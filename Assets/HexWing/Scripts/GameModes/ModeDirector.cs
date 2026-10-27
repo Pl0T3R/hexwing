@@ -16,13 +16,12 @@ namespace HexWing
     /// <summary>
     /// Runs one mode at a time (each on its own child object, switched on and off) and every restart:
     /// fade out, clear bolts, missiles and effects, put the player back at the mode's start, reset the
-    /// mode, fade in. The left menu button restarts; holding it for a second switches to the next mode.
-    /// The last mode played is remembered.
+    /// mode, fade in. The game opens in the hangar menu (<see cref="GameMenu"/>), which starts and switches
+    /// modes. The last mode played is remembered.
     /// </summary>
     public class ModeDirector : MonoBehaviour
     {
         const string ModeKey = "HexWing.Mode";
-        const float SwitchHold = 1f;
 
         public static ModeDirector Instance { get; private set; }
 
@@ -33,7 +32,6 @@ namespace HexWing
         MonoBehaviour[] _modes;
         int _index;
         bool _restarting;
-        float _menuHeld;
 
         void Awake()
         {
@@ -54,27 +52,11 @@ namespace HexWing
             MapTheme.Apply(Current is IMapMode first ? first.Map : Map.Orbit);
             PlayerShip.Instance?.Respawn(Current.StartPose);
             Current.ResetRun();
+            if (GameMenu.Instance != null) GameMenu.Instance.ShowHangar();
         }
 
-        void Update()
-        {
-            if (OVRInput.Get(OVRInput.Button.Start, OVRInput.Controller.LTouch))
-            {
-                _menuHeld += Time.unscaledDeltaTime;
-                if (_menuHeld >= SwitchHold)
-                {
-                    _menuHeld = float.NegativeInfinity;   // once per press
-                    Switch();
-                }
-            }
-            else
-            {
-                if (_menuHeld > 0f) Restart("przycisk menu");   // a short press
-                _menuHeld = 0f;
-            }
-        }
-
-        public void Switch()
+        /// <summary>Switches to the next mode behind a fade (the hangar's mode choice).</summary>
+        public void SelectNextMode()
         {
             if (_modes.Length < 2) return;
             Restart("zmiana trybu", (_index + 1) % _modes.Length);

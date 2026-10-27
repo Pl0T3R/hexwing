@@ -74,10 +74,17 @@ Updated after every step, so any session can pick up the work.
 - `ModeDirector.RespawnPlayer`: comes back without resetting the mode. `IGuidedMode`: the arrow points at the mode's objective.
 - Compile check: 0 errors, 0 warnings.
 
+**M8: polish** (cloud session; compiled, not run on a headset; done before M7, which needs Photon)
+- `UI/MenuPanel.cs` and `UI/GameMenu.cs`: a holographic panel with a laser pointer (or the stick and A). It has hangar, pause, controls, comfort and stats pages. The menu button now opens pause; the old press-to-restart and hold-to-switch are gone.
+- `Core/GamePause.cs`: one place for pausing (focus, menu). `Core/UserSettings.cs`: the player's settings in PlayerPrefs over GameConfig, with comfort presets; in the Editor the asset is restored after play. `Core/Progression.cs`: kill count and 7 cockpit colours with unlock conditions.
+- `Audio/ShipAudio.cs`: music pad, enemy bolt flyby, quiet engine while paused. `AI/AIShip.cs`: 3D engine hum with Doppler.
+- `Visuals/PipelineWarmup.cs`: draws every material during the black start. `Core/PerformanceManager.cs`: DC, triangles and GC per frame in the readout (Development builds).
+- Compile check: 0 errors, 0 warnings.
+
 ## Next
 
-1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M6 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
-2. **M7 (cloud, needs the owner's Photon App ID):** Team Dogfight online with Photon Fusion 2 (Host mode): 2–8 players, bots fill the rest, 30 kills or 10 minutes, lag-compensated hits, Meta Platform invites. Without the App ID, M8 (polish, hangar menu, settings, progression, comfort and performance pass) can go first.
+1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M8 checklists, record fps and p95 per mode in `PLAN.md`, and report the best control scheme and any discomfort. Fix what the real Unity and headset show (expect some API or tuning surprises: none of this has run yet).
+2. **M7, Team Dogfight online:** needs the owner's free Photon account, the Fusion 2 App ID and the Fusion 2 SDK imported into the project (it is downloaded after logging in at photonengine.com, so the cloud session can't fetch it). Design in `PLAN.md`: Host mode, 2–8 players, bots fill the rest, 30 kills or 10 minutes, fire events instead of networked bolts, lag-compensated hitboxes, Meta Platform invites. `IShipPilot` and `ShipControls` already separate input from flight, which is where a network pilot plugs in.
 
 ## Open issues
 
@@ -85,7 +92,7 @@ Updated after every step, so any session can pick up the work.
 2. **Game name:** "Hex Wing" is a working title.
 3. **Language:** the cockpit texts are Polish placeholders. Polish or English in the final game?
 4. **Control default:** B for now; the owner decides after trying A/B/C.
-5. **Photon account and App ID:** needed before M7.
+5. **Photon account, App ID and Fusion 2 SDK:** needed for M7 (online play). The alternative, Unity Netcode for GameObjects with Relay, needs no SDK download but has no built-in lag compensation.
 6. **Reference images** for the cockpit and ships: optional.
 
 ## Working rule

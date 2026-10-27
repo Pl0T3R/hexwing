@@ -108,8 +108,11 @@ namespace HexWing
                 _weapons.DamageBoost = 1f;
             }
             _abilities?.Configure(def);
-            _alert?.SetBaseColor(def.accent);
+            RefreshColor();
         }
+
+        /// <summary>Cockpit lights in the chosen paint (or the class colour).</summary>
+        public void RefreshColor() => _alert?.SetBaseColor(Progression.Accent(Definition));
 
         void OnCollided(Vector3 point, float severity)
         {

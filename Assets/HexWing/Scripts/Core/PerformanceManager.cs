@@ -1,4 +1,5 @@
 using System.Text;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.XR;
 
@@ -8,7 +9,9 @@ namespace HexWing
     /// Asks for the refresh rate from GameConfig (90 Hz), sets foveation and CPU/GPU levels, and keeps
     /// frame-time statistics: the average and worst frame of each readout interval and how many frames
     /// went over budget. The readout text is rebuilt only every few tenths of a second (no per-frame
-    /// allocations). Logs a line every 5 s for `adb logcat` / `metavr log`.
+    /// allocations). In Development builds it also reads draw calls, triangles and garbage per frame from
+    /// the profiler counters (the budget: at most 150 draw calls, 0 B garbage while fighting).
+    /// Logs a line every 5 s for `adb logcat` / `metavr log`.
     /// </summary>
     [DefaultExecutionOrder(-100)]
     public class PerformanceManager : MonoBehaviour
@@ -27,7 +30,8 @@ namespace HexWing
         /// <summary>The last readout text (changes only every readout interval).</summary>
         public string Readout { get; private set; } = "";
 
-        readonly StringBuilder _sb = new(160);
+        readonly StringBuilder _sb = new(200);
+        ProfilerRecorder _drawCalls, _triangles, _gcAlloc;
         float _acc, _worst, _nextLog;
         int _frames, _slow;
 
@@ -46,6 +50,27 @@ namespace HexWing
             OVRManager.suggestedCpuPerfLevel = OVRManager.ProcessorPerformanceLevel.SustainedHigh;
             OVRManager.suggestedGpuPerfLevel = OVRManager.ProcessorPerformanceLevel.SustainedHigh;
             _nextLog = Time.unscaledTime + 3f;
+            _drawCalls = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Draw Calls Count", 15);
+            _triangles = ProfilerRecorder.StartNew(ProfilerCategory.Render, "Triangles Count", 15);
+            _gcAlloc = ProfilerRecorder.StartNew(ProfilerCategory.Memory, "GC Allocated In Frame", 15);
+        }
+
+        void OnDestroy()
+        {
+            _drawCalls.Dispose();
+            _triangles.Dispose();
+            _gcAlloc.Dispose();
+        }
+
+        /// <summary>Average of the recorder's last samples; false if this build doesn't provide the counter.</summary>
+        static bool Average(ref ProfilerRecorder r, out long value)
+        {
+            value = 0;
+            if (!r.Valid || r.Count == 0) return false;
+            long sum = 0;
+            for (int i = 0; i < r.Count; i++) sum += r.GetSample(i).Value;
+            value = sum / r.Count;
+            return true;
         }
 
         void ApplyRefreshRate(float target)
@@ -100,6 +125,12 @@ namespace HexWing
             _sb.Append(Mathf.RoundToInt(Fps)).Append(" FPS / ").Append(Mathf.RoundToInt(RefreshRate)).Append(" Hz\n");
             _sb.Append("avg ").Append(AverageMs.ToString("F1")).Append(" ms  max ").Append(WorstMs.ToString("F1")).Append(" ms\n");
             _sb.Append("over budget: ").Append(SlowFrames);
+            if (Average(ref _drawCalls, out var dc))
+            {
+                _sb.Append("\nDC ").Append(dc);
+                if (Average(ref _triangles, out var tris)) _sb.Append("  tri ").Append(tris / 1000).Append('k');
+                if (Average(ref _gcAlloc, out var gc)) _sb.Append("  GC ").Append(gc).Append(" B");
+            }
             Readout = _sb.ToString();
         }
     }

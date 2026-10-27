@@ -322,7 +322,7 @@ namespace HexWing
                 "WINIETA " + VignetteLabel(cfg.comfort.vignette) + "\n" +
                 "POZIOMOWANIE " + (cfg.comfort.autoLevel ? "TAK" : "NIE") + "\n" +
                 "LIMIT SKRĘTU " + (cfg.comfort.turnRateLimit > 0f ? Mathf.RoundToInt(cfg.comfort.turnRateLimit) + "°/s" : "BRAK") + "\n" +
-                "MENU: RESTART, TRZYMAJ: TRYB\nTRZYMAJ L-GAŁKĘ: CENTRUJ\n" +
+                "MENU: PAUZA I HANGAR\nTRZYMAJ L-GAŁKĘ: CENTRUJ\n" +
                 "SPUST P: DZIAŁA  SPUST L: RAKIETA\nX: UNIK  A/B: ZDOLNOŚCI\nTRZYMAJ Y: STATEK");
         }
 

@@ -21,6 +21,7 @@ namespace HexWing
 
         FlightSettings _flightSettings;
         float _smokeTimer;
+        AudioSource _engine;
 
         public static AIShip Create(Transform parent, ShipMeshes.Kind kind, int index)
         {
@@ -43,6 +44,17 @@ namespace HexWing
             ship.Flight.ApplyComfort = false;
             ship.Weapons.IsPlayer = false;
             ship.Health.Destroyed += ship.OnDestroyed;
+            // engine hum: 3D with Doppler, so a close pass is heard going by
+            var engine = go.AddComponent<AudioSource>();
+            engine.loop = true;
+            engine.spatialBlend = 1f;
+            engine.rolloffMode = AudioRolloffMode.Linear;
+            engine.minDistance = 15f;
+            engine.maxDistance = 450f;
+            engine.dopplerLevel = 0.7f;
+            engine.volume = 0.3f;
+            engine.playOnAwake = false;
+            ship._engine = engine;
             return ship;
         }
 
@@ -81,6 +93,13 @@ namespace HexWing
             Weapons.ResetWeapons();
             Pilot.ResetPilot(skill, wingman, slot);
             _smokeTimer = 0f;
+            if (ShipAudio.Instance != null && ShipAudio.Instance.EngineClip != null)
+            {
+                _engine.clip = ShipAudio.Instance.EngineClip;
+                _engine.pitch = Kind == ShipMeshes.Kind.Trident ? 0.8f : Kind == ShipMeshes.Kind.Swallow ? 1.15f : 1.3f;
+                _engine.time = Random.value * 0.9f;   // ships don't hum in unison
+                _engine.Play();
+            }
         }
 
         public void Despawn() => gameObject.SetActive(false);

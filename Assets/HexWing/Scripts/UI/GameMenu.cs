@@ -1,0 +1,183 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace HexWing
+{
+    /// <summary>
+    /// The menus, on the holographic <see cref="MenuPanel"/>:
+    /// - Hangar (at start and from the pause menu): start, mode, ship, colour, controls, comfort, stats.
+    /// - Pause (the left menu button while flying): resume, restart, hangar, controls, comfort.
+    /// - Controls, comfort and stats pages, each with a way back.
+    /// Game time stops while a menu is open. Choices apply at once and are saved.
+    /// </summary>
+    public class GameMenu : MonoBehaviour
+    {
+        public static GameMenu Instance { get; private set; }
+
+        enum Page { Hangar, Pause, Controls, Comfort, Stats }
+
+        public bool Open => _panel != null && _panel.Visible;
+        public bool InHangar { get; private set; }
+
+        MenuPanel _panel;
+        PlayerInput _input;
+        Page _page, _back;
+
+        void Awake() => Instance = this;
+
+        void Start()
+        {
+            _panel = GetComponent<MenuPanel>();
+            _input = GetComponent<PlayerInput>();
+        }
+
+        void Update()
+        {
+            if (!OVRInput.GetDown(OVRInput.Button.Start, OVRInput.Controller.LTouch)) return;
+            if (ModeDirector.Instance != null && ModeDirector.Instance.Restarting) return;
+            if (!Open) ShowPause();
+            else if (_page == Page.Pause) Close();
+            else if (_page is Page.Controls or Page.Comfort or Page.Stats) Show(_back);
+        }
+
+        /// <summary>Opens the hangar (called once the first mode is set up, and from the pause menu).</summary>
+        public void ShowHangar()
+        {
+            InHangar = true;
+            Show(Page.Hangar);
+        }
+
+        void ShowPause()
+        {
+            InHangar = false;
+            Show(Page.Pause);
+        }
+
+        void Show(Page page)
+        {
+            _page = page;
+            GamePause.Set(GamePause.Reason.Menu, true);
+            if (_panel == null) _panel = GetComponent<MenuPanel>();
+            switch (page)
+            {
+                case Page.Hangar: _panel.Show("HANGAR", HangarItems()); break;
+                case Page.Pause: _panel.Show("PAUZA", PauseItems()); break;
+                case Page.Controls: _panel.Show("STEROWANIE", ControlItems()); break;
+                case Page.Comfort: _panel.Show("KOMFORT", ComfortItems()); break;
+                default: _panel.Show("STATYSTYKI", StatItems()); break;
+            }
+        }
+
+        void Close()
+        {
+            _panel.Hide();
+            InHangar = false;
+            GamePause.Set(GamePause.Reason.Menu, false);
+        }
+
+        void SubPage(Page page)
+        {
+            _back = _page;
+            Show(page);
+        }
+
+        // --- pages ------------------------------------------------------------------------------------
+
+        List<MenuEntry> HangarItems()
+        {
+            var d = ModeDirector.Instance;
+            var player = PlayerShip.Instance;
+            return new List<MenuEntry>
+            {
+                new(() => "> START: " + (d != null ? d.Current.Title : "?"), () =>
+                {
+                    Close();
+                    d?.Restart("start");
+                }),
+                new(() => "TRYB: " + (d != null ? d.Current.Title : "?") + "  >", () => d?.SelectNextMode()),
+                new(() => "STATEK: " + (player != null && player.Definition != null ? player.Definition.displayName : "?") + "  >", () => player?.SelectNextShip()),
+                new(() => "KOLOR: " + Progression.Paints[Progression.SelectedPaint].Name + "  (" + Progression.UnlockedCount + "/" + Progression.Paints.Length + ")  >",
+                    () => { Progression.NextPaint(); player?.RefreshColor(); }),
+                new("STEROWANIE ...", () => SubPage(Page.Controls)),
+                new("KOMFORT ...", () => SubPage(Page.Comfort)),
+                new("STATYSTYKI ...", () => SubPage(Page.Stats)),
+                new("WYJDŹ Z GRY", Application.Quit),
+            };
+        }
+
+        List<MenuEntry> PauseItems()
+        {
+            return new List<MenuEntry>
+            {
+                new("WZNÓW", Close),
+                new("RESTART", () => { Close(); ModeDirector.Instance?.Restart("restart z menu"); }),
+                new("HANGAR", ShowHangar),
+                new("STEROWANIE ...", () => SubPage(Page.Controls)),
+                new("KOMFORT ...", () => SubPage(Page.Comfort)),
+                new("CENTRUJ WIDOK", () => SeatedRecenter.Instance?.Recenter(withFade: false)),
+            };
+        }
+
+        List<MenuEntry> ControlItems()
+        {
+            var c = GameConfig.Instance.controls;
+            return new List<MenuEntry>
+            {
+                new(() => "STER: " + (_input != null ? PlayerInput.SchemeLabel(_input.Scheme) : "?"),
+                    () => _input?.SetScheme((ControlScheme)(((int)_input.Scheme + 1) % 3))),
+                new(() => "LATAJĄCA RĘKA: " + (c.swapHands ? "LEWA" : "PRAWA"), UserSettings.ToggleSwapHands),
+                new(() => "ODWRÓĆ GÓRA/DÓŁ: " + (c.invertPitch ? "TAK" : "NIE"), UserSettings.ToggleInvertPitch),
+                new(() => "CZUŁOŚĆ: " + c.sensitivity.ToString("0.0"), UserSettings.CycleSensitivity),
+                new(() => "WIBRACJE: " + Percent(GameConfig.Instance.haptics.master), UserSettings.CycleHaptics),
+                new(() => "GŁOŚNOŚĆ: " + Percent(UserSettings.Volume), UserSettings.CycleVolume),
+                new("< WSTECZ", () => Show(_back)),
+            };
+        }
+
+        List<MenuEntry> ComfortItems()
+        {
+            var c = GameConfig.Instance.comfort;
+            return new List<MenuEntry>
+            {
+                new("NAJWIĘKSZY KOMFORT", () => UserSettings.ApplyComfortPreset(0)),
+                new("ZRÓWNOWAŻONY", () => UserSettings.ApplyComfortPreset(1)),
+                new("BEZ POMOCY", () => UserSettings.ApplyComfortPreset(2)),
+                new(() => "WINIETA: " + Vignette(c.vignette), UserSettings.CycleVignette),
+                new(() => "POZIOMOWANIE: " + (c.autoLevel ? "TAK" : "NIE"), UserSettings.ToggleAutoLevel),
+                new(() => "LIMIT SKRĘTU: " + (c.turnRateLimit > 0f ? Mathf.RoundToInt(c.turnRateLimit) + " °/s" : "BRAK"), UserSettings.CycleTurnLimit),
+                new(() => "UNIK: " + (GameConfig.Instance.combat.evasiveStyle == EvasiveStyle.Jink ? "SKOK W BOK" : "BECZKA (OBRÓT)"), UserSettings.CycleEvasive),
+                new("< WSTECZ", () => Show(_back)),
+            };
+        }
+
+        List<MenuEntry> StatItems()
+        {
+            return new List<MenuEntry>
+            {
+                new(() => "ZESTRZELENIA: " + Progression.TotalKills, null),
+                new(() => "PRZETRWANIE: " + PlayerPrefs.GetInt("HexWing.Survival.BestScore", 0) + " (FALA " + PlayerPrefs.GetInt("HexWing.Survival.BestWave", 0) + ")", null),
+                new(() => "SZTURM: " + PlayerPrefs.GetInt("HexWing.Assault.BestScore", 0), null),
+                new(() => "ESKORTA: " + PlayerPrefs.GetInt("HexWing.Escort.BestScore", 0), null),
+                new(() => "TRENING: " + (PlayerPrefs.GetInt("HexWing.TrainingDone", 0) == 1 ? "UKOŃCZONY" : "NIE"), null),
+                new(() => "KOLORY: " + Progression.UnlockedCount + "/" + Progression.Paints.Length + NextUnlock(), null),
+                new("< WSTECZ", () => Show(_back)),
+            };
+        }
+
+        static string NextUnlock()
+        {
+            foreach (var p in Progression.Paints) if (!p.Unlocked()) return "  NASTĘPNY: " + p.Unlock;
+            return "";
+        }
+
+        static string Percent(float v) => Mathf.RoundToInt(v * 100f) + "%";
+
+        static string Vignette(VignetteLevel v) => v switch
+        {
+            VignetteLevel.Off => "WYŁ.",
+            VignetteLevel.Low => "SŁABA",
+            VignetteLevel.High => "MOCNA",
+            _ => "ŚREDNIA",
+        };
+    }
+}

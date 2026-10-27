@@ -214,4 +214,5 @@ continue.
 | M4 | Written, compiles 0/0, not run on a headset | – |
 | M5 | Written, compiles 0/0, not run on a headset | – |
 | M6 | Written, compiles 0/0, not run on a headset | – |
-| M7–M8 | Not started | – |
+| M7 | Waiting for the owner's Photon account, App ID and Fusion 2 SDK | – |
+| M8 | Written, compiles 0/0, not run on a headset | – |

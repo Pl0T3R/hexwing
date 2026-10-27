@@ -15,16 +15,22 @@ namespace HexWing
         const int Rate = 48000;
 
         ShipFlight _ship;
-        AudioSource _engine, _boost, _oneShots, _gunLeft, _gunRight;
+        AudioSource _engine, _boost, _oneShots, _gunLeft, _gunRight, _music;
         AudioClip _ring, _ringLast, _thud, _laser, _overheat, _lockTick, _locked, _missile, _explosion, _hitShield, _hitHull, _hitDealt, _kill, _evasive, _warnMissile, _warnLock, _ability, _denied;
         readonly AudioSource[] _world = new AudioSource[6];
         int _nextWorld;
+        AudioClip _flyby;
+        float _nextFlyby;
+
+        /// <summary>The engine drone, also used (3D, quieter) by AI ships.</summary>
+        public AudioClip EngineClip { get; private set; }
 
         void Awake()
         {
             Instance = this;
             _ship = GetComponent<ShipFlight>();
-            _engine = Source("Engine", Loop("Engine Drone", EngineSample, 1f), 0.35f);
+            EngineClip = Loop("Engine Drone", EngineSample, 1f);
+            _engine = Source("Engine", EngineClip, 0.35f);
             _boost = Source("Boost", Loop("Boost Rush", BoostSample, 1f), 0f);
             _oneShots = Source("One Shots", null, 1f);
             _ring = Clip("Ring Chime", 0.45f, t => Chime(t, 880f, 1320f));
@@ -45,6 +51,9 @@ namespace HexWing
             _warnLock = Clip("Warn Lock", 0.12f, t => Square(t, 700f) * 0.15f * Mathf.Clamp01((0.12f - t) * 60f));
             _ability = Clip("Ability", 0.4f, t => (Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(400f, 1200f, t / 0.4f) * t) * 0.3f) * Mathf.Clamp01((0.4f - t) * 10f) * Mathf.Clamp01(t * 200f));
             _denied = Clip("Denied", 0.18f, t => Square(t, 180f) * 0.15f * Mathf.Clamp01((0.18f - t) * 40f));
+            _flyby = Clip("Bolt Flyby", 0.25f, t => Grit(t) * 0.5f * Mathf.Sin(Mathf.PI * Mathf.Clamp01(t / 0.25f)) * Mathf.Sin(2f * Mathf.PI * 900f * t));
+            _music = Source("Music Pad", Loop("Music Pad", PadSample, 8f), 0f);
+            _music.Play();
             _gunLeft = Source("Gun Left", null, 0.5f);
             _gunLeft.panStereo = -0.45f;
             _gunRight = Source("Gun Right", null, 0.5f);
@@ -68,7 +77,17 @@ namespace HexWing
 
         void Update()
         {
+            // a soft pad: louder in the menu, quiet under the action
+            float musicTarget = GamePause.Has(GamePause.Reason.Menu) ? 0.22f : 0.07f;
+            _music.volume = Mathf.MoveTowards(_music.volume, musicTarget, Time.unscaledDeltaTime * 0.2f);
             if (_ship == null) return;
+            if (Time.timeScale <= 0f)
+            {
+                // paused: the engine idles quietly
+                _engine.volume = Mathf.MoveTowards(_engine.volume, 0.08f, Time.unscaledDeltaTime);
+                _boost.volume = 0f;
+                return;
+            }
             var f = GameConfig.Instance.flight;
             float s = Mathf.InverseLerp(f.minSpeed, f.maxSpeed, _ship.Speed);
             _engine.pitch = Mathf.Lerp(0.75f, 1.45f, s);
@@ -97,6 +116,18 @@ namespace HexWing
         public void PlayStep() => _oneShots.PlayOneShot(_ringLast, 0.5f);
         /// <summary>Called a few times a second while threatened: fast high beeps for a missile, slower low ones for a lock.</summary>
         public void PlayMissileWarning(bool missile) => _oneShots.PlayOneShot(missile ? _warnMissile : _warnLock, 0.5f);
+
+        /// <summary>An enemy bolt passing close by: a short hiss from where it passed (at most a few per second).</summary>
+        public void PlayFlyby(Vector3 position)
+        {
+            if (Time.unscaledTime < _nextFlyby) return;
+            _nextFlyby = Time.unscaledTime + 0.15f;
+            var a = _world[_nextWorld];
+            _nextWorld = (_nextWorld + 1) % _world.Length;
+            a.transform.position = position;
+            a.pitch = 1f;
+            a.PlayOneShot(_flyby, 0.6f);
+        }
 
         /// <summary>An explosion out in the world, heard from where it happened.</summary>
         public void PlayExplosion(Vector3 position, float size)
@@ -163,6 +194,24 @@ namespace HexWing
             _lowpass += (noise - _lowpass) * 0.02f;
             float wobble = 1f + 0.15f * Mathf.Sin(2f * Mathf.PI * 3f * t);
             return (saw1 * 0.25f + saw2 * 0.12f) * wobble + _lowpass * 0.9f;
+        }
+
+        /// <summary>
+        /// The music pad: two slow chords (A minor, F major), each four seconds, soft sine voices with a
+        /// gentle swell, so the 8 s loop has no seam (both ends are quiet).
+        /// </summary>
+        static readonly float[] ChordA = { 220f, 261.63f, 329.63f, 440f };
+        static readonly float[] ChordF = { 174.61f, 220f, 261.63f, 349.23f };
+
+        static float PadSample(float t, System.Random rng)
+        {
+            var chord = t < 4f ? ChordA : ChordF;
+            float local = t % 4f;
+            float env = Mathf.Sin(Mathf.PI * local / 4f);
+            float v = 0f;
+            for (int i = 0; i < chord.Length; i++)
+                v += Mathf.Sin(2f * Mathf.PI * chord[i] * t + i) * (0.18f - i * 0.03f) * (1f + 0.2f * Mathf.Sin(2f * Mathf.PI * 0.25f * t + i));
+            return v * env * env;
         }
 
         /// <summary>Band-limited noise: the rush of air (well, plasma) when boosting.</summary>

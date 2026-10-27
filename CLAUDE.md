@@ -9,6 +9,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 ## Current state
 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
+- M8 is written (M7, online play, waits for the owner's Photon account): the hangar and pause menus on a holographic panel with a laser pointer, the player's settings saved over GameConfig, unlockable cockpit colours, AI engine sounds in 3D with Doppler, enemy bolt flyby hisses, a music pad, shader warm-up, and draw-call/triangle/garbage counters in the readout.
 - M6 is written: the Capital Ship Assault mode (the capital ship "Kolos": shield generators, then 6 turrets, then the reactor; 15 minutes; a pool of 5 ships; wingmen), the Escort mode on the second map (3 transports through an asteroid belt, 3 ambushes), map theming (Orbit / Belt) and AI obstacle avoidance.
 - M5 is written: three ship classes as data (`ShipDefinition` assets: Sokół fighter, Jastrząb interceptor, Żubr bomber), six abilities with cooldowns (pursuit missile, repair, targeting computer, homing missiles, bomb run, turret drone), three passives, ship select (hold Y) and the Training mode.
 - M4 is written: AI pilots (attack with lead and aim error, bursts, break-off, evasion, wingmen escort), three original fighters (Hornet, Trident elite, Swallow wingman), the Survival mode with waves, an elite every 5th wave, 2 wingmen, score and best score, and missile/lock warnings.
@@ -128,7 +129,7 @@ Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`
 
 ## M6 checklist
 
-Modes now cycle (hold menu): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZETRWANIE → SZTURM → ESKORTA.
+Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZETRWANIE → SZTURM → ESKORTA.
 
 **SZTURM** (map Orbit):
 - [ ] A 560 m dark capital ship lies broadside 2.3 km ahead, with two glowing blue domes on its back, six turrets on the flanks, a bridge tower and red engines at the stern. Three wingmen fly with you. The right display shows the briefing, then `CEL: GENERATORY 2`, the clock (`CZAS 14:59`), `STATKI 5` and the score.
@@ -147,6 +148,19 @@ Modes now cycle (hold menu): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZE
 - [ ] Flying into rocks: bounce and damage; AI fighters swerve around them.
 - [ ] Going back to another mode restores the Orbit sky.
 - [ ] Performance in both modes in the biggest fight: 90 fps, expect at most about 90 draw calls.
+
+## M8 checklist
+
+- [ ] Start: the cockpit fades in with the **HANGAR** panel 1.5 m ahead (dark glass, amber title, white lines) and soft music. A cyan laser comes from the flying hand; the line under it lights up (with a light tick), the trigger (or A) chooses it. The thumbstick moves the highlight too. Game time is stopped (enemies frozen).
+- [ ] `> START: <mode>` closes the menu and starts the mode behind a fade. `TRYB` and `STATEK` switch behind a fade. `KOLOR` cycles the unlocked cockpit colours (the lights change at once). `WYJDŹ Z GRY` quits.
+- [ ] While flying, the menu button opens **PAUZA** (everything stops, the music gets louder): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page).
+- [ ] **STEROWANIE**: scheme, flying hand (left/right swaps the hands at once), invert pitch, sensitivity 0.6–1.6, vibration 100/50/0%, volume 100/75/50/25/0%. **KOMFORT**: three presets (most comfortable: strong vignette, auto-level, 60°/s limit, jink; balanced; no aids: no vignette, roll), then each setting on its own. Everything survives an app restart (and in the Editor the GameConfig asset is unchanged after play).
+- [ ] **STATYSTYKI**: total kills, the best of each mode, training, colours unlocked and what unlocks the next (white: training, green: 25 kills, violet: 100, blue: wave 10, red: escort won, gold: assault won).
+- [ ] Sound: AI fighters hum as they pass (Doppler), enemy bolts that just miss hiss by, the music pad is quiet in flight and louder in menus. Pausing quiets the engine.
+- [ ] Log at start: `Warm-up: N materials drawn plain and instanced.` No hitch at the first shot, explosion or menu (Perfetto: no long frame there).
+- [ ] Development build: the centre display adds `DC n  tri nk  GC n B`. In the biggest fights DC stays at most 150, and GC is 0 B in most frames.
+- [ ] Comfort test: 20 minutes of Survival or Assault with the default (balanced) preset; note the moments that feel bad and which setting helped.
+- [ ] Performance: p95 frame time under 11.1 ms at 90 Hz in every mode (`metavr perf`); record the numbers in `PLAN.md`.
 
 ## Where to tune
 
@@ -168,6 +182,7 @@ Modes now cycle (hold menu): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZE
   - `escort`: transports (count, speed, hull, shields, spacing), ambush points, ambush size, enemy skill, ship pool, wingmen, asteroid count, seed, sizes and the clear corridor, score values,
   - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
   - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
+- `Scripts/Core/UserSettings.cs`: which values the menus offer (turn limits, haptic levels, presets). `Scripts/Core/Progression.cs`: the colours and what unlocks them. `Scripts/UI/MenuPanel.cs`: panel size and distance (1.5 m), row height. `Scripts/Audio/ShipAudio.cs`: all synthesized sounds and the music pad.
 - `Resources/Ships/Sokol.asset`, `Jastrzab.asset`, `Zubr.asset` (made by Build Game, kept when it runs again): each class's flight numbers, hull, shields, gun multipliers, the two abilities, the passive and the cockpit colour. `ShipDefinition.Defaults()` has the same starting values in code.
 - `Scripts/Combat/CapitalShip.cs`: the capital ship's shape, part positions, hit points of generators (400), turrets (120) and reactor (800); `CapitalTurret.cs`: turret range, fire rate, damage and aim error. `Scripts/World/MapTheme.cs`: the Belt map's sky and sun. `Scripts/GameModes/Escort.cs`: the convoy route's waypoints.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
@@ -178,6 +193,8 @@ Modes now cycle (hold menu): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZE
 ## Known risks
 
 - **Builder APIs:** `ConfigureOpenXR` uses reflection and logs what it can't find; set those values by hand if the log says so. The rest of the builder is the Stopklatka builder adapted for pure VR (EyeLevel tracking, no passthrough or scene).
+- **Menu over the canopy:** the panel sits in the window's clear centre; if a strut or the inner hex ring cuts through it on the headset, move it (`MenuPanel.Distance`, the y offset in `Build`) or shrink it.
+- **Player settings vs GameConfig:** settings changed in the menus are stored in PlayerPrefs and written over the config at start. To test a config value from the Inspector, reset the player's choice first (or clear PlayerPrefs), or the stored choice wins.
 - **Text:** the cockpit screens use the legacy `TextMesh` with the built-in `LegacyRuntime.ttf`, so no TMP import is needed in M1. If Polish letters show as boxes, check the font's dynamic character set.
 - **Recenter:** `OVRManager.display.RecenterPose()` with EyeLevel tracking. If the view doesn't return to the seat, check that the tracking origin really is EyeLevel on the rig's `OVRManager`.
 - **Virtual stick (B):** positions come from `OVRInput.GetLocalControllerPosition` in tracking space, which is fixed to the cockpit. If the stick reacts to turning the ship, check that the rig has no rotation relative to the ship. If it's too twitchy or too lazy, tune `controls.stickRange` first, then `deadzone` and `curve`.

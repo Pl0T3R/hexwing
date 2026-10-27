@@ -38,6 +38,7 @@ namespace HexWing
         public const string CapitalHull = "CapitalHull";       // the capital ship: dark steel
         public const string Generator = "ShieldGenerator";     // its shield generator domes: glowing blue
         public const string Asteroid = "Asteroid";             // rocks of the Belt map
+        public const string MenuBack = "MenuBack";             // the hangar/pause menu panel: dark translucent
         public const string HudCyan = "HudCyan";               // holographic crosshair, enemy diamonds, lead marker
         public const string HudWhite = "HudWhite";             // target brackets while locking
         public const string HudAmber = "HudAmber";             // target brackets when locked
@@ -63,7 +64,7 @@ namespace HexWing
         {
             string shaderName = name switch
             {
-                Glass or Fade or Vignette or FlashShield or HudCyan or HudWhite or HudAmber => "HexWing/Transparent",
+                Glass or Fade or Vignette or FlashShield or HudCyan or HudWhite or HudAmber or MenuBack => "HexWing/Transparent",
                 Text => "HexWing/Text",
                 Sky => "HexWing/SpaceSky",
                 _ => "HexWing/Faceted",
@@ -100,6 +101,7 @@ namespace HexWing
                 CapitalHull => Hex("#4E535C"),
                 Generator => Hex("#7FC8FF"),
                 Asteroid => Hex("#6B5A4C"),
+                MenuBack => new Color(0.02f, 0.04f, 0.07f, 0.78f),
                 HudCyan => new Color(0.37f, 0.83f, 1f, 0.9f),
                 HudWhite => new Color(1f, 1f, 1f, 0.9f),
                 HudAmber => new Color(1f, 0.7f, 0.28f, 0.95f),

@@ -243,7 +243,7 @@ namespace HexWing
                 Step.Missile => "5. RAKIETA\nTRZYMAJ LEWY SPUST\nAŻ NAMIERZYSZ,\nPUŚĆ: STRZAŁ",
                 Step.Evasive => "6. UNIK\nWCIŚNIJ X",
                 Step.Abilities => "7. ZDOLNOŚCI  " + Progress + "/2\nA: " + a + "\nB: " + b,
-                _ => "TRENING UKOŃCZONY!\nPRZYTRZYMAJ MENU:\nINNY TRYB\nPRZYTRZYMAJ Y: STATEK",
+                _ => "TRENING UKOŃCZONY!\nMENU > HANGAR:\nINNE TRYBY\nI STATKI",
             };
         }
     }

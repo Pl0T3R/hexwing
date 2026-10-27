@@ -63,6 +63,7 @@ namespace HexWing
         {
             float dt = Time.deltaTime;
             if (dt <= 0f) return;
+            var player = PlayerShip.Instance != null && PlayerShip.Instance.Health.Alive ? PlayerShip.Instance.transform.position : (Vector3?)null;
             for (int i = 0; i < _count; i++)
             {
                 ref var bolt = ref _bolts[i];
@@ -88,8 +89,18 @@ namespace HexWing
                     i--;
                     continue;
                 }
+                if (player.HasValue && bolt.Team != Team.Player) Flyby(bolt.Position, step, player.Value);
                 bolt.Position += step;
             }
+        }
+
+        /// <summary>An enemy bolt passing within 14 m of the player this frame (but not hitting): a hiss.</summary>
+        static void Flyby(Vector3 from, Vector3 step, Vector3 player)
+        {
+            float t = Mathf.Clamp01(Vector3.Dot(player - from, step) / Mathf.Max(step.sqrMagnitude, 1e-4f));
+            if (t <= 0f || t >= 1f) return;   // the closest point must be inside this frame's step
+            var closest = from + step * t;
+            if ((closest - player).sqrMagnitude < 14f * 14f) ShipAudio.Instance?.PlayFlyby(closest);
         }
 
         bool Sweep(Vector3 from, Vector3 dir, float dist, Damageable owner, out RaycastHit best, out Damageable target)
