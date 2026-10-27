@@ -5,9 +5,10 @@ namespace HexWing
 {
     /// <summary>
     /// Fills the cockpit displays (M2), a few times a second so the texts don't allocate every frame:
-    /// - left: speed, throttle and its band (the sweet spot), the control scheme, auto-level,
-    /// - right: the rings course (ring, time, best) or the out-of-bounds countdown in red,
-    /// - centre: the performance readout,
+    /// - left: speed, throttle and its band (the sweet spot), stick and lever, auto-level,
+    /// - right: the mode (rings: ring, time, best; drones: target, kills, accuracy) or the out-of-bounds
+    ///   countdown in red,
+    /// - centre: hull, shields, gun heat, missile and evasive readiness, then the performance readout,
     /// - side left: how the current scheme works, side right: the comfort settings.
     /// </summary>
     public class CockpitHud : MonoBehaviour
@@ -23,6 +24,8 @@ namespace HexWing
         ShipFlight _ship;
         PlayerInput _input;
         ArenaBounds _bounds;
+        ShipWeapons _weapons;
+        Damageable _health;
         float _next;
         ControlScheme _shownScheme = (ControlScheme)(-1);
 
@@ -32,6 +35,8 @@ namespace HexWing
             _ship = GetComponent<ShipFlight>();
             _input = GetComponent<PlayerInput>();
             _bounds = GetComponent<ArenaBounds>();
+            _weapons = GetComponent<ShipWeapons>();
+            _health = GetComponent<Damageable>();
         }
 
         void Update()
@@ -68,8 +73,9 @@ namespace HexWing
                 _cockpit.Right.SetColor(Red);
                 return;
             }
+            if (DroneRange.Instance != null && DroneRange.Instance.isActiveAndEnabled) { RangeDisplay(DroneRange.Instance); return; }
             var course = RingsCourse.Instance;
-            if (course == null) { _cockpit.Right.SetText(""); return; }
+            if (course == null || !course.isActiveAndEnabled) { _cockpit.Right.SetText(""); return; }
             switch (course.Phase)
             {
                 case RingsCourse.State.Ready:
@@ -91,13 +97,63 @@ namespace HexWing
             _cockpit.Right.SetColor(course.Phase == RingsCourse.State.Finished ? Amber : Cyan);
         }
 
+        void RangeDisplay(DroneRange range)
+        {
+            _sb.Clear();
+            var target = _weapons != null ? _weapons.Target : null;
+            if (Time.time - range.LastKillTime < 1.5f) _sb.Append("ZESTRZELONY!\n");
+            else if (target != null)
+            {
+                _sb.Append("CEL ").Append(target.DisplayName).Append(' ')
+                   .Append(Mathf.RoundToInt(Vector3.Distance(target.transform.position, transform.position))).Append(" m\n");
+                if (_weapons.Locked) _sb.Append("NAMIERZONY\n");
+                else if (_weapons.LockProgress > 0f) _sb.Append("NAMIERZANIE ").Append(Mathf.RoundToInt(_weapons.LockProgress * 100f)).Append("%\n");
+            }
+            else _sb.Append("SZUKAJ CELU\n");
+            _sb.Append("ZESTRZELONE ").Append(range.Kills).Append('\n');
+            _sb.Append("CELNOŚĆ ").Append(Mathf.RoundToInt(range.Accuracy * 100f)).Append("%  (").Append(range.Hits).Append('/').Append(range.Shots).Append(')');
+            _cockpit.Right.SetText(_sb.ToString());
+            _cockpit.Right.SetColor(Time.time - range.LastKillTime < 1.5f || (_weapons != null && _weapons.Locked) ? Amber : Cyan);
+        }
+
         void PerfDisplay()
         {
             var debug = GameConfig.Instance.debug;
             var perf = PerformanceManager.Instance;
-            _sb.Clear().Append("HEX WING  M2");
+            _sb.Clear();
+            if (_health != null)
+            {
+                _sb.Append("KADŁUB ").Append(Mathf.CeilToInt(_health.Hull)).Append("  OSŁONY ").Append(Mathf.CeilToInt(_health.Shields)).Append('\n');
+            }
+            if (_weapons != null)
+            {
+                _sb.Append("DZIAŁA ");
+                if (_weapons.Overheated) _sb.Append("PRZEGRZANE ").Append(_weapons.LockoutLeft.ToString("0.0")).Append(" s");
+                else Bar(_weapons.Heat, 10);
+                _sb.Append('\n').Append("RAKIETA ");
+                if (_weapons.MissileCooldownLeft > 0f) _sb.Append(_weapons.MissileCooldownLeft.ToString("0.0")).Append(" s");
+                else _sb.Append("GOTOWA");
+            }
+            if (_ship != null)
+            {
+                _sb.Append("  UNIK ");
+                if (_ship.EvasiveCooldownLeft > 0f) _sb.Append(Mathf.CeilToInt(_ship.EvasiveCooldownLeft)).Append(" s");
+                else _sb.Append("OK");
+            }
             if (debug.performanceReadout && perf != null) _sb.Append('\n').Append(perf.Readout);
             _cockpit.Center.SetText(_sb.ToString());
+            bool danger = (_weapons != null && (_weapons.Overheated || _weapons.Heat > 0.8f)) ||
+                          (_health != null && _health.Hull < _health.MaxHull * 0.3f);
+            _cockpit.Center.SetColor(danger ? Red : Cyan);
+        }
+
+        /// <summary>A text bar: filled '|' and empty '.' cells.</summary>
+        void Bar(float value, int cells)
+        {
+            int filled = Mathf.Clamp(Mathf.RoundToInt(value * cells), 0, cells);
+            _sb.Append('[');
+            for (int i = 0; i < cells; i++) _sb.Append(i < filled ? '|' : '.');
+            _sb.Append(']');
         }
 
         void HelpDisplays()
@@ -111,7 +167,8 @@ namespace HexWing
                 "WINIETA " + VignetteLabel(cfg.comfort.vignette) + "\n" +
                 "POZIOMOWANIE " + (cfg.comfort.autoLevel ? "TAK" : "NIE") + "\n" +
                 "LIMIT SKRĘTU " + (cfg.comfort.turnRateLimit > 0f ? Mathf.RoundToInt(cfg.comfort.turnRateLimit) + "°/s" : "BRAK") + "\n" +
-                "MENU: RESTART\nTRZYMAJ L-GAŁKĘ: CENTRUJ");
+                "MENU: RESTART, TRZYMAJ: TRYB\nTRZYMAJ L-GAŁKĘ: CENTRUJ\n" +
+                "SPUST P: DZIAŁA  SPUST L: RAKIETA\nX: UNIK");
         }
 
         static string SchemeHelp(ControlScheme s, bool swapped)

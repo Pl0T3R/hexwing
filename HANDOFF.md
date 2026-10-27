@@ -30,10 +30,26 @@ Updated after every step, so any session can pick up the work.
 - `Core/GameBootstrap.cs`: pauses on focus loss or when the headset is taken off.
 - Compile check: 0 errors, 0 warnings. A Python check of the course generator over 2000 seeds: the farthest ring is 2.5 km from the centre, and the arena is 3 km.
 
+**M3: combat core** (cloud session; compiled, not run on a headset)
+- `Combat/Damageable.cs`: hull and shields with regen, team, a list of live ones, and a collider lookup cache.
+- `Weapons/LaserSystem.cs`: 384 pooled bolts, a raycast sweep per frame, instanced drawing per team.
+- `Weapons/MissileSystem.cs`: 24 homing missiles with a fuse and lifetime; evasive breaks their lock.
+- `Weapons/ShipWeapons.cs`: two alternating guns with convergence, heat and overheat lockout, the target nearest the nose, the lead point, and lock-on (hold, then release to fire a missile). Works for any pilot.
+- `Flight/ShipFlight.cs`: evasive (jink by default, or a roll) with a cooldown.
+- `Combat/PlayerShip.cs`: player hull and shields, a hitbox, collision damage, hit feedback, and death leading to a restart.
+- `Combat/TargetDrone.cs` and `GameModes/DroneRange.cs`: 8 looping drones that respawn, with kills and accuracy.
+- `GameModes/ModeDirector.cs`: modes as `IGameMode`. A menu press restarts and a 1 s hold switches the mode; every restart clears bolts, missiles and effects.
+- `Visuals/Effects.cs`: instanced flashes and debris. `Visuals/InstancedBatch.cs` is the shared helper.
+- `Cockpit/TargetingHud.cs`: holographic crosshair, enemy diamonds, target brackets with the lock state, and the lead marker (5 draws).
+- `Cockpit/CockpitAlert.cs`: cockpit lights flash on hits and pulse when the hull is low.
+- `Cockpit/CockpitHud.cs`: hull, shields, heat, missile and evasive on the centre display; drone stats on the right.
+- `Audio/ShipAudio.cs`: lasers, overheat, lock tones, missile, hits, kill chime, evasive, and 3D explosions.
+- Compile check: 0 errors, 0 warnings.
+
 ## Next
 
-1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1 and M2 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
-2. **M3 (cloud):** lasers (pooled, 800 m/s, swept), overheat, lead indicator, lock-on (another button in scheme B), damage and shields, evasive jink or roll, target drones, diegetic HUD v1, haptics and hit feedback.
+1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M3 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
+2. **M4 (cloud):** AI pilots (state machine, difficulty, evasive use, wingmen) built on `ShipFlight` + `ShipWeapons` with an AI `IShipPilot`, original enemy and ally fighter meshes, Survival mode (waves, every 5th elite), local high score.
 
 ## Open issues
 

@@ -5,18 +5,21 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// M2 test mode: fly through a course of hexagonal rings as fast as you can. The course comes from a
-    /// seed (the same seed gives the same course, so times compare), stays inside the arena, and gently
+    /// Flight practice: fly through a course of hexagonal rings as fast as you can. The course comes from
+    /// a seed (the same seed gives the same course, so times compare), stays inside the arena, and gently
     /// climbs and turns. The next ring glows; the cockpit arrow points at it. The timer starts at the first
     /// ring; the best time is kept per control scheme. After the last ring the result stays up for a few
-    /// seconds, then the course restarts behind a fade. Leaving the arena, or the left menu button,
-    /// restarts it too. Ring frames are solid: scraping one slows the ship.
+    /// seconds, then <see cref="ModeDirector"/> restarts the course behind a fade. Ring frames are solid:
+    /// scraping one slows (and damages) the ship.
     /// </summary>
-    public class RingsCourse : MonoBehaviour
+    public class RingsCourse : MonoBehaviour, IGameMode
     {
         public static RingsCourse Instance { get; private set; }
 
         public enum State { Ready, Running, Finished }
+
+        public string Title => "TOR PIERŚCIENI";
+        public Pose StartPose { get { EnsureCourse(); return _start; } }
 
         public State Phase { get; private set; }
         public int Next { get; private set; }
@@ -28,39 +31,39 @@ namespace HexWing
         public int Collisions { get; private set; }
         /// <summary>Seconds since the player flew past the next ring without going through it (for the HUD).</summary>
         public float SinceMissed { get; private set; } = 99f;
-        public Transform NextRing => Next < _rings.Count ? _rings[Next] : null;
+        public Transform NextRing => isActiveAndEnabled && Next < _rings.Count ? _rings[Next] : null;
 
         readonly List<Transform> _rings = new();
         readonly List<MeshRenderer> _renderers = new();
         Pose _start;
         ShipFlight _ship;
         PlayerInput _input;
-        ArenaBounds _bounds;
         float _prevSide;
-        bool _restarting;
+        bool _built;
         Mesh _ringMesh;
 
         void Awake() => Instance = this;
 
-        IEnumerator Start()
+        void OnEnable()
         {
-            var cockpit = PlayerCockpit.Instance;
-            if (cockpit == null) { Debug.LogError("[HexWing] RingsCourse needs the PlayerShip."); yield break; }
-            _ship = cockpit.GetComponent<ShipFlight>();
-            _input = cockpit.GetComponent<PlayerInput>();
-            _bounds = cockpit.GetComponent<ArenaBounds>();
+            var player = PlayerShip.Instance;
+            if (player == null) return;
+            _ship = player.GetComponent<ShipFlight>();
+            _input = player.GetComponent<PlayerInput>();
             if (_ship != null) _ship.Collided += OnCollided;
-            if (_bounds != null) _bounds.OutOfBounds += () => Restart("poza strefą");
-            if (_input != null) _input.SchemeChanged += _ => LoadBest();
-
-            BuildCourse();
-            ResetRun();
-            yield break;
+            if (_input != null) _input.SchemeChanged += OnSchemeChanged;
         }
+
+        void OnDisable()
+        {
+            if (_ship != null) _ship.Collided -= OnCollided;
+            if (_input != null) _input.SchemeChanged -= OnSchemeChanged;
+        }
+
+        void OnSchemeChanged(ControlScheme scheme) => LoadBest();
 
         void Update()
         {
-            if (OVRInput.GetDown(OVRInput.Button.Start, OVRInput.Controller.LTouch)) Restart("przycisk menu");
             if (_ship == null || Phase == State.Finished) return;
 
             if (Phase == State.Running) Elapsed += Time.deltaTime;
@@ -110,33 +113,14 @@ namespace HexWing
         IEnumerator RestartAfter(float seconds)
         {
             yield return new WaitForSeconds(seconds);
-            Restart("koniec");
+            ModeDirector.Instance?.Restart("koniec toru");
         }
 
-        public void Restart(string reason)
+        public void ResetRun()
         {
-            if (_restarting || _ship == null) return;
+            EnsureCourse();
             StopAllCoroutines();
-            StartCoroutine(RestartRoutine(reason));
-        }
-
-        IEnumerator RestartRoutine(string reason)
-        {
-            _restarting = true;
-            Debug.Log($"[HexWing] Course restart ({reason}).");
-            var fader = ScreenFader.Instance;
-            float t = GameConfig.Instance.comfort.fadeSeconds;
-            if (fader != null) yield return fader.FadeOut(t);
-            ResetRun();
-            yield return null;
-            if (fader != null) yield return fader.FadeIn(t);
-            _restarting = false;
-        }
-
-        void ResetRun()
-        {
-            _ship.ResetTo(_start.position, _start.rotation);
-            _input?.ResetControls();
+            if (_ship == null) OnEnable();
             Phase = State.Ready;
             Next = 0;
             Elapsed = 0f;
@@ -151,8 +135,6 @@ namespace HexWing
         void OnCollided(Vector3 point, float severity)
         {
             if (Phase == State.Running) Collisions++;
-            Haptics.PlayBoth(GameConfig.Instance.haptics.collision);
-            ShipAudio.Instance?.PlayCollision(severity);
         }
 
         string BestKey => $"HexWing.Best.{(_input != null ? (int)_input.Scheme : 0)}.{GameConfig.Instance.course.seed}.{GameConfig.Instance.course.rings}";
@@ -171,6 +153,13 @@ namespace HexWing
         }
 
         // --- course generation ---------------------------------------------------------------
+
+        void EnsureCourse()
+        {
+            if (_built) return;
+            _built = true;
+            BuildCourse();
+        }
 
         void BuildCourse()
         {

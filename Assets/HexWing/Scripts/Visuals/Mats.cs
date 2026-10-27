@@ -22,6 +22,18 @@ namespace HexWing
         public const string Ring = "CourseRing";               // course rings waiting their turn, and passed ones
         public const string RingNext = "CourseRingNext";       // the ring to fly through next (glows)
         public const string Dust = "SpaceDust";                // small specks around the ship that show speed
+        public const string LaserPlayer = "LaserPlayer";       // player bolts: cyan
+        public const string LaserEnemy = "LaserEnemy";         // enemy bolts: red-orange
+        public const string FlashHot = "FlashHot";             // impacts and explosions
+        public const string FlashCyan = "FlashCyan";           // player muzzle flashes
+        public const string FlashShield = "FlashShield";       // shield hits (translucent)
+        public const string Debris = "Debris";                 // explosion shards
+        public const string Drone = "Drone";                   // target drone body: light grey
+        public const string DroneCore = "DroneCore";           // target drone glowing band
+        public const string Missile = "Missile";               // homing missiles
+        public const string HudCyan = "HudCyan";               // holographic crosshair, enemy diamonds, lead marker
+        public const string HudWhite = "HudWhite";             // target brackets while locking
+        public const string HudAmber = "HudAmber";             // target brackets when locked
 
         static readonly Dictionary<string, Material> Cache = new();
 
@@ -44,7 +56,7 @@ namespace HexWing
         {
             string shaderName = name switch
             {
-                Glass or Fade or Vignette => "HexWing/Transparent",
+                Glass or Fade or Vignette or FlashShield or HudCyan or HudWhite or HudAmber => "HexWing/Transparent",
                 Text => "HexWing/Text",
                 Sky => "HexWing/SpaceSky",
                 _ => "HexWing/Faceted",
@@ -65,10 +77,22 @@ namespace HexWing
                 Ring => Hex("#4A5868"),
                 RingNext => Hex("#FFB347"),
                 Dust => Hex("#9AA8B8"),
+                LaserPlayer => Hex("#5FF2FF"),
+                LaserEnemy => Hex("#FF4A2A"),
+                FlashHot => Hex("#FFC266"),
+                FlashCyan => Hex("#9FF4FF"),
+                FlashShield => new Color(0.5f, 0.78f, 1f, 0.45f),
+                Debris => Hex("#3A3F48"),
+                Drone => Hex("#B8BEC6"),
+                DroneCore => Hex("#FF5533"),
+                Missile => Hex("#D8DDE3"),
+                HudCyan => new Color(0.37f, 0.83f, 1f, 0.9f),
+                HudWhite => new Color(1f, 1f, 1f, 0.9f),
+                HudAmber => new Color(1f, 0.7f, 0.28f, 0.95f),
                 _ => Color.white,
             };
             m.SetColor("_BaseColor", color);
-            if (name is Accent or RingNext) m.SetFloat("_Emission", 1f);
+            if (name is Accent or RingNext or LaserPlayer or LaserEnemy or FlashHot or FlashCyan or DroneCore) m.SetFloat("_Emission", 1f);
             if (name == Dust) m.SetFloat("_Emission", 0.6f);
             if (name is Fade or Vignette)
             {

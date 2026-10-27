@@ -6,6 +6,6 @@ A VR starfighter combat game for Meta Quest 3 (Unity 6, OpenXR, standalone). You
 - `CLAUDE.md`: how to set up, build and test the project on the developer's PC.
 - `HANDOFF.md`: current status, next steps and open issues.
 
-Status: **M2** (flight model, control schemes A/B/C, comfort options, rings course) on top of M1 (project builder, space scene, cockpit, recenter, fades, performance readout). It is written and compiles, but has not been run on a headset yet.
+Status: **M3** (lasers, heat, lock-on and missiles, shields, evasive, target drones, holographic HUD) on top of M2 (flight model, control schemes A/B/C, comfort options, rings course) and M1 (project builder, space scene, cockpit, recenter, fades, performance readout). It is written and compiles, but has not been run on a headset yet.
 
 Every scene, material and asset is created by `Assets/HexWing/Editor/HexWingBuilder.cs` (menu **HexWing → Build Game**).

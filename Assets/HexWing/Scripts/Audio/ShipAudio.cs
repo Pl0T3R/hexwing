@@ -3,9 +3,10 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// The player ship's sounds, synthesized at start (no audio files): an engine drone whose pitch and
-    /// loudness follow the speed, a breathy boost layer, a chime for each ring (a brighter one for the
-    /// last), and a thud for collisions. All 2D in the cockpit. M8 replaces this with the full sound set.
+    /// The game's sounds, synthesized at start (no audio files): an engine drone whose pitch and loudness
+    /// follow the speed, a breathy boost layer, ring chimes, collision thuds, laser shots (left and right
+    /// gun panned), overheat alarm, lock-on tones, missile launch, hits given and taken, kills, the evasive
+    /// whoosh, and explosions placed in 3D (a small pool of sources). M8 replaces this with the full set.
     /// </summary>
     public class ShipAudio : MonoBehaviour
     {
@@ -14,8 +15,10 @@ namespace HexWing
         const int Rate = 48000;
 
         ShipFlight _ship;
-        AudioSource _engine, _boost, _oneShots;
-        AudioClip _ring, _ringLast, _thud;
+        AudioSource _engine, _boost, _oneShots, _gunLeft, _gunRight;
+        AudioClip _ring, _ringLast, _thud, _laser, _overheat, _lockTick, _locked, _missile, _explosion, _hitShield, _hitHull, _hitDealt, _kill, _evasive;
+        readonly AudioSource[] _world = new AudioSource[6];
+        int _nextWorld;
 
         void Awake()
         {
@@ -27,6 +30,34 @@ namespace HexWing
             _ring = Clip("Ring Chime", 0.45f, t => Chime(t, 880f, 1320f));
             _ringLast = Clip("Ring Chime Last", 0.9f, t => Chime(t, 880f, 1760f) + Chime(t - 0.12f, 1320f, 1980f));
             _thud = Clip("Collision Thud", 0.5f, Thud);
+            _laser = Clip("Laser", 0.18f, Laser);
+            _overheat = Clip("Overheat", 0.6f, t => Square(t, t < 0.3f ? 620f : 470f) * 0.25f * Mathf.Clamp01((0.6f - t) * 20f));
+            _lockTick = Clip("Lock Tick", 0.05f, t => Mathf.Sin(2f * Mathf.PI * 1500f * t) * 0.3f * Mathf.Clamp01((0.05f - t) * 60f));
+            _locked = Clip("Locked", 0.35f, t => Mathf.Sin(2f * Mathf.PI * 1900f * t) * 0.28f * Mathf.Clamp01((0.35f - t) * 30f));
+            _missile = Clip("Missile", 1.1f, Missile);
+            _explosion = Clip("Explosion", 1.6f, Explosion);
+            _hitShield = Clip("Hit Shield", 0.3f, t => (Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(900f, 300f, t * 3f) * t) * 0.4f + Grit(t) * 0.25f) * Mathf.Exp(-t * 14f));
+            _hitHull = Clip("Hit Hull", 0.4f, t => (Grit(t) * 0.6f + Mathf.Sin(2f * Mathf.PI * 70f * t) * 0.5f) * Mathf.Exp(-t * 10f));
+            _hitDealt = Clip("Hit Dealt", 0.06f, t => Mathf.Sin(2f * Mathf.PI * 2400f * t) * 0.2f * Mathf.Exp(-t * 60f));
+            _kill = Clip("Kill", 0.5f, t => Chime(t, 660f, 990f) + Chime(t - 0.08f, 990f, 1480f));
+            _evasive = Clip("Evasive", 0.6f, t => Grit(t * 0.5f) * 0.35f * Mathf.Sin(Mathf.PI * Mathf.Clamp01(t / 0.6f)));
+            _gunLeft = Source("Gun Left", null, 0.5f);
+            _gunLeft.panStereo = -0.45f;
+            _gunRight = Source("Gun Right", null, 0.5f);
+            _gunRight.panStereo = 0.45f;
+            for (int i = 0; i < _world.Length; i++)
+            {
+                var go = new GameObject("Audio World " + i);
+                go.transform.SetParent(transform.parent, false);   // not on the ship: these stay where things blew up
+                var a = go.AddComponent<AudioSource>();
+                a.spatialBlend = 1f;
+                a.rolloffMode = AudioRolloffMode.Linear;
+                a.minDistance = 30f;
+                a.maxDistance = 1800f;
+                a.dopplerLevel = 0f;
+                a.playOnAwake = false;
+                _world[i] = a;
+            }
             _engine.Play();
             _boost.Play();
         }
@@ -48,6 +79,25 @@ namespace HexWing
 
         public void PlayRing(bool last) => _oneShots.PlayOneShot(last ? _ringLast : _ring, 0.6f);
         public void PlayCollision(float severity) => _oneShots.PlayOneShot(_thud, Mathf.Lerp(0.4f, 1f, severity));
+        public void PlayLaser(int gun) => (gun == 0 ? _gunLeft : _gunRight).PlayOneShot(_laser, 0.55f);
+        public void PlayOverheat() => _oneShots.PlayOneShot(_overheat, 0.7f);
+        public void PlayLockTick(float progress) => _oneShots.PlayOneShot(_lockTick, Mathf.Lerp(0.4f, 0.8f, progress));
+        public void PlayLocked() => _oneShots.PlayOneShot(_locked, 0.7f);
+        public void PlayMissile() => _oneShots.PlayOneShot(_missile, 0.8f);
+        public void PlayHitTaken(bool shield) => _oneShots.PlayOneShot(shield ? _hitShield : _hitHull, 0.9f);
+        public void PlayHitDealt() => _oneShots.PlayOneShot(_hitDealt, 0.5f);
+        public void PlayKill() => _oneShots.PlayOneShot(_kill, 0.7f);
+        public void PlayEvasive() => _oneShots.PlayOneShot(_evasive, 0.7f);
+
+        /// <summary>An explosion out in the world, heard from where it happened.</summary>
+        public void PlayExplosion(Vector3 position, float size)
+        {
+            var a = _world[_nextWorld];
+            _nextWorld = (_nextWorld + 1) % _world.Length;
+            a.transform.position = position;
+            a.pitch = Mathf.Lerp(1.3f, 0.8f, size);
+            a.PlayOneShot(_explosion, Mathf.Lerp(0.5f, 1f, size));
+        }
 
         AudioSource Source(string name, AudioClip clip, float volume)
         {
@@ -127,6 +177,37 @@ namespace HexWing
             float freq = Mathf.Lerp(90f, 40f, Mathf.Clamp01(t * 3f));
             float noise = Mathf.Sin(t * 12345.678f) * Mathf.Sin(t * 3456.7f);   // cheap deterministic grit
             return (Mathf.Sin(2f * Mathf.PI * freq * t) * 0.8f + noise * 0.3f * Mathf.Exp(-t * 25f)) * env;
+        }
+
+        static float Laser(float t)
+        {
+            // a falling zap with a short noisy attack
+            float f = Mathf.Lerp(1800f, 380f, Mathf.Clamp01(t / 0.16f));
+            float phase = 2f * Mathf.PI * (1800f * t - (1800f - 380f) * t * t / (2f * 0.16f));
+            float env = Mathf.Exp(-t * 18f) * Mathf.Clamp01(t * 800f);
+            return (Square(t, f * 0.5f) * 0.15f + Mathf.Sin(phase) * 0.35f + Grit(t) * 0.1f * Mathf.Exp(-t * 60f)) * env;
+        }
+
+        static float Missile(float t)
+        {
+            float env = Mathf.Clamp01(t * 30f) * Mathf.Exp(-t * 2.2f);
+            return (Grit(t) * 0.5f + Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(120f, 260f, t) * t) * 0.2f) * env;
+        }
+
+        static float Explosion(float t)
+        {
+            float env = Mathf.Clamp01(t * 200f) * Mathf.Exp(-t * 3f);
+            float boom = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(60f, 28f, Mathf.Clamp01(t)) * t);
+            return Mathf.Clamp(boom * 0.7f + Grit(t) * 0.8f * Mathf.Exp(-t * 2f), -1f, 1f) * env;
+        }
+
+        static float Square(float t, float f) => Frac(t * f) < 0.5f ? 1f : -1f;
+
+        /// <summary>Deterministic noise from time (hash), for one-shot clips.</summary>
+        static float Grit(float t)
+        {
+            float x = Mathf.Sin(t * 12.9898f * 4800f) * 43758.5453f;
+            return (x - Mathf.Floor(x)) * 2f - 1f;
         }
 
         static float Frac(float x) => x - Mathf.Floor(x);

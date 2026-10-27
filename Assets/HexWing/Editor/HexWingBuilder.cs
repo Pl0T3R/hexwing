@@ -266,6 +266,21 @@ namespace HexWing.EditorTools
             Faceted(Mats.RingNext, Hex("#FFB347"), Hex("#7A4410"), Hex("#FFE2B0"), 0.6f, 0.3f, 32f, 0.75f);
             Faceted(Mats.Dust, Hex("#9AA8B8"), Hex("#4A5260"), Color.white, 0f, 0f, 8f, 0.6f);
 
+            // combat: glowing bolts and flashes (emission 1 = flat bright colour), grey drones, missiles, debris
+            Faceted(Mats.LaserPlayer, Hex("#5FF2FF"), Hex("#5FF2FF"), Color.white, 0f, 0f, 8f, 1f);
+            Faceted(Mats.LaserEnemy, Hex("#FF4A2A"), Hex("#FF4A2A"), Color.white, 0f, 0f, 8f, 1f);
+            Faceted(Mats.FlashHot, Hex("#FFC266"), Hex("#FF7A2A"), Color.white, 0.4f, 0f, 8f, 1f);
+            Faceted(Mats.FlashCyan, Hex("#9FF4FF"), Hex("#5FD3FF"), Color.white, 0.2f, 0f, 8f, 1f);
+            Faceted(Mats.Debris, Hex("#3A3F48"), Hex("#121418"), Hex("#FF9A4A"), 0.6f, 0.3f, 24f, 0.05f);
+            Faceted(Mats.Drone, Hex("#B8BEC6"), Hex("#3C424C"), Hex("#C8D8E8"), 0.3f, 0.5f, 48f, 0f);
+            Faceted(Mats.DroneCore, Hex("#FF5533"), Hex("#FF5533"), Color.white, 0f, 0f, 8f, 1f);
+            Faceted(Mats.Missile, Hex("#D8DDE3"), Hex("#4A5058"), Hex("#FFFFFF"), 0.3f, 0.6f, 64f, 0f);
+            Translucent(Mats.FlashShield, new Color(0.5f, 0.78f, 1f, 0.45f), CompareFunction.LessEqual);
+            // holographic HUD markers: depth-tested, so the cockpit frame hides them
+            Translucent(Mats.HudCyan, new Color(0.37f, 0.83f, 1f, 0.9f), CompareFunction.LessEqual);
+            Translucent(Mats.HudWhite, new Color(1f, 1f, 1f, 0.9f), CompareFunction.LessEqual);
+            Translucent(Mats.HudAmber, new Color(1f, 0.7f, 0.28f, 0.95f), CompareFunction.LessEqual);
+
             var text = Material(Mats.Text, "HexWing/Text");
             text.SetColor("_BaseColor", Color.white);
             Material(Mats.Sky, "HexWing/SpaceSky");
@@ -282,6 +297,14 @@ namespace HexWing.EditorTools
             m.SetFloat("_SpecStrength", specStrength);
             m.SetFloat("_Gloss", gloss);
             m.SetFloat("_Emission", emission);
+            return m;
+        }
+
+        static Material Translucent(string name, Color color, CompareFunction zTest)
+        {
+            var m = Material(name, "HexWing/Transparent");
+            m.SetColor("_BaseColor", color);
+            m.SetFloat("_ZTest", (float)zTest);
             return m;
         }
 
@@ -323,7 +346,8 @@ namespace HexWing.EditorTools
         // --- scene -------------------------------------------------------------------------
 
         /// <summary>
-        /// Flight scene: space skybox, the systems (performance, sun, start-up, rings course, space dust) and
+        /// Flight scene: space skybox, the systems (performance, sun, start-up, space dust, lasers, missiles,
+        /// effects, and the modes: rings course and drone range) and
         /// the player ship: cockpit with the camera rig at the eye point (seated, eye-level tracking), input,
         /// flight model, arena bounds, HUD and instruments, comfort (fade, vignette, recenter) and sound.
         /// </summary>
@@ -342,16 +366,30 @@ namespace HexWing.EditorTools
             systems.AddComponent<PerformanceManager>();
             systems.AddComponent<SpaceEnvironment>();
             systems.AddComponent<GameBootstrap>();
-            systems.AddComponent<RingsCourse>();
             systems.AddComponent<SpaceDust>();
+            systems.AddComponent<LaserSystem>();
+            systems.AddComponent<MissileSystem>();
+            systems.AddComponent<Effects>();
+
+            // modes: one child each, ModeDirector switches them (menu button: restart, hold: next mode)
+            var modes = new GameObject("Modes");
+            modes.transform.SetParent(systems.transform, false);
+            modes.AddComponent<ModeDirector>();
+            new GameObject("Mode Rings Course").AddComponent<RingsCourse>().transform.SetParent(modes.transform, false);
+            new GameObject("Mode Drone Range").AddComponent<DroneRange>().transform.SetParent(modes.transform, false);
 
             var ship = new GameObject("PlayerShip");
             ship.AddComponent<PlayerCockpit>();
             ship.AddComponent<PlayerInput>();
+            ship.AddComponent<Damageable>();
             ship.AddComponent<ShipFlight>();
+            ship.AddComponent<ShipWeapons>();
             ship.AddComponent<ArenaBounds>();
+            ship.AddComponent<CockpitAlert>();
+            ship.AddComponent<PlayerShip>();
             ship.AddComponent<CockpitHud>();
             ship.AddComponent<CockpitInstruments>();
+            ship.AddComponent<TargetingHud>();
             ship.AddComponent<ScreenFader>();
             ship.AddComponent<ComfortVignette>();
             ship.AddComponent<SeatedRecenter>();

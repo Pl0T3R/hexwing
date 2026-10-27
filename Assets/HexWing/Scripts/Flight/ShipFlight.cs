@@ -27,11 +27,17 @@ namespace HexWing
         /// <summary>Current turn rates (deg/s): x = pitch (+ up), y = yaw (+ right), z = roll (+ right).</summary>
         public Vector3 AngularRate => _rates;
         /// <summary>How fast the view is turning (deg/s), roll weighted a little less. Drives the vignette.</summary>
-        public float TurnSpeed => Mathf.Sqrt(_rates.x * _rates.x + _rates.y * _rates.y + 0.5f * _rates.z * _rates.z);
+        public float TurnSpeed => Mathf.Sqrt(_rates.x * _rates.x + _rates.y * _rates.y + 0.5f * _rates.z * _rates.z)
+                                  + (Evading && GameConfig.Instance.combat.evasiveStyle == EvasiveStyle.Roll ? 400f : 0f);
         public float TurnMultiplier { get; private set; } = 1f;
         public Band CurrentBand { get; private set; }
         public bool AutoLeveling { get; private set; }
         public bool Frozen { get; set; }
+        public bool Evading => _evadeTime < _evadeDuration;
+        public float EvasiveCooldownLeft => Mathf.Max(0f, _evadeReadyAt - Time.time);
+
+        /// <summary>Raised when an evasive maneuver starts (sign: -1 left, +1 right).</summary>
+        public event System.Action<float> EvasiveStarted;
 
         /// <summary>Raised on a collision: hit point and how hard (0..1).</summary>
         public event System.Action<Vector3, float> Collided;
@@ -40,11 +46,15 @@ namespace HexWing
         Vector3 _rates;
         Vector3 _direction = Vector3.forward;
         float _sinceRoll;
+        float _evadeTime = 1f, _evadeDuration = 0f, _evadeSign = 1f, _evadeReadyAt, _breakLockUntil;
+        bool _evasiveHeld;
+        Damageable _self;
         readonly RaycastHit[] _hits = new RaycastHit[4];
 
         void Awake()
         {
             if (Pilot == null) Pilot = GetComponent<IShipPilot>();
+            _self = GetComponent<Damageable>();
             _direction = transform.forward;
             Speed = TargetSpeed(GameConfig.Instance.controls.cruiseThrottle);
         }
@@ -56,6 +66,8 @@ namespace HexWing
             _direction = transform.forward;
             _rates = Vector3.zero;
             _sinceRoll = 0f;
+            _evadeTime = _evadeDuration = 0f;
+            _evadeReadyAt = 0f;
             Speed = TargetSpeed(GameConfig.Instance.controls.cruiseThrottle);
         }
 
@@ -103,13 +115,46 @@ namespace HexWing
             // Unity: +x pitches the nose down and +z rolls left, so both are negated
             transform.rotation *= Quaternion.Euler(-_rates.x * dt, _rates.y * dt, -_rates.z * dt);
 
+            Vector3 evadeStep = Evasive(dt);
+
             float targetSpeed = TargetSpeed(throttle);
             Speed = Mathf.MoveTowards(Speed, targetSpeed, (targetSpeed > Speed ? f.acceleration : f.deceleration) * dt);
             Speed = Mathf.Max(Speed, f.minSpeed * 0.5f);   // never stalls, even right after a collision
 
             float follow = f.noseLag > 0f ? 1f - Mathf.Exp(-dt / f.noseLag) : 1f;
             _direction = Vector3.Slerp(_direction, transform.forward, follow).normalized;
-            Move(_direction * (Speed * dt), f);
+            Move(_direction * (Speed * dt) + evadeStep, f);
+            if (_self != null) _self.Velocity = Velocity;
+        }
+
+        /// <summary>
+        /// X: a quick sideways hop (jink, the view never rolls) or a full barrel roll, toward the side the
+        /// stick points (right if centred). Breaks missile locks on this ship for a moment.
+        /// </summary>
+        Vector3 Evasive(float dt)
+        {
+            var cfg = GameConfig.Instance.combat;
+            bool pressed = _controls.Evasive && !_evasiveHeld;
+            _evasiveHeld = _controls.Evasive;
+            if (pressed && !Evading && Time.time >= _evadeReadyAt)
+            {
+                float side = Mathf.Abs(_controls.Yaw) > 0.1f ? _controls.Yaw : _controls.Roll;
+                _evadeSign = side < -0.1f ? -1f : 1f;
+                _evadeDuration = Mathf.Max(0.1f, cfg.evasiveSeconds);
+                _evadeTime = 0f;
+                _evadeReadyAt = Time.time + cfg.evasiveCooldown;
+                _breakLockUntil = Time.time + cfg.evasiveBreaksLock;
+                EvasiveStarted?.Invoke(_evadeSign);
+            }
+            if (Time.time < _breakLockUntil && _self != null) MissileSystem.Instance?.BreakLocks(_self);
+            if (!Evading) return Vector3.zero;
+
+            float before = Mathf.SmoothStep(0f, 1f, _evadeTime / _evadeDuration);
+            _evadeTime = Mathf.Min(_evadeDuration, _evadeTime + dt);
+            float after = Mathf.SmoothStep(0f, 1f, _evadeTime / _evadeDuration);
+            if (cfg.evasiveStyle == EvasiveStyle.Roll)
+                transform.rotation *= Quaternion.Euler(0f, 0f, -_evadeSign * 360f * (after - before));
+            return transform.right * (_evadeSign * cfg.jinkDistance * (after - before));
         }
 
         void Move(Vector3 step, FlightSettings f)

@@ -131,8 +131,10 @@ namespace HexWing
             c.Throttle = _throttle;
             Deflection = new Vector3(c.Pitch, c.Yaw, c.Roll);
 
-            // M3 binds these to weapons; read here so every scheme has them
+            // the same in every scheme: flying hand's trigger fires, the other trigger locks on
+            // (releasing it while locked fires a missile), X evades; A/B are the abilities (M5)
             c.Fire = OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger, FlyHand) > 0.6f;
+            c.Lock = OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger, ThrottleHand) > 0.5f;
             c.Ability1 = OVRInput.Get(OVRInput.Button.One, FlyHand);
             c.Ability2 = OVRInput.Get(OVRInput.Button.Two, FlyHand);
             c.Evasive = OVRInput.Get(OVRInput.Button.One, ThrottleHand);

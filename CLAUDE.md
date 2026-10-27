@@ -9,6 +9,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 ## Current state
 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
+- M3 is written: lasers (pooled, swept, instanced), gun heat and overheat, targeting with the holographic HUD and a lead marker, lock-on and homing missiles, hull and shields, the evasive maneuver (jink or roll), target drones in a new drone range mode, hit feedback (haptics, sounds, cockpit lights) and a mode switch.
 - M2 is written: the flight model with throttle bands and arena bounds, the input layer with control schemes A/B/C, comfort options (vignette, auto-level, turn limit), the rings course, cockpit texts, the moving stick and throttle, space dust and synthesized ship sounds.
 - It was written in a cloud session with no Unity editor. It compiles to 0 errors and 0 warnings against the Unity 6000.0.85f1 DLLs plus stubs copied from the Meta XR Core SDK sources.
 - It has **never been opened in Unity or run on a headset**. Expect to fix compile errors against the real packages and to tune on the device.
@@ -81,6 +82,23 @@ Check:
 - [ ] 10 minutes of flying in your best scheme: report any discomfort, and at which moments.
 - [ ] Still 90 fps (centre display), p95 under 11.1 ms in `metavr perf`.
 
+## M3 checklist
+
+Buttons (every scheme): flying hand's trigger = guns; the other trigger = lock-on (hold with a target near the nose, release when locked to fire a missile); X = evasive; left menu button = restart, hold 1 s = next mode (rings course ↔ drone range).
+
+- [ ] Hold the menu button for 1 s: a fade, then the drone range (log `Mode: STRZELNICA`). 8 light-grey drones with a red glowing band fly loops 350–1100 m ahead.
+- [ ] Guns: cyan bolts from the left and right gun in turn, a cyan muzzle flash and a short zap panned to that side, a light haptic tick per shot. Bolts cross about 400 m ahead.
+- [ ] Heat: the centre display shows `DZIAŁA [|||.......]` filling while firing and draining after. At full heat: `PRZEGRZANE 3.0 s` in red, an alarm, a long buzz; the guns stop for 3 s.
+- [ ] HUD through the canopy: a cyan hexagon crosshair, small cyan diamonds on drones ahead, white brackets on the target nearest the nose, and a small cyan dot (lead marker) ahead of a moving target. Aiming the crosshair at the dot hits the drone. The cockpit frame hides the markers behind it.
+- [ ] Hits: an orange impact flash on the drone, a high tick sound, a light haptic, the crosshair pulses. Kill: an explosion with debris, a 3D boom from the drone's direction, a two-note chime, a stronger haptic, `ZESTRZELONY!` on the right display. The drone comes back elsewhere 3 s later.
+- [ ] Right display: target and distance, lock progress, kills and accuracy (`CELNOŚĆ 35% (21/60)`).
+- [ ] Lock-on: hold the left trigger with the target within 12° of the nose: rising ticks, brackets close in, after 1.2 s `NAMIERZONY`, amber turning brackets and a steady tone. Release: a missile launches (whoosh, haptic), turns after the drone and blows it up. `RAKIETA 6.0 s` counts down.
+- [ ] Evasive (X): jink, a quick 15 m hop to the side the stick points (right if centred), with a whoosh and haptic; the view doesn't roll. `UNIK 8 s` counts down. `combat.evasiveStyle` Roll does a full barrel roll instead (the vignette closes during it).
+- [ ] Damage: flying into a drone or a ring frame hurts (`KADŁUB` / `OSŁONY` on the centre display). Shield hits flash the cockpit lights blue-white, hull hits red, with a crackle and a haptic on both hands. Shields come back 4 s after the last hit. Under 30% hull the lights pulse red.
+- [ ] Death (hull 0, or 5 s outside the arena): an explosion ahead, the ship stops, a fade, the mode restarts (log `Player ship destroyed`, `Restart (zniszczony)`).
+- [ ] Rings course still works as in M2 (hold the menu button to go back).
+- [ ] Performance in the drone range while firing continuously with 2 missiles in the air: 90 fps, at most 150 draw calls (expect about 50).
+
 ## Where to tune
 
 - `Resources/GameConfig.asset` (made by Build Game; edit in the Inspector, also in Play mode):
@@ -93,7 +111,9 @@ Check:
   - `comfort` (also): vignette level, start/full turn rates and response; auto-level on/off, delay and rate; pitch/yaw and roll rate limits,
   - `arena`: radius (3 km) and the out-of-bounds countdown,
   - `course`: ring count, seed, ring radius, spacing, maximum turn and climb, result time,
-  - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab), boost rumble.
+  - `combat`: laser speed (800 m/s), range, damage, fire rate, heat per shot, cooling, overheat lockout, convergence, spread, bolt size; target and lock cones, lock time, HUD distance (30 m); missile speed, turn rate, damage, cooldown, lifetime, fuse; player hull, shields, shield delay and regen, collision damage; evasive style (Jink / Roll), cooldown, jink distance and time, lock-breaking time,
+  - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
+  - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
 - `Editor/HexWingBuilder.cs` → `CreateMaterials`: every color as a hex value. Run Build Game again after changing them.
 - `Shaders/SpaceSky.shader`: star density and brightness, nebula colors, the planet direction, size and colors. Tune them on the `SpaceSky` material.
@@ -106,5 +126,7 @@ Check:
 - **Recenter:** `OVRManager.display.RecenterPose()` with EyeLevel tracking. If the view doesn't return to the seat, check that the tracking origin really is EyeLevel on the rig's `OVRManager`.
 - **Virtual stick (B):** positions come from `OVRInput.GetLocalControllerPosition` in tracking space, which is fixed to the cockpit. If the stick reacts to turning the ship, check that the rig has no rotation relative to the ship. If it's too twitchy or too lazy, tune `controls.stickRange` first, then `deadzone` and `curve`.
 - **Twist roll and axes:** the sign conventions (push forward = nose down, twist clockwise = roll right) were derived on paper. If any axis is reversed on the headset, fix it in `PlayerInput`, not with the invert option.
-- **Grip conflict:** in scheme B the right grip holds the stick, so lock-on (planned on the right grip) needs another button in M3.
+- **Lock-on button:** the plan had lock-on on the right grip, but scheme B uses that grip for the stick, so lock-on is the other hand's trigger in every scheme.
+- **Holographic HUD:** markers are drawn 30 m from the eye in the true direction of what they mark (`combat.hudDistance`). If they are uncomfortable to focus on, try 15–60 m. They are depth-tested, so the canopy frame hides them.
+- **Bolt sweeps** use `Physics.RaycastNonAlloc` over the distance flown each frame; drones and the player have sphere colliders. With many enemies in M4, watch the `Physics.Raycast` time in the profiler.
 - **Near clip:** 0.03 m because the cockpit is close. If the far ships flicker later (z-fighting), raise it before lowering the far plane.

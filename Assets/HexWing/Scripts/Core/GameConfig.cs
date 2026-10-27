@@ -20,6 +20,8 @@ namespace HexWing
         public FlightSettings flight = new();
         public ArenaSettings arena = new();
         public CourseSettings course = new();
+        public CombatSettings combat = new();
+        public DroneSettings drones = new();
         public HapticSettings haptics = new();
         public DebugSettings debug = new();
 
@@ -213,6 +215,88 @@ namespace HexWing
         public float resultSeconds = 5f;
     }
 
+    public enum EvasiveStyle { Jink, Roll }
+
+    [Serializable]
+    public class CombatSettings
+    {
+        [Header("Lasers")]
+        [Tooltip("Bolt speed (m/s) on top of the ship's own velocity.")]
+        public float laserSpeed = 800f;
+        public float laserRange = 1500f;
+        public float laserDamage = 12f;
+        [Tooltip("Shots per second (the two guns alternate).")]
+        public float fireRate = 8f;
+        [Tooltip("Heat per shot; 1 = overheated.")]
+        public float heatPerShot = 0.055f;
+        [Tooltip("Heat lost per second while not firing.")]
+        public float coolRate = 0.4f;
+        [Tooltip("Seconds the guns are locked after overheating.")]
+        public float overheatLockout = 3f;
+        [Tooltip("Distance (m) where the two guns' bolts cross, in front of the crosshair.")]
+        public float convergence = 400f;
+        [Tooltip("Random spread (deg).")]
+        public float spread = 0.12f;
+        [Tooltip("Length (m) and thickness of a drawn bolt.")]
+        public float boltLength = 7f;
+        public float boltThickness = 0.28f;
+
+        [Header("Targeting and lock-on")]
+        [Tooltip("Targets within this angle of the nose get brackets and the lead marker.")]
+        public float targetCone = 25f;
+        public float targetRange = 1500f;
+        [Tooltip("Hold the lock button with the target this close to the nose (deg) to lock.")]
+        public float lockCone = 12f;
+        public float lockSeconds = 1.2f;
+        [Tooltip("Distance (m) from the eye where the holographic HUD markers are drawn.")]
+        public float hudDistance = 30f;
+
+        [Header("Missiles (fired by releasing the lock button while locked)")]
+        public float missileSpeed = 260f;
+        public float missileTurnRate = 110f;
+        public float missileDamage = 60f;
+        public float missileCooldown = 6f;
+        public float missileLifetime = 6f;
+        [Tooltip("Missile explodes when this close to its target (m).")]
+        public float missileFuse = 9f;
+
+        [Header("Player ship")]
+        public float hull = 100f;
+        public float shields = 60f;
+        [Tooltip("Seconds without damage before shields recharge.")]
+        public float shieldDelay = 4f;
+        public float shieldRegen = 20f;
+        [Tooltip("Hull damage of a head-on collision (scaled by how head-on it was).")]
+        public float collisionDamage = 40f;
+
+        [Header("Evasive (X)")]
+        [Tooltip("Jink: a quick sideways hop, the view never rolls (comfortable default). Roll: a full 360° barrel roll.")]
+        public EvasiveStyle evasiveStyle = EvasiveStyle.Jink;
+        public float evasiveCooldown = 8f;
+        public float jinkDistance = 15f;
+        public float evasiveSeconds = 0.5f;
+        [Tooltip("Seconds after an evasive during which missiles locked on you lose their lock.")]
+        public float evasiveBreaksLock = 0.6f;
+    }
+
+    [Serializable]
+    public class DroneSettings
+    {
+        public int count = 8;
+        public float hull = 36f;
+        public float shields = 0f;
+        [Tooltip("Speed range (m/s) of the drones' patrol loops.")]
+        public Vector2 speed = new(30f, 90f);
+        [Tooltip("Radius range (m) of the patrol loops.")]
+        public Vector2 loopRadius = new(80f, 220f);
+        [Tooltip("Distance range (m) from the player's start where drones patrol.")]
+        public Vector2 distance = new(350f, 1100f);
+        [Tooltip("Seconds before a destroyed drone is replaced.")]
+        public float respawnSeconds = 3f;
+        [Tooltip("Collision radius (m) for lasers and missiles.")]
+        public float radius = 4f;
+    }
+
     [Serializable]
     public class HapticPulse
     {
@@ -235,6 +319,15 @@ namespace HexWing
         public HapticPulse collision = new(0.3f, 1f, 0.25f);
         public HapticPulse boundsTick = new(0.8f, 0.35f, 0.03f);
         public HapticPulse grabStick = new(0.9f, 0.25f, 0.02f);
+        public HapticPulse fire = new(0.9f, 0.3f, 0.025f);
+        public HapticPulse overheat = new(0.25f, 0.8f, 0.4f);
+        public HapticPulse hitTaken = new(0.35f, 0.9f, 0.18f);
+        public HapticPulse hitDealt = new(0.95f, 0.2f, 0.02f);
+        public HapticPulse kill = new(0.6f, 0.6f, 0.12f);
+        public HapticPulse lockTick = new(1f, 0.15f, 0.015f);
+        public HapticPulse locked = new(0.8f, 0.4f, 0.08f);
+        public HapticPulse missile = new(0.4f, 0.7f, 0.15f);
+        public HapticPulse evasive = new(0.5f, 0.5f, 0.1f);
         [Tooltip("Constant light rumble while boosting (amplitude).")]
         [Range(0f, 1f)] public float boostRumble = 0.12f;
     }
