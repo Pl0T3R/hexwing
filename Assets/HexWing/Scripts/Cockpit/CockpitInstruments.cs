@@ -4,8 +4,9 @@ namespace HexWing
 {
     /// <summary>
     /// Moving parts of the cockpit: the stick tilts with pitch and yaw and twists with roll, the throttle
-    /// lever follows the throttle, and a small arrow above the console points at the next course ring,
-    /// the current target or the nearest enemy (or back to the arena when outside). They show what the ship is being told to do, whatever the scheme.
+    /// lever follows the throttle, and a small arrow above the console points where the mode wants you
+    /// (next ring, objective, convoy), else at the current target or the nearest enemy (or back to the
+    /// arena when outside). They show what the ship is being told to do, whatever the scheme.
     /// </summary>
     public class CockpitInstruments : MonoBehaviour
     {
@@ -53,9 +54,9 @@ namespace HexWing
             if (_arrow == null) return;
             Vector3? target = null;
             if (_bounds != null && _bounds.Outside) target = transform.position + _bounds.HomeDirection * 1000f;
-            else if (Training.Instance != null && Training.Instance.isActiveAndEnabled)
-                target = Training.Instance.Pointer != null ? Training.Instance.Pointer.position : (Vector3?)null;
-            else if (RingsCourse.Instance != null && RingsCourse.Instance.NextRing != null) target = RingsCourse.Instance.NextRing.position;
+            else if (ModeDirector.Instance != null && ModeDirector.Instance.Current is IGuidedMode guided && guided.Pointer != null)
+                target = guided.Pointer.position;
+            else if (ModeDirector.Instance != null && ModeDirector.Instance.Current is Training) target = null;   // training: only its own pointer
             else if (_weapons != null && _weapons.Target != null) target = _weapons.Target.transform.position;
             else target = NearestEnemy();
             _arrow.gameObject.SetActive(target.HasValue);

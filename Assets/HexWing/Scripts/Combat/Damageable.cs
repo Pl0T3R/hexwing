@@ -26,6 +26,10 @@ namespace HexWing
         public bool Targetable = true;
         [Tooltip("Incoming damage multiplier (heavy plating < 1).")]
         public float DamageTakenScale = 1f;
+        [Tooltip("Takes no damage (a capital ship's reactor while its shield generators stand). Hits still flash.")]
+        public bool Invulnerable;
+        [Tooltip("AI target choice: below 1 = more attractive (escorted transports), above 1 = less.")]
+        public float TargetPriority = 1f;
 
         public float Hull { get; private set; }
         public float Shields { get; private set; }
@@ -63,7 +67,7 @@ namespace HexWing
 
         public void Damage(float amount, Vector3 point, Damageable source)
         {
-            if (!Alive || amount <= 0f) return;
+            if (!Alive || amount <= 0f || Invulnerable) return;
             amount *= DamageTakenScale;
             _lastHit = Time.time;
             float toShields = Mathf.Min(Shields, amount);

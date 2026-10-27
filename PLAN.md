@@ -213,4 +213,5 @@ continue.
 | M3 | Written, compiles 0/0, not run on a headset | – |
 | M4 | Written, compiles 0/0, not run on a headset | – |
 | M5 | Written, compiles 0/0, not run on a headset | – |
-| M6–M8 | Not started | – |
+| M6 | Written, compiles 0/0, not run on a headset | – |
+| M7–M8 | Not started | – |

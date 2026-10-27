@@ -15,7 +15,8 @@ namespace HexWing
     /// - Extend: too close to the target: boost away for a moment, then come around again (no rams).
     /// - Evade: hit or chased by a missile: break hard to one side at full throttle, sometimes with an
     ///   evasive maneuver.
-    /// Far from the arena centre, it turns back in.
+    /// Far from the arena centre, it turns back in; an obstacle straight ahead (asteroid, capital hull) makes
+    /// it veer off along the surface for a moment.
     /// </summary>
     public class AIPilot : MonoBehaviour, IShipPilot
     {
@@ -34,7 +35,8 @@ namespace HexWing
         Damageable _self;
         System.Random _rng;
         float _nextThink, _stateUntil, _burstUntil, _pauseUntil, _reactUntil, _repickAt, _lastHit = -99f;
-        Vector3 _desired = Vector3.forward, _aimError, _breakDir;
+        Vector3 _desired = Vector3.forward, _aimError, _breakDir, _avoidDir;
+        float _avoidUntil;
         bool _fire, _lock, _evasive, _missileLocking;
         float _throttle = 0.5f;
 
@@ -60,6 +62,7 @@ namespace HexWing
             _lastHit = -99f;
             _fire = _lock = _evasive = _missileLocking = false;
             _throttle = 0.5f;
+            _avoidUntil = 0f;
             NewAimError();
         }
 
@@ -99,6 +102,16 @@ namespace HexWing
                 var picked = PickTarget();
                 if (picked != null && picked != Target) _reactUntil = Time.time + Lerp(cfg.reaction);   // a moment to react before firing
                 Target = picked;
+            }
+
+            // obstacles (asteroids, the capital ship's hull) straight ahead: veer off along the surface
+            float look = 120f + (_flight != null ? _flight.Speed : 0f);
+            if (Physics.SphereCast(pos, 8f, transform.forward, out var hit, look, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+                && !hit.collider.transform.IsChildOf(transform)
+                && (Target == null || !hit.collider.transform.IsChildOf(Target.transform)))
+            {
+                _avoidUntil = Time.time + 0.8f;
+                _avoidDir = (Vector3.ProjectOnPlane(transform.forward, hit.normal).normalized + hit.normal * 0.8f).normalized;
             }
 
             // threats first
@@ -154,6 +167,7 @@ namespace HexWing
                 // prefer close targets in front; enemies like the player a little more
                 float score = to.magnitude * (1.5f - 0.5f * Vector3.Dot(transform.forward, to.normalized));
                 if (d == PlayerShip.Instance?.Health) score *= 0.8f;
+                score *= d.TargetPriority;
                 if (score < bestScore) { bestScore = score; best = d; }
             }
             _repickAt = Time.time + 2f;   // re-pick every couple of seconds at most
@@ -208,6 +222,8 @@ namespace HexWing
                     Escort();
                     break;
             }
+
+            if (Time.time < _avoidUntil) { _desired = _avoidDir; _fire = false; }
 
             // stay in the arena
             if (pos.magnitude > arena * 0.85f) _desired = Vector3.Lerp(_desired, -pos.normalized, 0.8f).normalized;

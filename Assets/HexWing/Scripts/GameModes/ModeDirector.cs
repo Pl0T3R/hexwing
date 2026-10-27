@@ -51,6 +51,7 @@ namespace HexWing
             yield return null;   // the player ship and systems are set up in their Awake/Start
             if (_modes.Length == 0) { Debug.LogError("[HexWing] No game modes under ModeDirector. Run HexWing > Build Game."); yield break; }
             Activate(_index);
+            MapTheme.Apply(Current is IMapMode first ? first.Map : Map.Orbit);
             PlayerShip.Instance?.Respawn(Current.StartPose);
             Current.ResetRun();
         }
@@ -99,8 +100,33 @@ namespace HexWing
             MissileSystem.Instance?.ClearAll();
             Effects.Instance?.ClearAll();
             if (modeIndex != _index) Activate(modeIndex);
+            MapTheme.Apply(Current is IMapMode mapped ? mapped.Map : Map.Orbit);
             PlayerShip.Instance?.Respawn(Current.StartPose);
             Current.ResetRun();
+            yield return null;
+            if (fader != null) yield return fader.FadeIn(t);
+            _restarting = false;
+        }
+
+        /// <summary>
+        /// Brings the player back at a pose behind a fade without resetting the mode (reinforcements in
+        /// the objective modes). Bolts and missiles near the player are not cleared; the mode decides when.
+        /// </summary>
+        public void RespawnPlayer(Pose pose, float delay)
+        {
+            if (_restarting) return;
+            StartCoroutine(RespawnRoutine(pose, delay));
+        }
+
+        IEnumerator RespawnRoutine(Pose pose, float delay)
+        {
+            _restarting = true;
+            yield return new WaitForSeconds(delay);
+            var fader = ScreenFader.Instance;
+            float t = GameConfig.Instance.comfort.fadeSeconds;
+            if (fader != null) yield return fader.FadeOut(t);
+            MissileSystem.Instance?.BreakLocks(PlayerShip.Instance != null ? PlayerShip.Instance.Health : null);
+            PlayerShip.Instance?.Respawn(pose);
             yield return null;
             if (fader != null) yield return fader.FadeIn(t);
             _restarting = false;

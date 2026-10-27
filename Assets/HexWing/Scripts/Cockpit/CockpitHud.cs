@@ -83,6 +83,8 @@ namespace HexWing
                 return;
             }
             if (Survival.Instance != null && Survival.Instance.isActiveAndEnabled) { SurvivalDisplay(Survival.Instance); return; }
+            if (CapitalAssault.Instance != null && CapitalAssault.Instance.isActiveAndEnabled) { AssaultDisplay(CapitalAssault.Instance); return; }
+            if (Escort.Instance != null && Escort.Instance.isActiveAndEnabled) { EscortDisplay(Escort.Instance); return; }
             if (DroneRange.Instance != null && DroneRange.Instance.isActiveAndEnabled) { RangeDisplay(DroneRange.Instance); return; }
             var course = RingsCourse.Instance;
             if (course == null || !course.isActiveAndEnabled) { _cockpit.Right.SetText(""); return; }
@@ -131,6 +133,75 @@ namespace HexWing
             _cockpit.Right.SetText(_sb.ToString());
             bool alert = mode.Phase != Survival.State.Fighting || _threat;
             _cockpit.Right.SetColor(_threat ? Red : alert ? Amber : Cyan);
+        }
+
+        void AssaultDisplay(CapitalAssault mode)
+        {
+            _sb.Clear();
+            var ship = mode.Ship;
+            switch (mode.Phase)
+            {
+                case CapitalAssault.State.Briefing:
+                    _sb.Append("SZTURM: KOLOS\nZNISZCZ GENERATORY,\nDZIAŁA, POTEM REAKTOR\n");
+                    break;
+                case CapitalAssault.State.Fighting:
+                    if (ship != null)
+                    {
+                        switch (ship.Current)
+                        {
+                            case CapitalShip.Phase.Generators: _sb.Append("CEL: GENERATORY ").Append(ship.GeneratorsLeft).Append('\n'); break;
+                            case CapitalShip.Phase.Turrets: _sb.Append("CEL: DZIAŁA ").Append(ship.TurretsLeft).Append('\n'); break;
+                            case CapitalShip.Phase.Reactor: _sb.Append("CEL: REAKTOR ").Append(Mathf.CeilToInt(ship.Reactor.Hull)).Append('\n'); break;
+                            default: _sb.Append("KOLOS PADA!\n"); break;
+                        }
+                    }
+                    _sb.Append("CZAS ").Append(Clock(mode.TimeLeft)).Append('\n');
+                    Threats();
+                    break;
+                case CapitalAssault.State.Won:
+                    _sb.Append("ZWYCIĘSTWO!\nKOLOS ZNISZCZONY\n");
+                    break;
+                default:
+                    _sb.Append("PORAŻKA\n").Append(mode.LoseReason).Append('\n');
+                    break;
+            }
+            _sb.Append("STATKI ").Append(mode.LivesLeft).Append("  WYNIK ").Append(mode.Score).Append('\n');
+            _sb.Append("REKORD ").Append(mode.BestScore);
+            _cockpit.Right.SetText(_sb.ToString());
+            _cockpit.Right.SetColor(_threat || mode.Phase == CapitalAssault.State.Lost ? Red : mode.Phase == CapitalAssault.State.Fighting ? Cyan : Amber);
+        }
+
+        void EscortDisplay(Escort mode)
+        {
+            _sb.Clear();
+            switch (mode.Phase)
+            {
+                case Escort.State.Briefing:
+                    _sb.Append("ESKORTA\nPROWADŹ KONWÓJ\nPRZEZ PAS ASTEROID\n");
+                    break;
+                case Escort.State.Underway:
+                    _sb.Append("KONWÓJ ").Append(mode.TransportsAlive).Append('/').Append(mode.TransportsTotal)
+                       .Append("  TRASA ").Append(Mathf.RoundToInt(mode.RouteProgress * 100f)).Append("%\n");
+                    if (mode.EnemiesAlive > 0) _sb.Append("ZASADZKA! WROGOWIE ").Append(mode.EnemiesAlive).Append('\n');
+                    Threats();
+                    break;
+                case Escort.State.Won:
+                    _sb.Append("KONWÓJ DOTARŁ!\n");
+                    break;
+                default:
+                    _sb.Append("PORAŻKA\n").Append(mode.LoseReason).Append('\n');
+                    break;
+            }
+            _sb.Append("STATKI ").Append(mode.LivesLeft).Append("  WYNIK ").Append(mode.Score).Append('\n');
+            _sb.Append("REKORD ").Append(mode.BestScore);
+            _cockpit.Right.SetText(_sb.ToString());
+            _cockpit.Right.SetColor(_threat || mode.Phase == Escort.State.Lost || mode.EnemiesAlive > 0 ? Red : mode.Phase == Escort.State.Underway ? Cyan : Amber);
+        }
+
+        static string Clock(float seconds)
+        {
+            int s = Mathf.Max(0, Mathf.CeilToInt(seconds));
+            return (s / 60) + ":" + (s % 60).ToString("00");
         }
 
         bool _threat;

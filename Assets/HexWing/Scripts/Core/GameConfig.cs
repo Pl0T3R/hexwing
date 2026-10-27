@@ -25,6 +25,8 @@ namespace HexWing
         public AISettings ai = new();
         public SurvivalSettings survival = new();
         public AbilitySettings abilities = new();
+        public AssaultSettings assault = new();
+        public EscortSettings escort = new();
         public HapticSettings haptics = new();
         public DebugSettings debug = new();
 
@@ -298,6 +300,52 @@ namespace HexWing
         public float respawnSeconds = 3f;
         [Tooltip("Collision radius (m) for lasers and missiles.")]
         public float radius = 4f;
+    }
+
+    [Serializable]
+    public class AssaultSettings
+    {
+        [Tooltip("Seconds to destroy the capital ship (15 minutes).")]
+        public float timeLimit = 900f;
+        [Tooltip("Times the player can come back after being shot down (the team's ship pool).")]
+        public int playerLives = 5;
+        public float respawnDelay = 2f;
+        [Tooltip("Enemy fighters kept in the air; more once the turrets are down.")]
+        public int enemyFighters = 5;
+        public float enemyRespawn = 6f;
+        [Range(0f, 1f)] public float enemySkill = 0.5f;
+        public int wingmen = 3;
+        public float wingmanRespawn = 45f;
+        public int scorePerKill = 100;
+        public int scorePerGenerator = 500;
+        public int scorePerTurret = 250;
+        public int scoreReactor = 2000;
+    }
+
+    [Serializable]
+    public class EscortSettings
+    {
+        public int transports = 3;
+        public float transportSpeed = 30f;
+        public float transportHull = 500f;
+        public float transportShields = 150f;
+        [Tooltip("Metres between transports in the column.")]
+        public float spacing = 120f;
+        [Tooltip("Ambushes when the lead transport has done this share of the route.")]
+        public float[] ambushAt = { 0.15f, 0.42f, 0.7f };
+        public int ambushBase = 4;
+        [Range(0f, 1f)] public float enemySkill = 0.45f;
+        public int playerLives = 5;
+        public float respawnDelay = 2f;
+        public int wingmen = 2;
+        [Header("Asteroid field")]
+        public int asteroids = 260;
+        public int asteroidSeed = 4;
+        public Vector2 asteroidSize = new(8f, 60f);
+        [Tooltip("Asteroid-free tube (m) around the convoy's route.")]
+        public float corridor = 110f;
+        public int scorePerTransport = 1000;
+        public int scorePerKill = 100;
     }
 
     /// <summary>The six abilities (PLAN.md section 7). Which ship has which is in its ShipDefinition.</summary>

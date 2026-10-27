@@ -35,6 +35,9 @@ namespace HexWing
         public const string EliteHull = "EliteHull";           // enemy elite: near black
         public const string EnemyGlow = "EnemyGlow";           // enemy engines and sensors: red
         public const string AllyHull = "AllyHull";             // wingmen: light grey (glow uses Accent)
+        public const string CapitalHull = "CapitalHull";       // the capital ship: dark steel
+        public const string Generator = "ShieldGenerator";     // its shield generator domes: glowing blue
+        public const string Asteroid = "Asteroid";             // rocks of the Belt map
         public const string HudCyan = "HudCyan";               // holographic crosshair, enemy diamonds, lead marker
         public const string HudWhite = "HudWhite";             // target brackets while locking
         public const string HudAmber = "HudAmber";             // target brackets when locked
@@ -94,6 +97,9 @@ namespace HexWing
                 EliteHull => Hex("#2E3138"),
                 EnemyGlow => Hex("#FF3B2F"),
                 AllyHull => Hex("#C9CED6"),
+                CapitalHull => Hex("#4E535C"),
+                Generator => Hex("#7FC8FF"),
+                Asteroid => Hex("#6B5A4C"),
                 HudCyan => new Color(0.37f, 0.83f, 1f, 0.9f),
                 HudWhite => new Color(1f, 1f, 1f, 0.9f),
                 HudAmber => new Color(1f, 0.7f, 0.28f, 0.95f),
@@ -102,6 +108,7 @@ namespace HexWing
             m.SetColor("_BaseColor", color);
             if (name is Accent or RingNext or LaserPlayer or LaserEnemy or FlashHot or FlashCyan or DroneCore or EnemyGlow) m.SetFloat("_Emission", 1f);
             if (name == Dust) m.SetFloat("_Emission", 0.6f);
+            if (name == Generator) m.SetFloat("_Emission", 0.7f);
             if (name is Fade or Vignette)
             {
                 m.SetFloat("_ZTest", (float)UnityEngine.Rendering.CompareFunction.Always);

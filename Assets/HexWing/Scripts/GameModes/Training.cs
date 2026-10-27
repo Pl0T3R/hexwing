@@ -8,7 +8,7 @@ namespace HexWing
     /// on a slow drone, lock-on and a missile, the evasive, both abilities. Each finished step chimes.
     /// The last step marks training as done (kept on the headset). Nothing shoots back.
     /// </summary>
-    public class Training : MonoBehaviour, IGameMode
+    public class Training : MonoBehaviour, IGameMode, IGuidedMode
     {
         const string DoneKey = "HexWing.TrainingDone";
 

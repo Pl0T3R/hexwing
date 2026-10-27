@@ -9,6 +9,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 ## Current state
 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
+- M6 is written: the Capital Ship Assault mode (the capital ship "Kolos": shield generators, then 6 turrets, then the reactor; 15 minutes; a pool of 5 ships; wingmen), the Escort mode on the second map (3 transports through an asteroid belt, 3 ambushes), map theming (Orbit / Belt) and AI obstacle avoidance.
 - M5 is written: three ship classes as data (`ShipDefinition` assets: Sokół fighter, Jastrząb interceptor, Żubr bomber), six abilities with cooldowns (pursuit missile, repair, targeting computer, homing missiles, bomb run, turret drone), three passives, ship select (hold Y) and the Training mode.
 - M4 is written: AI pilots (attack with lead and aim error, bursts, break-off, evasion, wingmen escort), three original fighters (Hornet, Trident elite, Swallow wingman), the Survival mode with waves, an elite every 5th wave, 2 wingmen, score and best score, and missile/lock warnings.
 - M3 is written: lasers (pooled, swept, instanced), gun heat and overheat, targeting with the holographic HUD and a lead marker, lock-on and homing missiles, hull and shields, the evasive maneuver (jink or roll), target drones in a new drone range mode, hit feedback (haptics, sounds, cockpit lights) and a mode switch.
@@ -125,6 +126,28 @@ Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`
 - [ ] Pressing an ability that isn't ready (or a missile ability with no target) gives a low buzz sound and nothing else.
 - [ ] Survival with each ship: all abilities help, nothing breaks between waves or after a restart (abilities reset, the turret disappears).
 
+## M6 checklist
+
+Modes now cycle (hold menu): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZETRWANIE → SZTURM → ESKORTA.
+
+**SZTURM** (map Orbit):
+- [ ] A 560 m dark capital ship lies broadside 2.3 km ahead, with two glowing blue domes on its back, six turrets on the flanks, a bridge tower and red engines at the stern. Three wingmen fly with you. The right display shows the briefing, then `CEL: GENERATORY 2`, the clock (`CZAS 14:59`), `STATKI 5` and the score.
+- [ ] Only the current objective gets brackets and can be locked; the guide arrow points at the nearest one. The reactor can't be damaged while the generators stand (log `Capital ship phase: Generators`).
+- [ ] Generators down → `CEL: DZIAŁA 6`, then turrets down → `CEL: REAKTOR 800`. Turrets fire red twin bolts at you and the wingmen when you're on their side. Enemy fighters come out of the flanks; an elite after the turrets.
+- [ ] The reactor sits in a trench at the stern: bombs (Żubr) and missiles work on it. Destroyed: a chain of explosions along the hull, then the ship is gone, `ZWYCIĘSTWO!`, then a restart after 9 s.
+- [ ] Shot down: you come back at the start after a fade (`STATKI` goes down); at 0, `PORAŻKA / BRAK STATKÓW`. The clock running out: `PORAŻKA / CZAS MINĄŁ`.
+- [ ] Ships (yours and AI) bounce off the hull; AI fighters veer off before hitting it.
+
+**ESKORTA** (map Belt):
+- [ ] The sky changes: an amber gas giant to the side, a red-brown nebula, a warmer sun from the left (log `Mode: ESKORTA`, `Asteroid field: 260 rocks`). Brown asteroids of many sizes tumble slowly around a clear route.
+- [ ] Three light-grey transports with cyan engines fly in a column along the route (log `Escort: route 5xxx m`). The arrow points at the lead one; `KONWÓJ 3/3  TRASA n%`.
+- [ ] At about 15%, 42% and 70% of the route: `ZASADZKA! WROGOWIE n` in red; enemies come out from both sides ahead and go for the transports. The last ambush has an elite.
+- [ ] Transports can be destroyed (big explosion, `KONWÓJ 2/3`). One reaching the end: `KONWÓJ DOTARŁ!` and +1000 per transport. All lost: `PORAŻKA / KONWÓJ ZNISZCZONY`.
+- [ ] Shot down: you come back 300 m behind the lead transport.
+- [ ] Flying into rocks: bounce and damage; AI fighters swerve around them.
+- [ ] Going back to another mode restores the Orbit sky.
+- [ ] Performance in both modes in the biggest fight: 90 fps, expect at most about 90 draw calls.
+
 ## Where to tune
 
 - `Resources/GameConfig.asset` (made by Build Game; edit in the Inspector, also in Play mode):
@@ -141,9 +164,12 @@ Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`
   - `ai`: rookie → ace ranges for aim error, reaction, fire cone, burst pause, evade chance, laser damage and turn rates; fire range, burst length, break-off distance, extend time, decisions per second, wingman offset,
   - `survival`: wingmen, wave sizes, max alive, elite every n waves, wave of full skill, gap between waves, spawn distance and cone, hull and shields of enemies, elites and wingmen, score values,
   - `abilities`: cooldown, duration, damage and other numbers of each of the six abilities,
+  - `assault`: time limit, ship pool, respawn delay, enemy fighters and respawn, enemy skill, wingmen and their respawn, score values,
+  - `escort`: transports (count, speed, hull, shields, spacing), ambush points, ambush size, enemy skill, ship pool, wingmen, asteroid count, seed, sizes and the clear corridor, score values,
   - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
   - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
 - `Resources/Ships/Sokol.asset`, `Jastrzab.asset`, `Zubr.asset` (made by Build Game, kept when it runs again): each class's flight numbers, hull, shields, gun multipliers, the two abilities, the passive and the cockpit colour. `ShipDefinition.Defaults()` has the same starting values in code.
+- `Scripts/Combat/CapitalShip.cs`: the capital ship's shape, part positions, hit points of generators (400), turrets (120) and reactor (800); `CapitalTurret.cs`: turret range, fire rate, damage and aim error. `Scripts/World/MapTheme.cs`: the Belt map's sky and sun. `Scripts/GameModes/Escort.cs`: the convoy route's waypoints.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
 - `Editor/HexWingBuilder.cs` → `CreateMaterials`: every color as a hex value. Run Build Game again after changing them.
 - `Shaders/SpaceSky.shader`: star density and brightness, nebula colors, the planet direction, size and colors. Tune them on the `SpaceSky` material.

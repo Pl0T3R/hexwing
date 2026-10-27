@@ -12,7 +12,7 @@ namespace HexWing
     /// seconds, then <see cref="ModeDirector"/> restarts the course behind a fade. Ring frames are solid:
     /// scraping one slows (and damages) the ship.
     /// </summary>
-    public class RingsCourse : MonoBehaviour, IGameMode
+    public class RingsCourse : MonoBehaviour, IGameMode, IGuidedMode
     {
         public static RingsCourse Instance { get; private set; }
 
@@ -32,6 +32,7 @@ namespace HexWing
         /// <summary>Seconds since the player flew past the next ring without going through it (for the HUD).</summary>
         public float SinceMissed { get; private set; } = 99f;
         public Transform NextRing => isActiveAndEnabled && Next < _rings.Count ? _rings[Next] : null;
+        public Transform Pointer => NextRing;
 
         readonly List<Transform> _rings = new();
         readonly List<MeshRenderer> _renderers = new();

@@ -64,10 +64,20 @@ Updated after every step, so any session can pick up the work.
 - HUD: ability status, ship name and passive, training instructions; the arrow points at training targets.
 - Compile check: 0 errors, 0 warnings.
 
+**M6: objective modes and the second map** (cloud session; compiled, not run on a headset)
+- `Combat/CapitalShip.cs` and `CapitalTurret.cs`: the capital ship "Kolos". Its hull absorbs hits and has box colliders. Phases: generators → turrets → reactor (invulnerable until then). Only the current phase's parts can be targeted, and destruction is a chain of explosions.
+- `GameModes/CapitalAssault.cs`: 15 min, a pool of 5 ships with respawn at the start, enemy fighters out of the flanks, 3 wingmen that are replaced over time, score and best.
+- `World/AsteroidField.cs` (with `Route`): seeded rocks around a cleared corridor, 3 instanced shapes, sphere colliders.
+- `Combat/Transport.cs` and `GameModes/Escort.cs`: 3 transports along the route, 3 ambushes, a ship pool, respawn behind the convoy.
+- `World/MapTheme.cs`: Orbit and Belt skies on a runtime copy of the sky material. Modes pick the map with `IMapMode`.
+- `AI/AIFleet.cs`: AI ship pools per mode. `AIPilot`: obstacle avoidance and target priority. `Damageable`: `Invulnerable` and `TargetPriority`.
+- `ModeDirector.RespawnPlayer`: comes back without resetting the mode. `IGuidedMode`: the arrow points at the mode's objective.
+- Compile check: 0 errors, 0 warnings.
+
 ## Next
 
-1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M5 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
-2. **M6 (cloud):** the capital ship (sections: shield generators → turrets → reactor, a 15-minute Capital Ship Assault), Escort through an asteroid field with ambushes, two maps.
+1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M6 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
+2. **M7 (cloud, needs the owner's Photon App ID):** Team Dogfight online with Photon Fusion 2 (Host mode): 2–8 players, bots fill the rest, 30 kills or 10 minutes, lag-compensated hits, Meta Platform invites. Without the App ID, M8 (polish, hangar menu, settings, progression, comfort and performance pass) can go first.
 
 ## Open issues
 

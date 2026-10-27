@@ -281,6 +281,10 @@ namespace HexWing.EditorTools
             Faceted(Mats.EliteHull, Hex("#2E3138"), Hex("#0C0D10"), Hex("#FFB347"), 0.55f, 0.5f, 56f, 0f);
             Faceted(Mats.EnemyGlow, Hex("#FF3B2F"), Hex("#FF3B2F"), Color.white, 0f, 0f, 8f, 1f);
             Faceted(Mats.AllyHull, Hex("#C9CED6"), Hex("#454B55"), Hex("#9FE4FF"), 0.35f, 0.5f, 48f, 0f);
+            // capital ship, shield generators, asteroids
+            Faceted(Mats.CapitalHull, Hex("#4E535C"), Hex("#16181C"), Hex("#FF6A50"), 0.3f, 0.35f, 40f, 0f);
+            Faceted(Mats.Generator, Hex("#7FC8FF"), Hex("#2B5A80"), Color.white, 0.6f, 0.4f, 32f, 0.7f);
+            Faceted(Mats.Asteroid, Hex("#6B5A4C"), Hex("#1E1813"), Hex("#C89A6A"), 0.25f, 0.1f, 12f, 0f);
             Translucent(Mats.FlashShield, new Color(0.5f, 0.78f, 1f, 0.45f), CompareFunction.LessEqual);
             // holographic HUD markers: depth-tested, so the cockpit frame hides them
             Translucent(Mats.HudCyan, new Color(0.37f, 0.83f, 1f, 0.9f), CompareFunction.LessEqual);
@@ -370,7 +374,7 @@ namespace HexWing.EditorTools
 
         /// <summary>
         /// Flight scene: space skybox, the systems (performance, sun, start-up, space dust, lasers, missiles,
-        /// effects, and the modes: training, rings course, drone range and survival) and
+        /// effects, and the modes: training, rings course, drone range, survival, capital assault and escort) and
         /// the player ship: cockpit with the camera rig at the eye point (seated, eye-level tracking), input,
         /// flight model, arena bounds, HUD and instruments, comfort (fade, vignette, recenter) and sound.
         /// </summary>
@@ -402,6 +406,8 @@ namespace HexWing.EditorTools
             new GameObject("Mode Rings Course").AddComponent<RingsCourse>().transform.SetParent(modes.transform, false);
             new GameObject("Mode Drone Range").AddComponent<DroneRange>().transform.SetParent(modes.transform, false);
             new GameObject("Mode Survival").AddComponent<Survival>().transform.SetParent(modes.transform, false);
+            new GameObject("Mode Capital Assault").AddComponent<CapitalAssault>().transform.SetParent(modes.transform, false);
+            new GameObject("Mode Escort").AddComponent<Escort>().transform.SetParent(modes.transform, false);
 
             var ship = new GameObject("PlayerShip");
             ship.AddComponent<PlayerCockpit>();
