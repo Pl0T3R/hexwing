@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87037cc5ba0f7374bb6ca5ff12b3ae4b, type: 3}
+  m_Name: Sokol
+  m_EditorClassIdentifier: 
+  displayName: "SOK\xD3\u0141"
+  shipClass: 0
+  description: "My\u015Bliwiec: wszechstronny.\nA: rakieta po\u015Bcigowa\nB: naprawa\nPasywna:
+    wzmocnione os\u0142ony"
+  accent: {r: 0.37, g: 0.83, b: 1, a: 1}
+  flight:
+    minSpeed: 35
+    maxSpeed: 150
+    acceleration: 45
+    deceleration: 60
+    pitchRate: 70
+    yawRate: 50
+    rollRate: 140
+    angularResponse: 6
+    noseLag: 0.2
+    sweetSpot: {x: 0.2, y: 0.5}
+    sweetSpotMultiplier: 1.4
+    boostFrom: 0.85
+    boostMultiplier: 0.6
+    bandBlend: 0.06
+    collisionRadius: 2.5
+    collisionSpeedKeep: 0.5
+  hull: 100
+  shields: 60
+  shieldDelay: 4
+  shieldRegen: 20
+  laserDamage: 1
+  fireRate: 1
+  heatPerShot: 1
+  ability1: 2
+  ability2: 4
+  passive: 1

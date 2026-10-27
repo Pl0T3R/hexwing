@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SpaceSky
+  m_Shader: {fileID: 4800000, guid: 3acbdc55044e74e46afc33fba6273fa8, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 1
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _NebulaStrength: 0.6
+    - _PlanetRadius: 22
+    - _StarBrightness: 1.4
+    - _StarChance: 0.16
+    - _StarDensity: 180
+    - _SunSize: 900
+    m_Colors:
+    - _AtmosphereColor: {r: 0.45, g: 0.75, b: 1, a: 1}
+    - _NebulaColorA: {r: 0.09999997, g: 0.049999982, b: 0.21999997, a: 1}
+    - _NebulaColorB: {r: 0.02, g: 0.11999995, b: 0.19999996, a: 1}
+    - _PlanetColorA: {r: 0.15999997, g: 0.35999998, b: 0.54999995, a: 1}
+    - _PlanetColorB: {r: 0.54999995, g: 0.62, b: 0.68, a: 1}
+    - _PlanetDirection: {r: -0.35, g: -0.25, b: 0.9, a: 0}
+    - _SpaceColor: {r: 0.005, g: 0.007, b: 0.015, a: 1}
+    - _SunColor: {r: 1, g: 0.92, b: 0.78, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

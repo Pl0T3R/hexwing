@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87037cc5ba0f7374bb6ca5ff12b3ae4b, type: 3}
+  m_Name: Jastrzab
+  m_EditorClassIdentifier: 
+  displayName: "JASTRZ\u0104B"
+  shipClass: 1
+  description: "Przechwytuj\u0105cy: szybki, zwrotny, kruchy.\nA: komputer celowniczy\nB:
+    rakiety samonaprowadzaj\u0105ce\nPasywna: ch\u0142odzenie"
+  accent: {r: 0.55, g: 1, b: 0.6, a: 1}
+  flight:
+    minSpeed: 40
+    maxSpeed: 175
+    acceleration: 60
+    deceleration: 60
+    pitchRate: 82
+    yawRate: 58
+    rollRate: 170
+    angularResponse: 6
+    noseLag: 0.2
+    sweetSpot: {x: 0.2, y: 0.5}
+    sweetSpotMultiplier: 1.4
+    boostFrom: 0.85
+    boostMultiplier: 0.6
+    bandBlend: 0.06
+    collisionRadius: 2.5
+    collisionSpeedKeep: 0.5
+  hull: 70
+  shields: 40
+  shieldDelay: 4
+  shieldRegen: 20
+  laserDamage: 0.9
+  fireRate: 1.2
+  heatPerShot: 1
+  ability1: 1
+  ability2: 3
+  passive: 2

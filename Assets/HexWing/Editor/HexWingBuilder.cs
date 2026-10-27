@@ -53,7 +53,7 @@ namespace HexWing.EditorTools
             PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { GraphicsDeviceType.Vulkan });
             PlayerSettings.colorSpace = ColorSpace.Linear;
             EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
-            QualitySettings.shadows = ShadowQuality.Disable;
+            QualitySettings.shadows = UnityEngine.ShadowQuality.Disable;
 
             ConfigurePerformance();
             ConfigureUrp();
@@ -142,6 +142,16 @@ namespace HexWing.EditorTools
                     Debug.LogWarning("[HexWing] Meta Quest feature: symmetric projection field not found; turn it on in the OpenXR Meta Quest feature settings.");
                 if (!SetBoolIfFound(so, "m_optimizeBufferDiscards", true) && !SetBoolIfFound(so, "optimizeBufferDiscards", true))
                     Debug.LogWarning("[HexWing] Meta Quest feature: optimize buffer discards field not found.");
+                // Symmetric projection needs Quest 2 or newer: the original Quest ("quest") must not be a target device.
+                var devices = so.FindProperty("targetDevices");
+                if (devices != null && devices.isArray)
+                    for (int i = 0; i < devices.arraySize; i++)
+                    {
+                        var device = devices.GetArrayElementAtIndex(i);
+                        if (device.FindPropertyRelative("manifestName")?.stringValue == "quest")
+                            device.FindPropertyRelative("enabled").boolValue = false;
+                    }
+                else Debug.LogWarning("[HexWing] Meta Quest feature: target devices not found; turn off Quest in the feature settings.");
                 so.ApplyModifiedPropertiesWithoutUndo();
                 EditorUtility.SetDirty(quest);
             }
@@ -154,8 +164,52 @@ namespace HexWing.EditorTools
                       $"subsampled layout {(enabled != null ? "on" : "not found")}.");
         }
 
+        /// <summary>A project not made from a URP template has no pipeline asset: create one and use it at every quality level.</summary>
+        static void EnsureUrpAsset()
+        {
+            bool Has() => GraphicsSettings.defaultRenderPipeline is UniversalRenderPipelineAsset;
+            if (Has()) return;
+            const string dir = Root + "/Settings";
+            if (!AssetDatabase.IsValidFolder(dir)) AssetDatabase.CreateFolder(Root, "Settings");
+            const string path = dir + "/HexWingURP.asset";
+            var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path);
+            if (asset == null)
+            {
+                var renderer = ScriptableObject.CreateInstance<UniversalRendererData>();
+                AssetDatabase.CreateAsset(renderer, dir + "/HexWingURP_Renderer.asset");
+                asset = UniversalRenderPipelineAsset.Create(renderer);
+                AssetDatabase.CreateAsset(asset, path);
+            }
+            GraphicsSettings.defaultRenderPipeline = asset;
+            int level = QualitySettings.GetQualityLevel();
+            for (int i = 0; i < QualitySettings.count; i++)
+            {
+                QualitySettings.SetQualityLevel(i, false);
+                QualitySettings.renderPipeline = asset;
+            }
+            QualitySettings.SetQualityLevel(level, false);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[HexWing] Created and assigned " + path);
+        }
+
+        /// <summary>Android supports only one input backend: the Input System package (the game reads controllers through OVRInput, not UnityEngine.Input).</summary>
+        static void EnsureInputSystemOnly()
+        {
+            var all = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
+            if (all == null || all.Length == 0) { Debug.LogWarning("[HexWing] ProjectSettings not loadable: set Active Input Handling to Input System Package (New) by hand."); return; }
+            var so = new SerializedObject(all[0]);
+            var p = so.FindProperty("activeInputHandler");
+            if (p == null) { Debug.LogWarning("[HexWing] activeInputHandler not found: set Active Input Handling to Input System Package (New) by hand."); return; }
+            if (p.intValue == 1) return;
+            p.intValue = 1;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log("[HexWing] Active Input Handling set to Input System Package (New); the editor may ask to restart.");
+        }
+
         static void ConfigureUrp()
         {
+            EnsureUrpAsset();
+            EnsureInputSystemOnly();
             var assets = new HashSet<UniversalRenderPipelineAsset>();
             if (GraphicsSettings.defaultRenderPipeline is UniversalRenderPipelineAsset d) assets.Add(d);
             for (int i = 0; i < QualitySettings.count; i++)

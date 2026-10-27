@@ -1,0 +1,292 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad42cb6ff13e6154fb3048043dee5f50, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: 
+  performance:
+    targetRefreshRate: 90
+    foveation: 3
+    dynamicFoveation: 1
+    frameBudgetMs: 11.1
+  comfort:
+    fadeSeconds: 0.6
+    recenterFadeSeconds: 0.15
+    autoRecenterDelay: 0.5
+    recenterHoldSeconds: 0.4
+    vignette: 2
+    vignetteStartRate: 25
+    vignetteFullRate: 90
+    vignetteResponse: 6
+    autoLevel: 1
+    autoLevelDelay: 0.8
+    autoLevelRate: 40
+    turnRateLimit: 0
+    rollRateLimit: 0
+  cockpit:
+    eyePoint: {x: 0, y: 0.12, z: -0.05}
+    shellRadius: 1.05
+    windowHalfAngle: 52
+  controls:
+    scheme: 1
+    cycleWithY: 1
+    swapHands: 0
+    invertPitch: 0
+    deadzone: 0.12
+    curve: 1.6
+    sensitivity: 1
+    stickRange: 0.09
+    twistRange: 40
+    throttleRange: 0.18
+    gripThreshold: 0.55
+    tiltRange: 30
+    cruiseThrottle: 0.4
+    throttleResponse: 3
+  flight:
+    minSpeed: 35
+    maxSpeed: 150
+    acceleration: 45
+    deceleration: 60
+    pitchRate: 70
+    yawRate: 50
+    rollRate: 140
+    angularResponse: 6
+    noseLag: 0.2
+    sweetSpot: {x: 0.2, y: 0.5}
+    sweetSpotMultiplier: 1.4
+    boostFrom: 0.85
+    boostMultiplier: 0.6
+    bandBlend: 0.06
+    collisionRadius: 2.5
+    collisionSpeedKeep: 0.5
+  arena:
+    radius: 3000
+    outsideSeconds: 5
+  course:
+    rings: 16
+    seed: 7
+    ringRadius: 16
+    spacing: {x: 260, y: 420}
+    maxTurn: 40
+    maxClimb: 22
+    resultSeconds: 5
+  combat:
+    laserSpeed: 800
+    laserRange: 1500
+    laserDamage: 12
+    fireRate: 8
+    heatPerShot: 0.055
+    coolRate: 0.4
+    overheatLockout: 3
+    convergence: 400
+    spread: 0.12
+    boltLength: 7
+    boltThickness: 0.28
+    targetCone: 25
+    targetRange: 1500
+    lockCone: 12
+    lockSeconds: 1.2
+    hudDistance: 30
+    missileSpeed: 260
+    missileTurnRate: 110
+    missileDamage: 60
+    missileCooldown: 6
+    missileLifetime: 6
+    missileFuse: 9
+    hull: 100
+    shields: 60
+    shieldDelay: 4
+    shieldRegen: 20
+    collisionDamage: 40
+    evasiveStyle: 0
+    evasiveCooldown: 8
+    jinkDistance: 15
+    evasiveSeconds: 0.5
+    evasiveBreaksLock: 0.6
+  drones:
+    count: 8
+    hull: 36
+    shields: 0
+    speed: {x: 30, y: 90}
+    loopRadius: {x: 80, y: 220}
+    distance: {x: 350, y: 1100}
+    respawnSeconds: 3
+    radius: 4
+  ai:
+    aimError: {x: 4.5, y: 1.2}
+    reaction: {x: 0.7, y: 0.2}
+    fireCone: {x: 7, y: 3.5}
+    fireRange: 900
+    burstSeconds: 1.1
+    burstPause: {x: 1.2, y: 0.4}
+    evadeChance: {x: 0.25, y: 0.75}
+    damageScale: {x: 0.35, y: 0.8}
+    turnScale: {x: 0.75, y: 1}
+    breakOffDistance: 140
+    extendSeconds: 2.2
+    thinkRate: 10
+    wingOffset: {x: 45, y: 8, z: -35}
+  survival:
+    wingmen: 2
+    firstWave: 3
+    perWave: 1
+    maxAlive: 12
+    eliteEvery: 5
+    fullSkillWave: 12
+    waveGap: 4
+    spawnDistance: {x: 1300, y: 1800}
+    spawnCone: 70
+    enemyHull: 48
+    enemyShields: 0
+    eliteHull: 130
+    eliteShields: 60
+    wingmanHull: 80
+    wingmanShields: 40
+    scorePerKill: 100
+    scorePerElite: 500
+    scorePerWave: 250
+  abilities:
+    targetingCooldown: 20
+    targetingSeconds: 5
+    targetingDamage: 1.3
+    pursuitCooldown: 14
+    pursuitDamage: 80
+    pursuitTurnScale: 1.7
+    homingCooldown: 12
+    homingLockSeconds: 1.5
+    homingCount: 3
+    homingDamage: 40
+    repairCooldown: 25
+    repairAmount: 40
+    repairSeconds: 3
+    bombCooldown: 18
+    bombCount: 6
+    bombInterval: 0.18
+    bombDamage: 70
+    bombBlastRadius: 45
+    bombSpeed: 90
+    bombFuse: 1.6
+    turretCooldown: 22
+    turretSeconds: 15
+    turretRange: 700
+    turretFireRate: 4
+    turretDamage: 8
+    turretAimError: 2.5
+  assault:
+    timeLimit: 900
+    playerLives: 5
+    respawnDelay: 2
+    enemyFighters: 5
+    enemyRespawn: 6
+    enemySkill: 0.5
+    wingmen: 3
+    wingmanRespawn: 45
+    scorePerKill: 100
+    scorePerGenerator: 500
+    scorePerTurret: 250
+    scoreReactor: 2000
+  escort:
+    transports: 3
+    transportSpeed: 30
+    transportHull: 500
+    transportShields: 150
+    spacing: 120
+    ambushAt:
+    - 0.15
+    - 0.42
+    - 0.7
+    ambushBase: 4
+    enemySkill: 0.45
+    playerLives: 5
+    respawnDelay: 2
+    wingmen: 2
+    asteroids: 260
+    asteroidSeed: 4
+    asteroidSize: {x: 8, y: 60}
+    corridor: 110
+    scorePerTransport: 1000
+    scorePerKill: 100
+  dogfight:
+    teamSize: 4
+    killsToWin: 30
+    timeLimit: 600
+    playerRespawn: 3
+    botRespawn: 5
+    allySkill: 0.55
+    enemySkill: 0.5
+    baseDistance: 1300
+    spawnSpread: 120
+    botHull: 70
+    botShields: 40
+    scorePerKill: 100
+    scoreWin: 1000
+  haptics:
+    master: 1
+    ring:
+      frequency: 0.6
+      amplitude: 0.45
+      seconds: 0.06
+    collision:
+      frequency: 0.3
+      amplitude: 1
+      seconds: 0.25
+    boundsTick:
+      frequency: 0.8
+      amplitude: 0.35
+      seconds: 0.03
+    grabStick:
+      frequency: 0.9
+      amplitude: 0.25
+      seconds: 0.02
+    fire:
+      frequency: 0.9
+      amplitude: 0.3
+      seconds: 0.025
+    overheat:
+      frequency: 0.25
+      amplitude: 0.8
+      seconds: 0.4
+    hitTaken:
+      frequency: 0.35
+      amplitude: 0.9
+      seconds: 0.18
+    hitDealt:
+      frequency: 0.95
+      amplitude: 0.2
+      seconds: 0.02
+    kill:
+      frequency: 0.6
+      amplitude: 0.6
+      seconds: 0.12
+    lockTick:
+      frequency: 1
+      amplitude: 0.15
+      seconds: 0.015
+    locked:
+      frequency: 0.8
+      amplitude: 0.4
+      seconds: 0.08
+    missile:
+      frequency: 0.4
+      amplitude: 0.7
+      seconds: 0.15
+    evasive:
+      frequency: 0.5
+      amplitude: 0.5
+      seconds: 0.1
+    missileWarning:
+      frequency: 0.2
+      amplitude: 0.35
+      seconds: 0.08
+    boostRumble: 0.12
+  debug:
+    performanceReadout: 1
+    readoutInterval: 0.5

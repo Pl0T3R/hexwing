@@ -96,6 +96,13 @@ Updated after every step, so any session can pick up the work.
 - `IPlayerDeathHandler.OnPlayerDestroyed` now receives the killer.
 - A Python check of the spawn geometry: bases 1.3 km from the centre, the teams at least 2.6 km apart, teammates 120 m apart.
 
+**First Unity session on the PC (CLAUDE.md steps 1–4, in progress)**
+- Step 1 done: Android Build Support, SDK/NDK and OpenJDK installed for 6000.0.85f1 (`metavr unity editors add-modules`, one module per call; the JDK module is named `android-open-jdk-17.0.18+8`). `metavr_unity_setup inject` staged `Assets/Editor/MetaQuestVRSetup.cs`; the MCP server was not loaded in that session, so it was called over stdio JSON-RPC. `Packages/manifest.json` needed the XR Management, OpenXR 1.16.1, uGUI 2.0.0, Meta XR Core SDK 207.0.1 and URP 17.0.4 entries added by hand, or the game scripts left Unity in Safe Mode and the setup never ran. After leaving Safe Mode the setup finished (`SETUP COMPLETE`).
+- Step 2 done: HexWing → Build Game ran, with fixes to `HexWingBuilder.cs`: `UnityEngine.ShadowQuality` (ambiguous with URP), `EnsureUrpAsset` (the project had no URP asset; it creates `Assets/HexWing/Settings/HexWingURP.asset`), the original Quest target device is switched off (OpenXR validation rejects symmetric projection with it), and `EnsureInputSystemOnly` (Android refuses Active Input Handling = Both).
+- Step 3: the scripts compile with zero errors in the editor. Warnings were not counted yet.
+- Step 4 blocked on: Build And Run stops at the dialog "Active Input Handling is set to Both" until the setting is Input System Package (New): set it by hand in Project Settings → Player (the builder tries too, unverified). The APK goes to `Builds/` (ignored by git). The Quest 3 is visible to `metavr device list` (developer mode is on now).
+- Nothing has run on the headset yet, so the M1 checklist and step 5 are open.
+
 ## Next
 
 1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M8 checklists, record fps and p95 per mode in `PLAN.md`, and report the best control scheme and any discomfort. Fix what the real Unity and headset show (expect some API or tuning surprises: none of this has run yet).
