@@ -31,6 +31,7 @@ namespace HexWing
             new() { Name = "FIOLET", Color = new Color(0.7f, 0.55f, 1f), Unlock = "100 ZESTRZELEŃ", Unlocked = () => TotalKills >= 100 },
             new() { Name = "BŁĘKIT", Color = new Color(0.3f, 0.66f, 1f), Unlock = "FALA 10", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) >= 10 },
             new() { Name = "CZERWIEŃ", Color = new Color(1f, 0.35f, 0.29f), Unlock = "ESKORTA", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.EscortWon, 0) == 1 },
+            new() { Name = "SREBRO", Color = new Color(0.82f, 0.86f, 0.92f), Unlock = "WALKA DRUŻYN", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.DogfightWon, 0) == 1 },
             new() { Name = "ZŁOTO", Color = new Color(1f, 0.82f, 0.29f), Unlock = "SZTURM", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.AssaultWon, 0) == 1 },
         };
 

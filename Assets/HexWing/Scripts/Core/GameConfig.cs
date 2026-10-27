@@ -27,6 +27,7 @@ namespace HexWing
         public AbilitySettings abilities = new();
         public AssaultSettings assault = new();
         public EscortSettings escort = new();
+        public DogfightSettings dogfight = new();
         public HapticSettings haptics = new();
         public DebugSettings debug = new();
 
@@ -346,6 +347,27 @@ namespace HexWing
         public float corridor = 110f;
         public int scorePerTransport = 1000;
         public int scorePerKill = 100;
+    }
+
+    [Serializable]
+    public class DogfightSettings
+    {
+        [Tooltip("Ships per team, the player included (offline: the rest are bots; online in M7: players first).")]
+        public int teamSize = 4;
+        public int killsToWin = 30;
+        [Tooltip("Seconds; when time runs out the team with more kills wins.")]
+        public float timeLimit = 600f;
+        public float playerRespawn = 3f;
+        public float botRespawn = 5f;
+        [Range(0f, 1f)] public float allySkill = 0.55f;
+        [Range(0f, 1f)] public float enemySkill = 0.5f;
+        [Tooltip("Distance (m) of each team's base from the arena centre.")]
+        public float baseDistance = 1300f;
+        public float spawnSpread = 120f;
+        public float botHull = 70f;
+        public float botShields = 40f;
+        public int scorePerKill = 100;
+        public int scoreWin = 1000;
     }
 
     /// <summary>The six abilities (PLAN.md section 7). Which ship has which is in its ShipDefinition.</summary>

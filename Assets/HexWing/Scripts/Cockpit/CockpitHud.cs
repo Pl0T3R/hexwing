@@ -85,6 +85,7 @@ namespace HexWing
             if (Survival.Instance != null && Survival.Instance.isActiveAndEnabled) { SurvivalDisplay(Survival.Instance); return; }
             if (CapitalAssault.Instance != null && CapitalAssault.Instance.isActiveAndEnabled) { AssaultDisplay(CapitalAssault.Instance); return; }
             if (Escort.Instance != null && Escort.Instance.isActiveAndEnabled) { EscortDisplay(Escort.Instance); return; }
+            if (TeamDogfight.Instance != null && TeamDogfight.Instance.isActiveAndEnabled) { DogfightDisplay(TeamDogfight.Instance); return; }
             if (DroneRange.Instance != null && DroneRange.Instance.isActiveAndEnabled) { RangeDisplay(DroneRange.Instance); return; }
             var course = RingsCourse.Instance;
             if (course == null || !course.isActiveAndEnabled) { _cockpit.Right.SetText(""); return; }
@@ -196,6 +197,33 @@ namespace HexWing
             _sb.Append("REKORD ").Append(mode.BestScore);
             _cockpit.Right.SetText(_sb.ToString());
             _cockpit.Right.SetColor(_threat || mode.Phase == Escort.State.Lost || mode.EnemiesAlive > 0 ? Red : mode.Phase == Escort.State.Underway ? Cyan : Amber);
+        }
+
+        void DogfightDisplay(TeamDogfight mode)
+        {
+            _sb.Clear();
+            var cfg = GameConfig.Instance.dogfight;
+            var me = mode.Roster.LocalPlayer;
+            switch (mode.Phase)
+            {
+                case TeamDogfight.State.Briefing:
+                    _sb.Append("WALKA DRUŻYN ").Append(cfg.teamSize).Append(" NA ").Append(cfg.teamSize).Append("\nDO ").Append(cfg.killsToWin).Append(" ZESTRZELEŃ\n");
+                    break;
+                case TeamDogfight.State.Fighting:
+                    _sb.Append("NASI ").Append(mode.OurKills).Append(" : ").Append(mode.TheirKills).Append(" ONI\n");
+                    _sb.Append("CZAS ").Append(Clock(mode.TimeLeft)).Append('\n');
+                    Threats();
+                    break;
+                default:
+                    _sb.Append(mode.Result > 0 ? "WYGRANA!" : mode.Result < 0 ? "PRZEGRANA" : "REMIS").Append("  ")
+                       .Append(mode.OurKills).Append(':').Append(mode.TheirKills).Append('\n');
+                    break;
+            }
+            if (me != null) _sb.Append("TY ").Append(me.Kills).Append(" ZESTRZ. / ").Append(me.Deaths).Append(" STRAT\n");
+            _sb.Append("WYNIK ").Append(mode.Score).Append("  REKORD ").Append(mode.BestScore);
+            _cockpit.Right.SetText(_sb.ToString());
+            bool losing = mode.Phase == TeamDogfight.State.Over ? mode.Result < 0 : false;
+            _cockpit.Right.SetColor(_threat || losing ? Red : mode.Phase == TeamDogfight.State.Fighting ? Cyan : Amber);
         }
 
         static string Clock(float seconds)

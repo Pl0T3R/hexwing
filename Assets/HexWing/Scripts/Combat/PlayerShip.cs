@@ -140,7 +140,7 @@ namespace HexWing
             Effects.Instance?.Explode(transform.position + transform.forward * 6f, _flight != null ? _flight.Velocity : Vector3.zero, 3f, 12);
             ShipAudio.Instance?.PlayExplosion(transform.position, 1f);
             if (_flight != null) _flight.Frozen = true;   // the view stops moving; the fade hides the rest
-            if (ModeDirector.Instance != null && ModeDirector.Instance.Current is IPlayerDeathHandler handler) handler.OnPlayerDestroyed();
+            if (ModeDirector.Instance != null && ModeDirector.Instance.Current is IPlayerDeathHandler handler) handler.OnPlayerDestroyed(by);
             else ModeDirector.Instance?.Restart("zniszczony");
         }
     }

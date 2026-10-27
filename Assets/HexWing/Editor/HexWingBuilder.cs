@@ -375,7 +375,7 @@ namespace HexWing.EditorTools
 
         /// <summary>
         /// Flight scene: space skybox, the systems (performance, sun, start-up, space dust, lasers, missiles,
-        /// effects, and the modes: training, rings course, drone range, survival, capital assault and escort) and
+        /// effects, and the modes: training, rings course, drone range, survival, capital assault, escort and team dogfight) and
         /// the player ship: cockpit with the camera rig at the eye point (seated, eye-level tracking), input,
         /// flight model, arena bounds, HUD and instruments, comfort (fade, vignette, recenter) and sound.
         /// </summary>
@@ -410,6 +410,7 @@ namespace HexWing.EditorTools
             new GameObject("Mode Survival").AddComponent<Survival>().transform.SetParent(modes.transform, false);
             new GameObject("Mode Capital Assault").AddComponent<CapitalAssault>().transform.SetParent(modes.transform, false);
             new GameObject("Mode Escort").AddComponent<Escort>().transform.SetParent(modes.transform, false);
+            new GameObject("Mode Team Dogfight").AddComponent<TeamDogfight>().transform.SetParent(modes.transform, false);
 
             var ship = new GameObject("PlayerShip");
             ship.AddComponent<PlayerCockpit>();

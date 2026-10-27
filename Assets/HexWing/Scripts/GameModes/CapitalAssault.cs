@@ -200,7 +200,7 @@ namespace HexWing
             PlayerPrefs.Save();
         }
 
-        public void OnPlayerDestroyed()
+        public void OnPlayerDestroyed(Damageable by)
         {
             if (Phase == State.Won || Phase == State.Lost) return;
             if (LivesLeft <= 0) { Lose("BRAK STATKÓW"); return; }

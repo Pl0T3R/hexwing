@@ -9,6 +9,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 ## Current state
 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
+- M7, offline part: the Team Dogfight mode (4 v 4 with bots, first to 30 kills or 10 minutes) built on a `TeamRoster` of slots, so the online version only fills slots with players. Online play still waits for the owner's Photon account.
 - M8 is written (M7, online play, waits for the owner's Photon account): the hangar and pause menus on a holographic panel with a laser pointer, the player's settings saved over GameConfig, unlockable cockpit colours, AI engine sounds in 3D with Doppler, enemy bolt flyby hisses, a music pad, shader warm-up, and draw-call/triangle/garbage counters in the readout.
 - M6 is written: the Capital Ship Assault mode (the capital ship "Kolos": shield generators, then 6 turrets, then the reactor; 15 minutes; a pool of 5 ships; wingmen), the Escort mode on the second map (3 transports through an asteroid belt, 3 ambushes), map theming (Orbit / Belt) and AI obstacle avoidance.
 - M5 is written: three ship classes as data (`ShipDefinition` assets: Sokół fighter, Jastrząb interceptor, Żubr bomber), six abilities with cooldowns (pursuit missile, repair, targeting computer, homing missiles, bomb run, turret drone), three passives, ship select (hold Y) and the Training mode.
@@ -129,7 +130,7 @@ Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`
 
 ## M6 checklist
 
-Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZETRWANIE → SZTURM → ESKORTA.
+Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZETRWANIE → SZTURM → ESKORTA → WALKA DRUŻYN.
 
 **SZTURM** (map Orbit):
 - [ ] A 560 m dark capital ship lies broadside 2.3 km ahead, with two glowing blue domes on its back, six turrets on the flanks, a bridge tower and red engines at the stern. Three wingmen fly with you. The right display shows the briefing, then `CEL: GENERATORY 2`, the clock (`CZAS 14:59`), `STATKI 5` and the score.
@@ -149,6 +150,13 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 - [ ] Going back to another mode restores the Orbit sky.
 - [ ] Performance in both modes in the biggest fight: 90 fps, expect at most about 90 draw calls.
 
+## M7 (offline) checklist
+
+- [ ] In the hangar choose TRYB until `WALKA DRUŻYN` (log `Mode: WALKA DRUŻYN`, `Team dogfight: 4 v 4, first to 30 or 10 min`). You start on your team's side with three light-grey wingmen; four Hornets start 2.6 km away on the other side.
+- [ ] Right display: `NASI n : m ONI`, the clock, your kills and losses, score. Every ship shot down scores for the other team, yours included.
+- [ ] Shot down: you come back at your base after 3 s (fade); bots come back after 5 s. Enemy names show as `WRÓG n` on the target display, wingmen as `SKRZYDŁOWY n`.
+- [ ] First to 30, or the leader at 10:00: `WYGRANA!` / `PRZEGRANA` / `REMIS` with the score for 9 s, then a new match. A win unlocks the silver cockpit colour; the best score shows in STATYSTYKI.
+
 ## M8 checklist
 
 - [ ] Start: the cockpit fades in with the **HANGAR** panel 1.5 m ahead (dark glass, amber title, white lines) and soft music. A cyan laser comes from the flying hand; the line under it lights up (with a light tick), the trigger (or A) chooses it. The thumbstick moves the highlight too. Game time is stopped (enemies frozen).
@@ -156,7 +164,7 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 - [ ] While flying, the menu button opens **PAUZA** (everything stops, the music gets louder, AI engines go quiet): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page). HANGAR from the pause menu has `< WRÓĆ DO GRY` at the top; the menu button there goes back to the pause page.
 - [ ] Choosing WZNÓW or START with the trigger or A and keeping it held: the guns don't fire and no ability triggers until the button is released.
 - [ ] **STEROWANIE**: scheme, flying hand (left/right swaps the hands at once), invert pitch, sensitivity 0.6–1.6, vibration 100/50/0%, volume 100/75/50/25/0%. **KOMFORT**: three presets (most comfortable: strong vignette, auto-level, 60°/s limit, jink; balanced; no aids: no vignette, roll), then each setting on its own. Everything survives an app restart (and in the Editor the GameConfig asset is unchanged after play).
-- [ ] **STATYSTYKI**: total kills, the best of each mode, training, colours unlocked and what unlocks the next (white: training, green: 25 kills, violet: 100, blue: wave 10, red: escort won, gold: assault won).
+- [ ] **STATYSTYKI**: total kills, the best of each mode, training, colours unlocked and what unlocks the next (white: training, green: 25 kills, violet: 100, blue: wave 10, red: escort won, silver: team dogfight won, gold: assault won).
 - [ ] Sound: AI fighters hum as they pass (Doppler), enemy bolts that just miss hiss by, the music pad is quiet in flight and louder in menus. Pausing quiets the engine.
 - [ ] Log at start: `Warm-up: N materials drawn plain and instanced.` No hitch at the first shot, explosion or menu (Perfetto: no long frame there).
 - [ ] Development build: the centre display adds `DC n  tri nk  GC n B`. In the biggest fights DC stays at most 150, and GC is 0 B in most frames.
@@ -181,6 +189,7 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
   - `abilities`: cooldown, duration, damage and other numbers of each of the six abilities,
   - `assault`: time limit, ship pool, respawn delay, enemy fighters and respawn, enemy skill, wingmen and their respawn, score values,
   - `escort`: transports (count, speed, hull, shields, spacing), ambush points, ambush size, enemy skill, ship pool, wingmen, asteroid count, seed, sizes and the clear corridor, score values,
+  - `dogfight`: team size, kills to win, time limit, respawn times, ally and enemy skill, base distance, spawn spread, bot hull and shields, score values,
   - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
   - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
 - `Scripts/Core/UserSettings.cs`: which values the menus offer (turn limits, haptic levels, presets). `Scripts/Core/Progression.cs`: the colours and what unlocks them. `Scripts/UI/MenuPanel.cs`: panel size and distance (1.5 m), row height. `Scripts/Audio/ShipAudio.cs`: all synthesized sounds and the music pad.

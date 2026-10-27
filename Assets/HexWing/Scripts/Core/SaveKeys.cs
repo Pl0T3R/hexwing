@@ -14,6 +14,8 @@ namespace HexWing
         public const string AssaultWon = "HexWing.Assault.Won";
         public const string EscortBestScore = "HexWing.Escort.BestScore";
         public const string EscortWon = "HexWing.Escort.Won";
+        public const string DogfightBestScore = "HexWing.Dogfight.BestScore";
+        public const string DogfightWon = "HexWing.Dogfight.Won";
         public const string Kills = "HexWing.Stats.Kills";
         public const string CockpitColor = "HexWing.CockpitColor";
     }

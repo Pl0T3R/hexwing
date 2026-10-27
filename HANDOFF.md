@@ -90,10 +90,16 @@ Updated after every step, so any session can pick up the work.
 - The Editor restores only the menu-owned GameConfig fields after play, so Inspector tuning is kept.
 - Progress keys are in `Core/SaveKeys.cs`. The `Damageable` collider cache drops destroyed colliders at each restart.
 
+**M7, offline part: Team Dogfight** (cloud session; compiled)
+- `GameModes/TeamRoster.cs`: one slot per ship (local player, bot, or later a remote player) with kills and deaths.
+- `GameModes/TeamDogfight.cs`: 4 v 4 with bots on the Orbit map; first to 30 or the leader after 10 minutes. Respawns at each team's base. There is a score and best, and a win unlocks the silver colour.
+- `IPlayerDeathHandler.OnPlayerDestroyed` now receives the killer.
+- A Python check of the spawn geometry: bases 1.3 km from the centre, the teams at least 2.6 km apart, teammates 120 m apart.
+
 ## Next
 
 1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M8 checklists, record fps and p95 per mode in `PLAN.md`, and report the best control scheme and any discomfort. Fix what the real Unity and headset show (expect some API or tuning surprises: none of this has run yet).
-2. **M7, Team Dogfight online:** needs the owner's free Photon account, the Fusion 2 App ID and the Fusion 2 SDK imported into the project (it is downloaded after logging in at photonengine.com, so the cloud session can't fetch it). Design in `PLAN.md`: Host mode, 2–8 players, bots fill the rest, 30 kills or 10 minutes, fire events instead of networked bolts, lag-compensated hitboxes, Meta Platform invites. `IShipPilot` and `ShipControls` already separate input from flight, which is where a network pilot plugs in.
+2. **M7, Team Dogfight online** (the offline mode with bots is done; the online part fills `TeamRoster` slots with remote players flown by a network `IShipPilot`): needs the owner's free Photon account, the Fusion 2 App ID and the Fusion 2 SDK imported into the project (it is downloaded after logging in at photonengine.com, so the cloud session can't fetch it). Design in `PLAN.md`: Host mode, 2–8 players, bots fill the rest, 30 kills or 10 minutes, fire events instead of networked bolts, lag-compensated hitboxes, Meta Platform invites. `IShipPilot` and `ShipControls` already separate input from flight, which is where a network pilot plugs in.
 
 ## Open issues
 

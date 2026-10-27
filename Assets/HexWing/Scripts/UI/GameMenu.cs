@@ -185,6 +185,7 @@ namespace HexWing
                 new(() => "PRZETRWANIE: " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestScore, 0) + " (FALA " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) + ")", null),
                 new(() => "SZTURM: " + PlayerPrefs.GetInt(SaveKeys.AssaultBestScore, 0), null),
                 new(() => "ESKORTA: " + PlayerPrefs.GetInt(SaveKeys.EscortBestScore, 0), null),
+                new(() => "WALKA DRUŻYN: " + PlayerPrefs.GetInt(SaveKeys.DogfightBestScore, 0), null),
                 new(() => "TRENING: " + (PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 ? "UKOŃCZONY" : "NIE"), null),
                 new(() => "KOLORY: " + Progression.UnlockedCount + "/" + Progression.Paints.Length + NextUnlock(), null),
                 new("< WSTECZ", () => Show(_back)),

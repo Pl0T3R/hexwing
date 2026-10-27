@@ -6,7 +6,7 @@ namespace HexWing
     /// <summary>A mode that wants to handle the player's death itself (e.g. show a result first).</summary>
     public interface IPlayerDeathHandler
     {
-        void OnPlayerDestroyed();
+        void OnPlayerDestroyed(Damageable by);
     }
 
     /// <summary>
@@ -209,7 +209,7 @@ namespace HexWing
             _toSpawn = _eliteToSpawn = 0;
         }
 
-        public void OnPlayerDestroyed()
+        public void OnPlayerDestroyed(Damageable by)
         {
             if (Phase == State.GameOver) return;
             SetPhase(State.GameOver);
