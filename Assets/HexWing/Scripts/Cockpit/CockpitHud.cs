@@ -26,6 +26,8 @@ namespace HexWing
         ArenaBounds _bounds;
         ShipWeapons _weapons;
         Damageable _health;
+        AbilitySystem _abilities;
+        int _shownShip = -1;
         float _next;
         ControlScheme _shownScheme = (ControlScheme)(-1);
 
@@ -37,6 +39,7 @@ namespace HexWing
             _bounds = GetComponent<ArenaBounds>();
             _weapons = GetComponent<ShipWeapons>();
             _health = GetComponent<Damageable>();
+            _abilities = GetComponent<AbilitySystem>();
         }
 
         void Update()
@@ -71,6 +74,12 @@ namespace HexWing
                 _sb.Append("POZA STREFĄ!\nWRACAJ  ").Append(Mathf.CeilToInt(_bounds.SecondsLeft));
                 _cockpit.Right.SetText(_sb.ToString());
                 _cockpit.Right.SetColor(Red);
+                return;
+            }
+            if (Training.Instance != null && Training.Instance.isActiveAndEnabled)
+            {
+                _cockpit.Right.SetText(Training.Instance.Instruction());
+                _cockpit.Right.SetColor(Training.Instance.Current == Training.Step.Done ? Amber : Cyan);
                 return;
             }
             if (Survival.Instance != null && Survival.Instance.isActiveAndEnabled) { SurvivalDisplay(Survival.Instance); return; }
@@ -195,11 +204,27 @@ namespace HexWing
                 if (_ship.EvasiveCooldownLeft > 0f) _sb.Append(Mathf.CeilToInt(_ship.EvasiveCooldownLeft)).Append(" s");
                 else _sb.Append("OK");
             }
+            if (_abilities != null)
+            {
+                _sb.Append('\n');
+                AbilityLine("A", _abilities.A);
+                _sb.Append("  ");
+                AbilityLine("B", _abilities.B);
+            }
             if (debug.performanceReadout && perf != null) _sb.Append('\n').Append(perf.Readout);
             _cockpit.Center.SetText(_sb.ToString());
             bool danger = (_weapons != null && (_weapons.Overheated || _weapons.Heat > 0.8f)) ||
                           (_health != null && _health.Hull < _health.MaxHull * 0.3f);
             _cockpit.Center.SetColor(danger ? Red : Cyan);
+        }
+
+        void AbilityLine(string button, AbilitySystem.Slot slot)
+        {
+            _sb.Append(button).Append(':').Append(ShipDefinition.AbilityLabel(slot.Kind)).Append(' ');
+            if (slot.Busy) _sb.Append(Mathf.RoundToInt(slot.Progress * 100f)).Append('%');
+            else if (slot.Active) _sb.Append("AKTYWNA");
+            else if (slot.CooldownLeft > 0f) _sb.Append(Mathf.CeilToInt(slot.CooldownLeft)).Append('s');
+            else _sb.Append("OK");
         }
 
         /// <summary>A text bar: filled '|' and empty '.' cells.</summary>
@@ -213,17 +238,21 @@ namespace HexWing
 
         void HelpDisplays()
         {
-            if (_input == null || _input.Scheme == _shownScheme) return;   // these only change with the scheme
+            var player = PlayerShip.Instance;
+            int ship = player != null ? player.ShipIndex : 0;
+            if (_input == null || (_input.Scheme == _shownScheme && ship == _shownShip)) return;   // these only change with the scheme or ship
             _shownScheme = _input.Scheme;
+            _shownShip = ship;
             var cfg = GameConfig.Instance;
             _cockpit.SideLeft.SetText(PlayerInput.SchemeLabel(_shownScheme) + "\n" + SchemeHelp(_shownScheme, cfg.controls.swapHands) +
                                       (cfg.controls.cycleWithY ? "\nY: ZMIEŃ STER" : ""));
             _cockpit.SideRight.SetText(
+                (player != null && player.Definition != null ? player.Definition.displayName + "  (" + ShipDefinition.PassiveLabel(player.Definition.passive) + ")\n" : "") +
                 "WINIETA " + VignetteLabel(cfg.comfort.vignette) + "\n" +
                 "POZIOMOWANIE " + (cfg.comfort.autoLevel ? "TAK" : "NIE") + "\n" +
                 "LIMIT SKRĘTU " + (cfg.comfort.turnRateLimit > 0f ? Mathf.RoundToInt(cfg.comfort.turnRateLimit) + "°/s" : "BRAK") + "\n" +
                 "MENU: RESTART, TRZYMAJ: TRYB\nTRZYMAJ L-GAŁKĘ: CENTRUJ\n" +
-                "SPUST P: DZIAŁA  SPUST L: RAKIETA\nX: UNIK");
+                "SPUST P: DZIAŁA  SPUST L: RAKIETA\nX: UNIK  A/B: ZDOLNOŚCI\nTRZYMAJ Y: STATEK");
         }
 
         static string SchemeHelp(ControlScheme s, bool swapped)

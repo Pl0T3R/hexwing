@@ -55,10 +55,19 @@ Updated after every step, so any session can pick up the work.
 - HUD: missile and lock warnings with beeps and haptics, the survival display, and ally markers.
 - Compile check: 0 errors, 0 warnings.
 
+**M5: classes, abilities, training** (cloud session; compiled, not run on a headset)
+- `Data/ShipDefinition.cs`: a ScriptableObject per class (flight, hull, shields, guns, abilities, passive, accent colour). The builder writes `Resources/Ships/*.asset`, and code defaults are used if they are missing.
+- `Abilities/AbilitySystem.cs`: two slots (A/B) with cooldown, active time and aiming progress, for all six abilities. `Abilities/TurretDrone.cs` is the bomber's turret.
+- `MissileSystem`: per-missile damage, turn, speed, lifetime and blast radius (bombs). `ShipWeapons`: `HeatScale` and `DamageBoost`. `Damageable`: `Heal` and `DamageTakenScale`.
+- `PlayerShip`: applies the selected class and its passive at every respawn. Holding Y picks the next class, saved in PlayerPrefs.
+- `GameModes/Training.cs`: 8 checked steps, the first mode on a fresh install.
+- HUD: ability status, ship name and passive, training instructions; the arrow points at training targets.
+- Compile check: 0 errors, 0 warnings.
+
 ## Next
 
-1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M4 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
-2. **M5 (cloud):** 3 ship classes as data (`ShipDefinition` ScriptableObjects: fighter, interceptor, bomber), 6 abilities + passives with cooldowns (targeting computer, pursuit missile, homing missiles, repair, bomb run, turret drone), a simple ship select, and a Training mode.
+1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M5 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
+2. **M6 (cloud):** the capital ship (sections: shield generators → turrets → reactor, a 15-minute Capital Ship Assault), Escort through an asteroid field with ambushes, two maps.
 
 ## Open issues
 

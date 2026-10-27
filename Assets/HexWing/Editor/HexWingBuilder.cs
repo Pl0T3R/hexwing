@@ -32,6 +32,7 @@ namespace HexWing.EditorTools
             ConfigureProject();
             CreateMaterials();
             EnsureGameConfig();
+            EnsureShipDefinitions();
             BuildFlightScene();
             Debug.Log("[HexWing] Done. Next: Meta > Tools > Project Setup Tool > Fix All, then File > Build And Run.");
         }
@@ -348,11 +349,28 @@ namespace HexWing.EditorTools
             Debug.Log($"[HexWing] Created {ConfigPath} with default settings.");
         }
 
+        // --- ship classes ------------------------------------------------------------------------
+
+        [MenuItem("HexWing/3b. Create Ship Definitions (if missing)", priority = 22)]
+        public static void EnsureShipDefinitions()
+        {
+            const string dir = Root + "/Resources/Ships";
+            Directory.CreateDirectory(dir);
+            foreach (var def in ShipDefinition.Defaults())
+            {
+                var path = $"{dir}/{def.name}.asset";
+                if (AssetDatabase.LoadAssetAtPath<ShipDefinition>(path) != null) continue;   // keep tuned values
+                AssetDatabase.CreateAsset(def, path);
+                Debug.Log($"[HexWing] Created {path}.");
+            }
+            AssetDatabase.SaveAssets();
+        }
+
         // --- scene -------------------------------------------------------------------------
 
         /// <summary>
         /// Flight scene: space skybox, the systems (performance, sun, start-up, space dust, lasers, missiles,
-        /// effects, and the modes: rings course, drone range and survival) and
+        /// effects, and the modes: training, rings course, drone range and survival) and
         /// the player ship: cockpit with the camera rig at the eye point (seated, eye-level tracking), input,
         /// flight model, arena bounds, HUD and instruments, comfort (fade, vignette, recenter) and sound.
         /// </summary>
@@ -380,6 +398,7 @@ namespace HexWing.EditorTools
             var modes = new GameObject("Modes");
             modes.transform.SetParent(systems.transform, false);
             modes.AddComponent<ModeDirector>();
+            new GameObject("Mode Training").AddComponent<Training>().transform.SetParent(modes.transform, false);   // first: new players start here
             new GameObject("Mode Rings Course").AddComponent<RingsCourse>().transform.SetParent(modes.transform, false);
             new GameObject("Mode Drone Range").AddComponent<DroneRange>().transform.SetParent(modes.transform, false);
             new GameObject("Mode Survival").AddComponent<Survival>().transform.SetParent(modes.transform, false);
@@ -390,6 +409,7 @@ namespace HexWing.EditorTools
             ship.AddComponent<Damageable>();
             ship.AddComponent<ShipFlight>();
             ship.AddComponent<ShipWeapons>();
+            ship.AddComponent<AbilitySystem>();
             ship.AddComponent<ArenaBounds>();
             ship.AddComponent<CockpitAlert>();
             ship.AddComponent<PlayerShip>();

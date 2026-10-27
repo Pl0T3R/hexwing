@@ -74,11 +74,26 @@ namespace HexWing
             _ => "C: GAŁKI",
         };
 
+        float _yHeld;
+
+        /// <summary>Y: a short press cycles the control scheme, holding it for a second switches the ship class.</summary>
         void Update()
         {
             var cfg = GameConfig.Instance.controls;
-            if (cfg.cycleWithY && OVRInput.GetDown(OVRInput.Button.Two, OVRInput.Controller.LTouch))
-                SetScheme((ControlScheme)(((int)Scheme + 1) % 3));
+            if (OVRInput.Get(OVRInput.Button.Two, OVRInput.Controller.LTouch))
+            {
+                _yHeld += Time.unscaledDeltaTime;
+                if (_yHeld >= 1f)
+                {
+                    _yHeld = float.NegativeInfinity;   // once per press
+                    PlayerShip.Instance?.SelectNextShip();
+                }
+            }
+            else
+            {
+                if (_yHeld > 0f && cfg.cycleWithY) SetScheme((ControlScheme)(((int)Scheme + 1) % 3));
+                _yHeld = 0f;
+            }
         }
 
         public void ReadControls(ref ShipControls c)

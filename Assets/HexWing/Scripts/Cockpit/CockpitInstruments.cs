@@ -53,6 +53,8 @@ namespace HexWing
             if (_arrow == null) return;
             Vector3? target = null;
             if (_bounds != null && _bounds.Outside) target = transform.position + _bounds.HomeDirection * 1000f;
+            else if (Training.Instance != null && Training.Instance.isActiveAndEnabled)
+                target = Training.Instance.Pointer != null ? Training.Instance.Pointer.position : (Vector3?)null;
             else if (RingsCourse.Instance != null && RingsCourse.Instance.NextRing != null) target = RingsCourse.Instance.NextRing.position;
             else if (_weapons != null && _weapons.Target != null) target = _weapons.Target.transform.position;
             else target = NearestEnemy();

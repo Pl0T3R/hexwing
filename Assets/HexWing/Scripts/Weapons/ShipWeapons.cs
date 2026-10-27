@@ -29,6 +29,10 @@ namespace HexWing
         public float FireRateScale = 1f;
         /// <summary>Can lock on and fire missiles (the player, elite AI).</summary>
         public bool HasMissiles = true;
+        /// <summary>Heat per shot relative to the config (ship class, cooling passive, targeting computer).</summary>
+        public float HeatScale = 1f;
+        /// <summary>Extra damage multiplier while an ability is active.</summary>
+        public float DamageBoost = 1f;
 
         public float Heat { get; private set; }
         public bool Overheated => _lockoutLeft > 0f;
@@ -94,7 +98,7 @@ namespace HexWing
             {
                 _nextShot = Time.time + 1f / (cfg.fireRate * Mathf.Max(0.05f, FireRateScale));
                 Shoot(cfg);
-                Heat += cfg.heatPerShot;
+                Heat += cfg.heatPerShot * HeatScale;
                 if (Heat >= 1f)
                 {
                     Heat = 1f;
@@ -162,7 +166,7 @@ namespace HexWing
             if (cfg.spread > 0f)
                 dir = Quaternion.Euler(Rand() * cfg.spread, Rand() * cfg.spread, 0f) * dir;
             var team = _self != null ? _self.Team : (IsPlayer ? Team.Player : Team.Enemy);
-            LaserSystem.Instance?.Fire(gun, dir, _flight.Velocity, _self, team, cfg.laserDamage * DamageScale);
+            LaserSystem.Instance?.Fire(gun, dir, _flight.Velocity, _self, team, cfg.laserDamage * DamageScale * DamageBoost);
             Effects.Instance?.SpawnFlash(gun + transform.forward * 0.6f, 0.9f, 0.06f, team == Team.Player ? Effects.FlashKind.Muzzle : Effects.FlashKind.Impact);
             Fired?.Invoke(_gun);
             if (IsPlayer)

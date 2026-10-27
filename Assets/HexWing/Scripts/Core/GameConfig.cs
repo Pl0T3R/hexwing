@@ -24,6 +24,7 @@ namespace HexWing
         public DroneSettings drones = new();
         public AISettings ai = new();
         public SurvivalSettings survival = new();
+        public AbilitySettings abilities = new();
         public HapticSettings haptics = new();
         public DebugSettings debug = new();
 
@@ -297,6 +298,50 @@ namespace HexWing
         public float respawnSeconds = 3f;
         [Tooltip("Collision radius (m) for lasers and missiles.")]
         public float radius = 4f;
+    }
+
+    /// <summary>The six abilities (PLAN.md section 7). Which ship has which is in its ShipDefinition.</summary>
+    [Serializable]
+    public class AbilitySettings
+    {
+        [Header("Targeting computer: no gun heat and more damage for a while")]
+        public float targetingCooldown = 20f;
+        public float targetingSeconds = 5f;
+        public float targetingDamage = 1.3f;
+
+        [Header("Pursuit missile: one fast-turning missile at the target, no lock needed")]
+        public float pursuitCooldown = 14f;
+        public float pursuitDamage = 80f;
+        public float pursuitTurnScale = 1.7f;
+
+        [Header("Homing missiles: hold the target in the lock cone, then three missiles")]
+        public float homingCooldown = 12f;
+        public float homingLockSeconds = 1.5f;
+        public int homingCount = 3;
+        public float homingDamage = 40f;
+
+        [Header("Repair: hull back over a few seconds")]
+        public float repairCooldown = 25f;
+        public float repairAmount = 40f;
+        public float repairSeconds = 3f;
+
+        [Header("Bomb run: bombs dropped along the flight path, each with a blast")]
+        public float bombCooldown = 18f;
+        public int bombCount = 6;
+        public float bombInterval = 0.18f;
+        public float bombDamage = 70f;
+        public float bombBlastRadius = 45f;
+        public float bombSpeed = 90f;
+        public float bombFuse = 1.6f;
+
+        [Header("Turret drone: a gun turret left behind that shoots enemies")]
+        public float turretCooldown = 22f;
+        public float turretSeconds = 15f;
+        public float turretRange = 700f;
+        public float turretFireRate = 4f;
+        public float turretDamage = 8f;
+        [Tooltip("Aim error (deg) of the turret.")]
+        public float turretAimError = 2.5f;
     }
 
     /// <summary>AI pilot skill: each value goes from the "rookie" end (skill 0) to the "ace" end (skill 1).</summary>

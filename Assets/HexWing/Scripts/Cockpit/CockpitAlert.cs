@@ -16,6 +16,8 @@ namespace HexWing
         Material _material;
         Color _normal;
         Color _flashColor;
+        Color _pendingColor;
+        bool _hasPending;
         float _flash;
         Damageable _health;
 
@@ -26,10 +28,20 @@ namespace HexWing
             {
                 if (r.name != "Accents") continue;
                 _material = new Material(r.sharedMaterial);
-                _normal = _material.GetColor(BaseColorId);
+                _normal = _hasPending ? _pendingColor : _material.GetColor(BaseColorId);
+                _material.SetColor(BaseColorId, _normal);
                 r.sharedMaterial = _material;
                 break;
             }
+        }
+
+        /// <summary>The ship class's accent colour (cockpit lights at rest).</summary>
+        public void SetBaseColor(Color color)
+        {
+            _normal = color;
+            if (_material != null) _material.SetColor(BaseColorId, color);
+            _pendingColor = color;
+            _hasPending = _material == null;
         }
 
         public void Flash(bool shield)

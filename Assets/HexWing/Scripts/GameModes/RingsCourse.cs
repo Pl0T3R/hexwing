@@ -40,7 +40,6 @@ namespace HexWing
         PlayerInput _input;
         float _prevSide;
         bool _built;
-        Mesh _ringMesh;
 
         void Awake() => Instance = this;
 
@@ -168,7 +167,6 @@ namespace HexWing
             var rng = new System.Random(cfg.seed);
             var root = new GameObject("Rings Course").transform;
             root.SetParent(transform, false);
-            _ringMesh = RingMesh(cfg.ringRadius);
 
             var points = new List<Vector3>();
             var pos = new Vector3(0f, 0f, -arena * 0.35f);
@@ -199,7 +197,7 @@ namespace HexWing
                 var into = i > 0 ? points[i] - points[i - 1] : points[i] - startPos;
                 var outOf = i < points.Count - 1 ? points[i + 1] - points[i] : into;
                 var facing = (into.normalized + outOf.normalized).normalized;
-                var ring = BuildRing(root, i, points[i], Quaternion.LookRotation(facing, Vector3.up), cfg.ringRadius);
+                var ring = CreateRing(root, $"Ring {i + 1}", points[i], Quaternion.LookRotation(facing, Vector3.up), cfg.ringRadius);
                 _rings.Add(ring);
                 _renderers.Add(ring.GetComponent<MeshRenderer>());
             }
@@ -218,9 +216,18 @@ namespace HexWing
 
         static float Rand(System.Random rng, float min, float max) => min + (float)rng.NextDouble() * (max - min);
 
-        Transform BuildRing(Transform root, int index, Vector3 position, Quaternion rotation, float radius)
+        static Mesh _ringMesh;
+        static float _ringMeshRadius;
+
+        /// <summary>A solid hexagonal ring (also used by the training mode). Its +Z is the way through.</summary>
+        public static Transform CreateRing(Transform root, string name, Vector3 position, Quaternion rotation, float radius)
         {
-            var go = MeshKit.Part($"Ring {index + 1}", root, _ringMesh, Mats.Get(Mats.Ring));
+            if (_ringMesh == null || !Mathf.Approximately(_ringMeshRadius, radius))
+            {
+                _ringMesh = RingMesh(radius);
+                _ringMeshRadius = radius;
+            }
+            var go = MeshKit.Part(name, root, _ringMesh, Mats.Get(Mats.Ring));
             go.transform.SetPositionAndRotation(position, rotation);
             // six solid beams: the frame can be hit, the opening is free
             for (int i = 0; i < 6; i++)

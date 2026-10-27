@@ -24,6 +24,8 @@ namespace HexWing
         public string DisplayName = "CEL";
         [Tooltip("Can be locked and gets HUD brackets.")]
         public bool Targetable = true;
+        [Tooltip("Incoming damage multiplier (heavy plating < 1).")]
+        public float DamageTakenScale = 1f;
 
         public float Hull { get; private set; }
         public float Shields { get; private set; }
@@ -62,12 +64,20 @@ namespace HexWing
         public void Damage(float amount, Vector3 point, Damageable source)
         {
             if (!Alive || amount <= 0f) return;
+            amount *= DamageTakenScale;
             _lastHit = Time.time;
             float toShields = Mathf.Min(Shields, amount);
             Shields -= toShields;
             Hull = Mathf.Max(0f, Hull - (amount - toShields));
             Damaged?.Invoke(amount, point, source);
             if (Hull <= 0f) Destroyed?.Invoke(source);
+        }
+
+        /// <summary>Adds hull (repair), up to the maximum.</summary>
+        public void Heal(float amount)
+        {
+            if (!Alive || amount <= 0f) return;
+            Hull = Mathf.Min(MaxHull, Hull + amount);
         }
 
         /// <summary>The damageable a collider belongs to (null if none). Cached per collider.</summary>

@@ -3,10 +3,11 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// Homing missiles (pool of 24): fly at a fixed speed, turn toward the target's lead point at a
-    /// limited rate, explode within the fuse distance or when they hit something, and fizzle after their
-    /// lifetime. A target that does an evasive maneuver breaks the lock of missiles already chasing it.
-    /// Drawn instanced, with a small flash trail.
+    /// Homing missiles and bombs (pool of 24): fly at a fixed speed, turn toward the target's lead point
+    /// at a limited rate, explode within the fuse distance or when they hit something, and fizzle after
+    /// their lifetime. A target that does an evasive maneuver breaks the lock of missiles already chasing
+    /// it. Bombs have no target and a blast radius: they go off at the end of their fuse (or on contact)
+    /// and damage every enemy nearby. Drawn instanced, with a small flash trail.
     /// </summary>
     public class MissileSystem : MonoBehaviour
     {
@@ -17,7 +18,7 @@ namespace HexWing
         struct Missile
         {
             public Vector3 Position, Direction;
-            public float Life, TrailTimer;
+            public float Life, TrailTimer, Damage, TurnScale, Speed, Blast;
             public Damageable Target, Owner;
             public Team Team;
         }
@@ -42,17 +43,27 @@ namespace HexWing
             _batch = new InstancedBatch(b.ToMesh("Missile"), Mats.Get(Mats.Missile), MaxMissiles);
         }
 
-        public bool Launch(Vector3 position, Vector3 direction, Damageable target, Damageable owner, Team team)
+        /// <param name="damage">Negative = the config's missile damage.</param>
+        /// <param name="speed">Negative = the config's missile speed.</param>
+        /// <param name="lifetime">Negative = the config's missile lifetime.</param>
+        /// <param name="blastRadius">Above 0: a bomb that damages everything of the other team in this radius.</param>
+        public bool Launch(Vector3 position, Vector3 direction, Damageable target, Damageable owner, Team team,
+                           float damage = -1f, float turnScale = 1f, float speed = -1f, float lifetime = -1f, float blastRadius = 0f)
         {
             if (_count >= MaxMissiles) return false;
+            var cfg = GameConfig.Instance.combat;
             _missiles[_count++] = new Missile
             {
                 Position = position,
                 Direction = direction.normalized,
-                Life = GameConfig.Instance.combat.missileLifetime,
+                Life = lifetime > 0f ? lifetime : cfg.missileLifetime,
                 Target = target,
                 Owner = owner,
                 Team = team,
+                Damage = damage >= 0f ? damage : cfg.missileDamage,
+                TurnScale = turnScale,
+                Speed = speed > 0f ? speed : cfg.missileSpeed,
+                Blast = blastRadius,
             };
             return true;
         }
@@ -92,13 +103,13 @@ namespace HexWing
                     if (dist <= cfg.missileFuse) { explode = true; victim = m.Target; }
                     else
                     {
-                        float t = dist / cfg.missileSpeed;
+                        float t = dist / m.Speed;
                         var aim = (to + m.Target.Velocity * t * 0.7f).normalized;
-                        m.Direction = Vector3.RotateTowards(m.Direction, aim, cfg.missileTurnRate * Mathf.Deg2Rad * dt, 0f);
+                        m.Direction = Vector3.RotateTowards(m.Direction, aim, cfg.missileTurnRate * m.TurnScale * Mathf.Deg2Rad * dt, 0f);
                     }
                 }
 
-                var step = m.Direction * (cfg.missileSpeed * dt);
+                var step = m.Direction * (m.Speed * dt);
                 if (!explode)
                 {
                     int n = Physics.RaycastNonAlloc(m.Position, m.Direction, _hits, step.magnitude, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
@@ -115,11 +126,14 @@ namespace HexWing
 
                 if (explode || m.Life <= 0f)
                 {
-                    Effects.Instance?.Explode(m.Position, Vector3.zero, explode ? 4f : 2f, explode ? 10 : 4);
-                    ShipAudio.Instance?.PlayExplosion(m.Position, explode ? 0.8f : 0.4f);
-                    if (victim != null && victim.Team != m.Team)
+                    bool bomb = m.Blast > 0f;
+                    bool big = explode || bomb;
+                    Effects.Instance?.Explode(m.Position, Vector3.zero, bomb ? m.Blast * 0.25f : big ? 4f : 2f, big ? 10 : 4);
+                    ShipAudio.Instance?.PlayExplosion(m.Position, big ? 0.8f : 0.4f);
+                    if (bomb) Blast(m);
+                    else if (victim != null && victim.Team != m.Team)
                     {
-                        victim.Damage(cfg.missileDamage, m.Position, m.Owner);
+                        victim.Damage(m.Damage, m.Position, m.Owner);
                         Hit?.Invoke(victim, !victim.Alive, m.Owner);
                     }
                     _missiles[i] = _missiles[--_count];
@@ -134,6 +148,21 @@ namespace HexWing
                     m.TrailTimer = 0.05f;
                     Effects.Instance?.SpawnFlash(m.Position - m.Direction * 1.4f, 0.9f, 0.35f, Effects.FlashKind.Impact);
                 }
+            }
+        }
+
+        /// <summary>Damage to everything of the other team within the blast radius, less toward the edge.</summary>
+        void Blast(in Missile m)
+        {
+            var all = Damageable.All;
+            for (int i = all.Count - 1; i >= 0; i--)
+            {
+                var d = all[i];
+                if (!d.Alive || d.Team == m.Team) continue;
+                float dist = Vector3.Distance(d.transform.position, m.Position);
+                if (dist > m.Blast) continue;
+                d.Damage(m.Damage * Mathf.Lerp(1f, 0.4f, dist / m.Blast), m.Position, m.Owner);
+                Hit?.Invoke(d, !d.Alive, m.Owner);
             }
         }
 

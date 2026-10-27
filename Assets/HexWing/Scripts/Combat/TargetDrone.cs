@@ -47,11 +47,19 @@ namespace HexWing
         public void Respawn(Vector3 center, System.Random rng)
         {
             var cfg = GameConfig.Instance.drones;
-            _center = center;
-            _radius = Mathf.Lerp(cfg.loopRadius.x, cfg.loopRadius.y, (float)rng.NextDouble());
-            _speed = Mathf.Lerp(cfg.speed.x, cfg.speed.y, (float)rng.NextDouble()) * (rng.NextDouble() < 0.5 ? -1f : 1f);
-            _angle = (float)rng.NextDouble() * Mathf.PI * 2f;
+            float radius = Mathf.Lerp(cfg.loopRadius.x, cfg.loopRadius.y, (float)rng.NextDouble());
+            float speed = Mathf.Lerp(cfg.speed.x, cfg.speed.y, (float)rng.NextDouble()) * (rng.NextDouble() < 0.5 ? -1f : 1f);
             var tilt = Quaternion.Euler((float)rng.NextDouble() * 50f - 25f, (float)rng.NextDouble() * 360f, (float)rng.NextDouble() * 50f - 25f);
+            Respawn(center, radius, speed, tilt, (float)rng.NextDouble() * Mathf.PI * 2f);
+        }
+
+        /// <summary>A loop of <paramref name="radius"/> at <paramref name="speed"/> (negative = the other way) in the plane given by <paramref name="tilt"/>.</summary>
+        public void Respawn(Vector3 center, float radius, float speed, Quaternion tilt, float angle)
+        {
+            _center = center;
+            _radius = Mathf.Max(1f, radius);
+            _speed = speed;
+            _angle = angle;
             _u = tilt * Vector3.right;
             _w = tilt * Vector3.forward;
             Health.Restore();
@@ -59,6 +67,13 @@ namespace HexWing
             _collider.enabled = true;
             Health.enabled = true;
             Place(0f);
+        }
+
+        public void Hide()
+        {
+            _visual.SetActive(false);
+            _collider.enabled = false;
+            Health.enabled = false;
         }
 
         void Update()
@@ -80,9 +95,7 @@ namespace HexWing
         {
             Effects.Instance?.Explode(transform.position, Health.Velocity, 4f, 18);
             ShipAudio.Instance?.PlayExplosion(transform.position, 1f);
-            _visual.SetActive(false);
-            _collider.enabled = false;
-            Health.enabled = false;   // out of the target list until it respawns
+            Hide();   // out of the target list until it respawns
         }
 
         static void EnsureMeshes()

@@ -9,6 +9,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 ## Current state
 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
+- M5 is written: three ship classes as data (`ShipDefinition` assets: Sokół fighter, Jastrząb interceptor, Żubr bomber), six abilities with cooldowns (pursuit missile, repair, targeting computer, homing missiles, bomb run, turret drone), three passives, ship select (hold Y) and the Training mode.
 - M4 is written: AI pilots (attack with lead and aim error, bursts, break-off, evasion, wingmen escort), three original fighters (Hornet, Trident elite, Swallow wingman), the Survival mode with waves, an elite every 5th wave, 2 wingmen, score and best score, and missile/lock warnings.
 - M3 is written: lasers (pooled, swept, instanced), gun heat and overheat, targeting with the holographic HUD and a lead marker, lock-on and homing missiles, hull and shields, the evasive maneuver (jink or roll), target drones in a new drone range mode, hit feedback (haptics, sounds, cockpit lights) and a mode switch.
 - M2 is written: the flight model with throttle bands and arena bounds, the input layer with control schemes A/B/C, comfort options (vignette, auto-level, turn limit), the rings course, cockpit texts, the moving stick and throttle, space dust and synthesized ship sounds.
@@ -112,6 +113,18 @@ Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`
 - [ ] Performance with 12 enemies, 2 wingmen and a full dogfight: 90 fps. Expect about 80 draw calls; watch CPU time (AI and raycasts) in `metavr perf`.
 - [ ] 20 minutes of Survival: comfort report (vignette level, any moment that felt bad).
 
+## M5 checklist
+
+- [ ] First start: the game opens in `TRENING` (log `Mode: TRENING`). Each step shows on the right display with a hint for your scheme, the arrow points at rings and drones, a finished step chimes. Steps: throttle, left and right, 3 rings, a drone with guns, a drone with a missile, X, A and B. The end says `TRENING UKOŃCZONY!` (log `Training completed.`).
+- [ ] Hold Y for 1 s: a fade, the next ship (log `Ship: ...`). The cockpit lights change colour (Sokół cyan, Jastrząb green, Żubr amber); the side-right display shows the ship and its passive. A short Y press still changes the control scheme.
+- [ ] Jastrząb is clearly faster and turns quicker but dies sooner; Żubr is slow, takes many hits and hits harder.
+- [ ] The centre display shows both abilities (`A:NAPRAWA OK  B:...`), their cooldown in seconds, `AKTYWNA` while running, the aiming percentage for the salvo.
+- [ ] Sokół: A = pursuit missile (needs a target: a sharply turning missile, 14 s), B = repair (hull back up by 40 over 3 s, 25 s). Passive: shields come back sooner and faster.
+- [ ] Jastrząb: A = targeting computer (5 s without gun heat and +30% damage, 20 s), B = homing missiles (keep the target near the nose for 1.5 s, then 3 missiles, 12 s; losing the target cancels with a 2 s wait). Passive: guns heat 30% slower.
+- [ ] Żubr: A = bomb run (6 bombs along the flight path, each with a 45 m blast, 18 s), B = turret drone (left behind, shoots the nearest enemy for 15 s, can be shot down, 22 s). Passive: 15% less damage, half collision damage.
+- [ ] Pressing an ability that isn't ready (or a missile ability with no target) gives a low buzz sound and nothing else.
+- [ ] Survival with each ship: all abilities help, nothing breaks between waves or after a restart (abilities reset, the turret disappears).
+
 ## Where to tune
 
 - `Resources/GameConfig.asset` (made by Build Game; edit in the Inspector, also in Play mode):
@@ -120,15 +133,17 @@ Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`
   - `cockpit`: the eye point in the ship, the shell radius, the window angle,
   - `debug`: the readout on the centre screen and its interval.
   - `controls`: scheme (default B), Y cycling, swapped hands, inverted pitch, deadzone, response curve, sensitivity; B's stick range (9 cm), twist range (40°), throttle range (18 cm) and grip threshold; A's tilt range; the stick throttle's cruise value and response,
-  - `flight`: minimum/maximum speed (35 / 150 m/s), acceleration, pitch / yaw / roll rates (70 / 50 / 140 °/s), angular response, nose lag (0.2 s), throttle bands (sweet spot 0.2–0.5 at 1.4x, boost from 0.85 at 0.6x, blend), collision radius and speed kept after a collision,
+  - `flight`: the AI fighters' base flight numbers (the player's come from the ship class, see below): minimum/maximum speed (35 / 150 m/s), acceleration, pitch / yaw / roll rates (70 / 50 / 140 °/s), angular response, nose lag (0.2 s), throttle bands (sweet spot 0.2–0.5 at 1.4x, boost from 0.85 at 0.6x, blend), collision radius and speed kept after a collision,
   - `comfort` (also): vignette level, start/full turn rates and response; auto-level on/off, delay and rate; pitch/yaw and roll rate limits,
   - `arena`: radius (3 km) and the out-of-bounds countdown,
   - `course`: ring count, seed, ring radius, spacing, maximum turn and climb, result time,
   - `combat`: laser speed (800 m/s), range, damage, fire rate, heat per shot, cooling, overheat lockout, convergence, spread, bolt size; target and lock cones, lock time, HUD distance (30 m); missile speed, turn rate, damage, cooldown, lifetime, fuse; player hull, shields, shield delay and regen, collision damage; evasive style (Jink / Roll), cooldown, jink distance and time, lock-breaking time,
   - `ai`: rookie → ace ranges for aim error, reaction, fire cone, burst pause, evade chance, laser damage and turn rates; fire range, burst length, break-off distance, extend time, decisions per second, wingman offset,
   - `survival`: wingmen, wave sizes, max alive, elite every n waves, wave of full skill, gap between waves, spawn distance and cone, hull and shields of enemies, elites and wingmen, score values,
+  - `abilities`: cooldown, duration, damage and other numbers of each of the six abilities,
   - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
   - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
+- `Resources/Ships/Sokol.asset`, `Jastrzab.asset`, `Zubr.asset` (made by Build Game, kept when it runs again): each class's flight numbers, hull, shields, gun multipliers, the two abilities, the passive and the cockpit colour. `ShipDefinition.Defaults()` has the same starting values in code.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
 - `Editor/HexWingBuilder.cs` → `CreateMaterials`: every color as a hex value. Run Build Game again after changing them.
 - `Shaders/SpaceSky.shader`: star density and brightness, nebula colors, the planet direction, size and colors. Tune them on the `SpaceSky` material.
