@@ -46,10 +46,19 @@ Updated after every step, so any session can pick up the work.
 - `Audio/ShipAudio.cs`: lasers, overheat, lock tones, missile, hits, kill chime, evasive, and 3D explosions.
 - Compile check: 0 errors, 0 warnings.
 
+**M4: AI and Survival** (cloud session; compiled, not run on a headset)
+- `AI/AIPilot.cs`: an `IShipPilot` with Escort, Attack, Extend and Evade states. It decides at 10 Hz (staggered) and steers every frame. Skill 0..1 scales aim error, reaction, fire cone, bursts, evasion, damage and turn rate. Elites lock on and fire missiles.
+- `AI/AIShip.cs`: a pooled AI fighter (meshes, collider, Damageable, ShipFlight without comfort options, ShipWeapons, pilot) that smokes when damaged.
+- `Visuals/ShipMeshes.cs`: Hornet, Trident and Swallow, 200–400 triangles each.
+- `GameModes/Survival.cs`: waves, an elite every 5th, 2 wingmen, one life, score and best score/wave in PlayerPrefs. `IPlayerDeathHandler` shows the result before the restart.
+- `ShipFlight`: per-ship `SettingsOverride` and `ApplyComfort`. `ShipWeapons`: damage and fire-rate scale, `HasMissiles`, and a list of all weapons for lock warnings.
+- HUD: missile and lock warnings with beeps and haptics, the survival display, and ally markers.
+- Compile check: 0 errors, 0 warnings.
+
 ## Next
 
-1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M3 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
-2. **M4 (cloud):** AI pilots (state machine, difficulty, evasive use, wingmen) built on `ShipFlight` + `ShipWeapons` with an AI `IShipPilot`, original enemy and ally fighter meshes, Survival mode (waves, every 5th elite), local high score.
+1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M4 checklists, record fps and p95 in `PLAN.md`, and report the best control scheme and any discomfort.
+2. **M5 (cloud):** 3 ship classes as data (`ShipDefinition` ScriptableObjects: fighter, interceptor, bomber), 6 abilities + passives with cooldowns (targeting computer, pursuit missile, homing missiles, repair, bomb run, turret drone), a simple ship select, and a Training mode.
 
 ## Open issues
 

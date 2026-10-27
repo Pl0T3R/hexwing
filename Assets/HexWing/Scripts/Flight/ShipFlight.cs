@@ -20,6 +20,11 @@ namespace HexWing
         public enum Band { Slow, SweetSpot, Cruise, Boost }
 
         public IShipPilot Pilot { get; set; }
+        /// <summary>Flight numbers for this ship (AI classes, later ship definitions); null = GameConfig.flight.</summary>
+        public FlightSettings SettingsOverride { get; set; }
+        /// <summary>Comfort options (turn limits, auto-level) are for the player's own view only; AI ships turn this off.</summary>
+        public bool ApplyComfort { get; set; } = true;
+        public FlightSettings Settings => SettingsOverride ?? GameConfig.Instance.flight;
         public ShipControls Controls => _controls;
 
         public float Speed { get; private set; }
@@ -75,7 +80,7 @@ namespace HexWing
         {
             float dt = Time.deltaTime;
             if (dt <= 0f || Frozen) return;
-            var f = GameConfig.Instance.flight;
+            var f = Settings;
             var comfort = GameConfig.Instance.comfort;
 
             _controls = default;
@@ -86,12 +91,12 @@ namespace HexWing
             CurrentBand = BandOf(throttle, f);
 
             float pitchRate = f.pitchRate, yawRate = f.yawRate, rollRate = f.rollRate;
-            if (comfort.turnRateLimit > 0f)
+            if (ApplyComfort && comfort.turnRateLimit > 0f)
             {
                 pitchRate = Mathf.Min(pitchRate, comfort.turnRateLimit);
                 yawRate = Mathf.Min(yawRate, comfort.turnRateLimit);
             }
-            if (comfort.rollRateLimit > 0f) rollRate = Mathf.Min(rollRate, comfort.rollRateLimit);
+            if (ApplyComfort && comfort.rollRateLimit > 0f) rollRate = Mathf.Min(rollRate, comfort.rollRateLimit);
 
             var target = new Vector3(
                 _controls.Pitch * pitchRate * TurnMultiplier,
@@ -101,7 +106,7 @@ namespace HexWing
             // auto-level: with no roll input for a moment, roll gently back to the arena's horizon
             _sinceRoll = _controls.Rolling ? 0f : _sinceRoll + dt;
             AutoLeveling = false;
-            if (comfort.autoLevel && _sinceRoll >= comfort.autoLevelDelay)
+            if (ApplyComfort && comfort.autoLevel && _sinceRoll >= comfort.autoLevelDelay)
             {
                 float bank = BankAngle();
                 if (!float.IsNaN(bank) && Mathf.Abs(bank) > 0.5f)
@@ -192,7 +197,7 @@ namespace HexWing
         /// Roll (deg, in this class's +right convention) that brings the wings level with the arena's
         /// horizon: negative when banked right. NaN when flying almost straight up or down.
         /// </summary>
-        float BankAngle()
+        public float BankAngle()
         {
             var fwd = transform.forward;
             if (Mathf.Abs(Vector3.Dot(fwd, Vector3.up)) > 0.94f) return float.NaN;
@@ -203,7 +208,7 @@ namespace HexWing
 
         float TargetSpeed(float throttle)
         {
-            var f = GameConfig.Instance.flight;
+            var f = Settings;
             return Mathf.Lerp(f.minSpeed, f.maxSpeed, throttle);
         }
 

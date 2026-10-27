@@ -16,7 +16,7 @@ namespace HexWing
 
         ShipFlight _ship;
         AudioSource _engine, _boost, _oneShots, _gunLeft, _gunRight;
-        AudioClip _ring, _ringLast, _thud, _laser, _overheat, _lockTick, _locked, _missile, _explosion, _hitShield, _hitHull, _hitDealt, _kill, _evasive;
+        AudioClip _ring, _ringLast, _thud, _laser, _overheat, _lockTick, _locked, _missile, _explosion, _hitShield, _hitHull, _hitDealt, _kill, _evasive, _warnMissile, _warnLock;
         readonly AudioSource[] _world = new AudioSource[6];
         int _nextWorld;
 
@@ -41,6 +41,8 @@ namespace HexWing
             _hitDealt = Clip("Hit Dealt", 0.06f, t => Mathf.Sin(2f * Mathf.PI * 2400f * t) * 0.2f * Mathf.Exp(-t * 60f));
             _kill = Clip("Kill", 0.5f, t => Chime(t, 660f, 990f) + Chime(t - 0.08f, 990f, 1480f));
             _evasive = Clip("Evasive", 0.6f, t => Grit(t * 0.5f) * 0.35f * Mathf.Sin(Mathf.PI * Mathf.Clamp01(t / 0.6f)));
+            _warnMissile = Clip("Warn Missile", 0.09f, t => Square(t, 1250f) * 0.18f * Mathf.Clamp01((0.09f - t) * 80f));
+            _warnLock = Clip("Warn Lock", 0.12f, t => Square(t, 700f) * 0.15f * Mathf.Clamp01((0.12f - t) * 60f));
             _gunLeft = Source("Gun Left", null, 0.5f);
             _gunLeft.panStereo = -0.45f;
             _gunRight = Source("Gun Right", null, 0.5f);
@@ -88,6 +90,8 @@ namespace HexWing
         public void PlayHitDealt() => _oneShots.PlayOneShot(_hitDealt, 0.5f);
         public void PlayKill() => _oneShots.PlayOneShot(_kill, 0.7f);
         public void PlayEvasive() => _oneShots.PlayOneShot(_evasive, 0.7f);
+        /// <summary>Called a few times a second while threatened: fast high beeps for a missile, slower low ones for a lock.</summary>
+        public void PlayMissileWarning(bool missile) => _oneShots.PlayOneShot(missile ? _warnMissile : _warnLock, 0.5f);
 
         /// <summary>An explosion out in the world, heard from where it happened.</summary>
         public void PlayExplosion(Vector3 position, float size)

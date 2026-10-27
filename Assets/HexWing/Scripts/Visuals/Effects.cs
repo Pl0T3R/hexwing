@@ -4,14 +4,14 @@ namespace HexWing
 {
     /// <summary>
     /// Pooled visual effects, all instanced: flashes (a glowing ball that pops up and shrinks: laser
-    /// impacts, muzzle flashes, explosions) and debris (faceted shards that fly apart, tumble and shrink).
+    /// impacts, muzzle flashes, explosions; dark smoke puffs that grow instead) and debris (faceted shards that fly apart, tumble and shrink).
     /// Fixed-size arrays; when full, the oldest effect is reused. Runs on game time, so pausing freezes it.
     /// </summary>
     public class Effects : MonoBehaviour
     {
         public static Effects Instance { get; private set; }
 
-        public enum FlashKind { Impact, Muzzle, Explosion, Shield }
+        public enum FlashKind { Impact, Muzzle, Explosion, Shield, Smoke }
 
         struct Flash
         {
@@ -32,7 +32,7 @@ namespace HexWing
         readonly Flash[] _flashes = new Flash[MaxFlashes];
         readonly Shard[] _shards = new Shard[MaxShards];
         int _flashCount, _shardCount, _flashNext, _shardNext;
-        InstancedBatch _hot, _cyan, _shield, _debris;
+        InstancedBatch _hot, _cyan, _shield, _smoke, _debris;
         System.Random _rng = new(5);
 
         void Awake()
@@ -47,6 +47,7 @@ namespace HexWing
             _hot = new InstancedBatch(flashMesh, Mats.Get(Mats.FlashHot), MaxFlashes);
             _cyan = new InstancedBatch(flashMesh, Mats.Get(Mats.FlashCyan), MaxFlashes);
             _shield = new InstancedBatch(flashMesh, Mats.Get(Mats.FlashShield), MaxFlashes);
+            _smoke = new InstancedBatch(flashMesh, Mats.Get(Mats.Debris), MaxFlashes);
             _debris = new InstancedBatch(shardMesh, Mats.Get(Mats.Debris), MaxShards);
         }
 
@@ -86,7 +87,7 @@ namespace HexWing
         void LateUpdate()
         {
             float dt = Time.deltaTime;
-            _hot.Clear(); _cyan.Clear(); _shield.Clear(); _debris.Clear();
+            _hot.Clear(); _cyan.Clear(); _shield.Clear(); _smoke.Clear(); _debris.Clear();
 
             for (int i = 0; i < _flashCount; i++)
             {
@@ -99,12 +100,15 @@ namespace HexWing
                     continue;
                 }
                 float t = f.Age / f.Life;
-                float s = f.Size * (t < 0.15f ? Mathf.Lerp(0.5f, 1f, t / 0.15f) : Mathf.Lerp(1f, 0.05f, (t - 0.15f) / 0.85f));
+                float s = f.Kind == FlashKind.Smoke
+                    ? f.Size * Mathf.Lerp(0.4f, 1.6f, t) * (1f - t * t)   // smoke puffs grow, then thin out
+                    : f.Size * (t < 0.15f ? Mathf.Lerp(0.5f, 1f, t / 0.15f) : Mathf.Lerp(1f, 0.05f, (t - 0.15f) / 0.85f));
                 var m = Matrix4x4.TRS(f.Position, Quaternion.identity, Vector3.one * s);
                 switch (f.Kind)
                 {
                     case FlashKind.Muzzle: _cyan.Add(m); break;
                     case FlashKind.Shield: _shield.Add(m); break;
+                    case FlashKind.Smoke: _smoke.Add(m); break;
                     default: _hot.Add(m); break;
                 }
             }
@@ -128,7 +132,7 @@ namespace HexWing
             _flashNext %= Mathf.Max(1, _flashCount);
             _shardNext %= Mathf.Max(1, _shardCount);
 
-            _hot.Draw(); _cyan.Draw(); _shield.Draw(); _debris.Draw();
+            _hot.Draw(); _cyan.Draw(); _shield.Draw(); _smoke.Draw(); _debris.Draw();
         }
 
         public void ClearAll() { _flashCount = 0; _shardCount = 0; }

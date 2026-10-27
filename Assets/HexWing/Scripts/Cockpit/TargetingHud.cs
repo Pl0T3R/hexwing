@@ -7,10 +7,10 @@ namespace HexWing
     /// projection on the glass). Each marker sits at a fixed distance from the eye in the true direction
     /// of what it marks, so its size in view is constant and the eyes don't refocus between markers:
     /// - the crosshair (a hexagon) where the guns converge; it pulses on every hit,
-    /// - a small diamond on every enemy in range ahead,
+    /// - a small diamond on every enemy in range ahead, a small white triangle on every wingman,
     /// - brackets on the current target: white, closing in while locking, amber and turning when locked,
     /// - the lead marker: aim the crosshair at it and the bolts meet the target.
-    /// All markers are instanced: 5 draw calls at most.
+    /// All markers are instanced: 6 draw calls at most.
     /// </summary>
     public class TargetingHud : MonoBehaviour
     {
@@ -20,7 +20,7 @@ namespace HexWing
         Transform _eye;
         ShipWeapons _weapons;
         Damageable _self;
-        InstancedBatch _crosshair, _diamonds, _bracketWhite, _bracketAmber, _lead;
+        InstancedBatch _crosshair, _diamonds, _allies, _bracketWhite, _bracketAmber, _lead;
         float _hitPulse;
 
         void Start()
@@ -32,6 +32,7 @@ namespace HexWing
             var cyan = Mats.Get(Mats.HudCyan);
             _crosshair = new InstancedBatch(Outline(6, 0.5f, 0.06f, 30f), cyan, 1);
             _diamonds = new InstancedBatch(Outline(4, 0.5f, 0.1f, 0f), cyan, 64);
+            _allies = new InstancedBatch(Outline(3, 0.5f, 0.12f, 90f), Mats.Get(Mats.HudWhite), 16);
             var bracket = Brackets();
             _bracketWhite = new InstancedBatch(bracket, Mats.Get(Mats.HudWhite), 1);
             _bracketAmber = new InstancedBatch(bracket, Mats.Get(Mats.HudAmber), 1);
@@ -66,7 +67,7 @@ namespace HexWing
             float d = cfg.hudDistance;
             var eye = _eye.position;
             var up = transform.up;
-            _crosshair.Clear(); _diamonds.Clear(); _bracketWhite.Clear(); _bracketAmber.Clear(); _lead.Clear();
+            _crosshair.Clear(); _diamonds.Clear(); _allies.Clear(); _bracketWhite.Clear(); _bracketAmber.Clear(); _lead.Clear();
             bool alive = _self == null || _self.Alive;
 
             if (alive)
@@ -80,10 +81,11 @@ namespace HexWing
                 for (int i = 0; i < all.Count; i++)
                 {
                     var t = all[i];
-                    if (t == _self || !t.Alive || !t.Targetable || t.Team == Team.Player || t.Team == Team.Neutral || t == target) continue;
+                    if (t == _self || !t.Alive || !t.Targetable || t.Team == Team.Neutral || t == target) continue;
                     var to = t.transform.position - eye;
                     if (to.sqrMagnitude > cfg.targetRange * cfg.targetRange || Vector3.Dot(to, _eye.forward) <= 0f) continue;
-                    Place(_diamonds, eye, t.transform.position, d, DiamondDeg, up, 0f);
+                    if (t.Team == Team.Player) Place(_allies, eye, t.transform.position, d, DiamondDeg * 0.8f, up, 0f);   // wingmen: small white triangles
+                    else Place(_diamonds, eye, t.transform.position, d, DiamondDeg, up, 0f);
                 }
 
                 if (target != null && target.Alive)
@@ -97,7 +99,7 @@ namespace HexWing
                 }
             }
 
-            _crosshair.Draw(); _diamonds.Draw(); _bracketWhite.Draw(); _bracketAmber.Draw(); _lead.Draw();
+            _crosshair.Draw(); _diamonds.Draw(); _allies.Draw(); _bracketWhite.Draw(); _bracketAmber.Draw(); _lead.Draw();
         }
 
         static void Place(InstancedBatch batch, Vector3 eye, Vector3 worldTarget, float distance, float degrees, Vector3 up, float spin)

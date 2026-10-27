@@ -9,6 +9,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 ## Current state
 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
+- M4 is written: AI pilots (attack with lead and aim error, bursts, break-off, evasion, wingmen escort), three original fighters (Hornet, Trident elite, Swallow wingman), the Survival mode with waves, an elite every 5th wave, 2 wingmen, score and best score, and missile/lock warnings.
 - M3 is written: lasers (pooled, swept, instanced), gun heat and overheat, targeting with the holographic HUD and a lead marker, lock-on and homing missiles, hull and shields, the evasive maneuver (jink or roll), target drones in a new drone range mode, hit feedback (haptics, sounds, cockpit lights) and a mode switch.
 - M2 is written: the flight model with throttle bands and arena bounds, the input layer with control schemes A/B/C, comfort options (vignette, auto-level, turn limit), the rings course, cockpit texts, the moving stick and throttle, space dust and synthesized ship sounds.
 - It was written in a cloud session with no Unity editor. It compiles to 0 errors and 0 warnings against the Unity 6000.0.85f1 DLLs plus stubs copied from the Meta XR Core SDK sources.
@@ -99,6 +100,18 @@ Buttons (every scheme): flying hand's trigger = guns; the other trigger = lock-o
 - [ ] Rings course still works as in M2 (hold the menu button to go back).
 - [ ] Performance in the drone range while firing continuously with 2 missiles in the air: 90 fps, at most 150 draw calls (expect about 50).
 
+## M4 checklist
+
+Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`).
+
+- [ ] `FALA 1` and `WROGOWIE 3` on the right display for 4 s, two light-grey wingmen with cyan engines fly in beside you (small white triangles on the HUD). Then enemies appear far ahead: dark Hornets with red engines and forward-swept wings (cyan diamonds).
+- [ ] Enemies come at you, bank into turns, fire red bolts in bursts when lined up, break away instead of ramming, and turn back in. Early waves miss a lot, later ones less (`skill` in the log line of each wave).
+- [ ] Shooting an enemy that's on fire (below 50% hull) leaves dark smoke behind it. Kills: explosion and debris, score +100. Wingmen also shoot enemies and can be shot down (`SKRZ.` count); they come back at the next wave.
+- [ ] Clearing a wave: +250, the next wave is bigger. Wave 5: `UWAGA: GROT!`, a near-black Trident with three blade wings and amber glow; it locks on (`NAMIERZA CIĘ!`, low beeps) and fires missiles (`RAKIETA! UNIK (X)` in red, fast beeps, a light buzz). An evasive breaks the missile's lock.
+- [ ] Getting shot down: the view stops, `KONIEC GRY` or `NOWY REKORD!` with wave, kills and score for 6 s, then a fade and a new game. The best score and wave survive an app restart.
+- [ ] Performance with 12 enemies, 2 wingmen and a full dogfight: 90 fps. Expect about 80 draw calls; watch CPU time (AI and raycasts) in `metavr perf`.
+- [ ] 20 minutes of Survival: comfort report (vignette level, any moment that felt bad).
+
 ## Where to tune
 
 - `Resources/GameConfig.asset` (made by Build Game; edit in the Inspector, also in Play mode):
@@ -112,6 +125,8 @@ Buttons (every scheme): flying hand's trigger = guns; the other trigger = lock-o
   - `arena`: radius (3 km) and the out-of-bounds countdown,
   - `course`: ring count, seed, ring radius, spacing, maximum turn and climb, result time,
   - `combat`: laser speed (800 m/s), range, damage, fire rate, heat per shot, cooling, overheat lockout, convergence, spread, bolt size; target and lock cones, lock time, HUD distance (30 m); missile speed, turn rate, damage, cooldown, lifetime, fuse; player hull, shields, shield delay and regen, collision damage; evasive style (Jink / Roll), cooldown, jink distance and time, lock-breaking time,
+  - `ai`: rookie → ace ranges for aim error, reaction, fire cone, burst pause, evade chance, laser damage and turn rates; fire range, burst length, break-off distance, extend time, decisions per second, wingman offset,
+  - `survival`: wingmen, wave sizes, max alive, elite every n waves, wave of full skill, gap between waves, spawn distance and cone, hull and shields of enemies, elites and wingmen, score values,
   - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
   - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
@@ -128,5 +143,6 @@ Buttons (every scheme): flying hand's trigger = guns; the other trigger = lock-o
 - **Twist roll and axes:** the sign conventions (push forward = nose down, twist clockwise = roll right) were derived on paper. If any axis is reversed on the headset, fix it in `PlayerInput`, not with the invert option.
 - **Lock-on button:** the plan had lock-on on the right grip, but scheme B uses that grip for the stick, so lock-on is the other hand's trigger in every scheme.
 - **Holographic HUD:** markers are drawn 30 m from the eye in the true direction of what they mark (`combat.hudDistance`). If they are uncomfortable to focus on, try 15–60 m. They are depth-tested, so the canopy frame hides them.
+- **AI** (`AI/AIPilot.cs`) was tuned on paper. If enemies are too hard, lower `ai.damageScale` and raise `ai.aimError` first; if they circle without fighting, raise `ai.fireCone`; if they ram, raise `ai.breakOffDistance`. Its axis signs follow `ShipFlight` (pitch + = nose up, yaw + = right, roll + = right).
 - **Bolt sweeps** use `Physics.RaycastNonAlloc` over the distance flown each frame; drones and the player have sphere colliders. With many enemies in M4, watch the `Physics.Raycast` time in the profiler.
 - **Near clip:** 0.03 m because the cockpit is close. If the far ships flicker later (z-fighting), raise it before lowering the far plane.

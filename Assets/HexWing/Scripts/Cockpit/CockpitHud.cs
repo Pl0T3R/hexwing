@@ -73,6 +73,7 @@ namespace HexWing
                 _cockpit.Right.SetColor(Red);
                 return;
             }
+            if (Survival.Instance != null && Survival.Instance.isActiveAndEnabled) { SurvivalDisplay(Survival.Instance); return; }
             if (DroneRange.Instance != null && DroneRange.Instance.isActiveAndEnabled) { RangeDisplay(DroneRange.Instance); return; }
             var course = RingsCourse.Instance;
             if (course == null || !course.isActiveAndEnabled) { _cockpit.Right.SetText(""); return; }
@@ -95,6 +96,60 @@ namespace HexWing
             if (course.BestTime > 0f) _sb.Append("REKORD ").Append(FormatTime(course.BestTime));
             _cockpit.Right.SetText(_sb.ToString());
             _cockpit.Right.SetColor(course.Phase == RingsCourse.State.Finished ? Amber : Cyan);
+        }
+
+        void SurvivalDisplay(Survival mode)
+        {
+            _sb.Clear();
+            switch (mode.Phase)
+            {
+                case Survival.State.Intro:
+                    _sb.Append("FALA ").Append(mode.Wave).Append('\n');
+                    if (mode.EliteWave) _sb.Append("UWAGA: GROT!\n");
+                    _sb.Append("WROGOWIE ").Append(mode.EnemiesLeft).Append('\n');
+                    break;
+                case Survival.State.Fighting:
+                    _sb.Append("FALA ").Append(mode.Wave).Append("  WROGOWIE ").Append(mode.EnemiesLeft).Append('\n');
+                    Threats();
+                    break;
+                default:
+                    _sb.Append(mode.NewBest ? "NOWY REKORD!\n" : "KONIEC GRY\n");
+                    _sb.Append("FALA ").Append(mode.Wave).Append("  ZESTRZELONE ").Append(mode.Kills).Append('\n');
+                    break;
+            }
+            _sb.Append("WYNIK ").Append(mode.Score).Append("  SKRZ. ").Append(mode.WingmenAlive).Append('\n');
+            _sb.Append("REKORD ").Append(mode.BestScore).Append(" (FALA ").Append(mode.BestWave).Append(')');
+            _cockpit.Right.SetText(_sb.ToString());
+            bool alert = mode.Phase != Survival.State.Fighting || _threat;
+            _cockpit.Right.SetColor(_threat ? Red : alert ? Amber : Cyan);
+        }
+
+        bool _threat;
+
+        /// <summary>Missile chasing the player, or an enemy locking on: a warning line, beeps and a buzz.</summary>
+        void Threats()
+        {
+            _threat = false;
+            var me = _health;
+            if (me == null || !me.Alive) return;
+            if (MissileSystem.Instance != null && MissileSystem.Instance.IsChasing(me))
+            {
+                _sb.Append("RAKIETA! UNIK (X)\n");
+                _threat = true;
+                ShipAudio.Instance?.PlayMissileWarning(true);
+                Haptics.PlayBoth(GameConfig.Instance.haptics.missileWarning);
+                return;
+            }
+            var all = ShipWeapons.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var w = all[i];
+                if (w.IsPlayer || w.Target != me || w.LockProgress <= 0f) continue;
+                _sb.Append("NAMIERZA CIĘ!\n");
+                _threat = true;
+                ShipAudio.Instance?.PlayMissileWarning(false);
+                return;
+            }
         }
 
         void RangeDisplay(DroneRange range)

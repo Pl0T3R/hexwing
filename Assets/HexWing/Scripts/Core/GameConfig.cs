@@ -22,6 +22,8 @@ namespace HexWing
         public CourseSettings course = new();
         public CombatSettings combat = new();
         public DroneSettings drones = new();
+        public AISettings ai = new();
+        public SurvivalSettings survival = new();
         public HapticSettings haptics = new();
         public DebugSettings debug = new();
 
@@ -297,6 +299,64 @@ namespace HexWing
         public float radius = 4f;
     }
 
+    /// <summary>AI pilot skill: each value goes from the "rookie" end (skill 0) to the "ace" end (skill 1).</summary>
+    [Serializable]
+    public class AISettings
+    {
+        [Tooltip("Aim error (deg), rookie → ace.")]
+        public Vector2 aimError = new(4.5f, 1.2f);
+        [Tooltip("Seconds before reacting to a new situation, rookie → ace.")]
+        public Vector2 reaction = new(0.7f, 0.2f);
+        [Tooltip("Fires when the lead point is within this angle (deg), rookie → ace.")]
+        public Vector2 fireCone = new(7f, 3.5f);
+        public float fireRange = 900f;
+        [Tooltip("Seconds of fire, then a pause (rookie → ace pause).")]
+        public float burstSeconds = 1.1f;
+        public Vector2 burstPause = new(1.2f, 0.4f);
+        [Tooltip("Chance to break away when hit or chased, rookie → ace.")]
+        public Vector2 evadeChance = new(0.25f, 0.75f);
+        [Tooltip("Laser damage relative to the player's, rookie → ace (keeps early waves fair).")]
+        public Vector2 damageScale = new(0.35f, 0.8f);
+        [Tooltip("Turn rates relative to the player's ship, rookie → ace.")]
+        public Vector2 turnScale = new(0.75f, 1.0f);
+        [Tooltip("Breaks off when closer than this to its target (m), then comes around again.")]
+        public float breakOffDistance = 140f;
+        [Tooltip("Seconds of flying away before turning back in.")]
+        public float extendSeconds = 2.2f;
+        [Tooltip("Decisions per second (steering runs every frame).")]
+        public float thinkRate = 10f;
+        [Tooltip("Wingmen hold this offset from the player (m: right, up, back) when they have no target.")]
+        public Vector3 wingOffset = new(45f, 8f, -35f);
+    }
+
+    [Serializable]
+    public class SurvivalSettings
+    {
+        [Tooltip("Allied AI fighters flying with the player; they come back at every wave.")]
+        public int wingmen = 2;
+        [Tooltip("Enemies in wave n: first + perWave × (n − 1), up to max alive at once.")]
+        public int firstWave = 3;
+        public float perWave = 1f;
+        public int maxAlive = 12;
+        [Tooltip("Every n-th wave has an elite (tougher, faster, fires missiles).")]
+        public int eliteEvery = 5;
+        [Tooltip("Wave at which enemy skill reaches 1 (ace).")]
+        public int fullSkillWave = 12;
+        public float waveGap = 4f;
+        public Vector2 spawnDistance = new(1300f, 1800f);
+        [Tooltip("Spawns stay within this angle of the player's nose, so nobody appears right behind you.")]
+        public float spawnCone = 70f;
+        public float enemyHull = 48f;
+        public float enemyShields = 0f;
+        public float eliteHull = 130f;
+        public float eliteShields = 60f;
+        public float wingmanHull = 80f;
+        public float wingmanShields = 40f;
+        public int scorePerKill = 100;
+        public int scorePerElite = 500;
+        public int scorePerWave = 250;
+    }
+
     [Serializable]
     public class HapticPulse
     {
@@ -328,6 +388,7 @@ namespace HexWing
         public HapticPulse locked = new(0.8f, 0.4f, 0.08f);
         public HapticPulse missile = new(0.4f, 0.7f, 0.15f);
         public HapticPulse evasive = new(0.5f, 0.5f, 0.1f);
+        public HapticPulse missileWarning = new(0.2f, 0.35f, 0.08f);
         [Tooltip("Constant light rumble while boosting (amplitude).")]
         [Range(0f, 1f)] public float boostRumble = 0.12f;
     }

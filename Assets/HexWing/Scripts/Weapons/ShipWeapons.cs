@@ -21,7 +21,14 @@ namespace HexWing
     {
         static readonly Vector3[] Guns = { new(-1.7f, -0.55f, 2.6f), new(1.7f, -0.55f, 2.6f) };
 
+        public static readonly System.Collections.Generic.List<ShipWeapons> All = new();
+
         public bool IsPlayer = true;
+        /// <summary>AI difficulty: laser damage and fire rate relative to the config.</summary>
+        public float DamageScale = 1f;
+        public float FireRateScale = 1f;
+        /// <summary>Can lock on and fire missiles (the player, elite AI).</summary>
+        public bool HasMissiles = true;
 
         public float Heat { get; private set; }
         public bool Overheated => _lockoutLeft > 0f;
@@ -51,6 +58,12 @@ namespace HexWing
             _self = GetComponent<Damageable>();
         }
 
+        void OnEnable() => All.Add(this);
+        void OnDisable() => All.Remove(this);
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => All.Clear();
+
         public void ResetWeapons()
         {
             Heat = 0f;
@@ -79,7 +92,7 @@ namespace HexWing
 
             if (c.Fire && _lockoutLeft <= 0f && Time.time >= _nextShot)
             {
-                _nextShot = Time.time + 1f / cfg.fireRate;
+                _nextShot = Time.time + 1f / (cfg.fireRate * Mathf.Max(0.05f, FireRateScale));
                 Shoot(cfg);
                 Heat += cfg.heatPerShot;
                 if (Heat >= 1f)
@@ -110,7 +123,7 @@ namespace HexWing
             if (Target != null) LeadPoint = Lead(Target, cfg.laserSpeed);
 
             // --- lock-on and missiles -----------------------------------------------------------
-            bool lockNow = c.Lock;
+            bool lockNow = c.Lock && HasMissiles;
             if (lockNow && Target != null && MissileCooldownLeft <= 0f)
             {
                 if (LockProgress < 1f)
@@ -149,8 +162,8 @@ namespace HexWing
             if (cfg.spread > 0f)
                 dir = Quaternion.Euler(Rand() * cfg.spread, Rand() * cfg.spread, 0f) * dir;
             var team = _self != null ? _self.Team : (IsPlayer ? Team.Player : Team.Enemy);
-            LaserSystem.Instance?.Fire(gun, dir, _flight.Velocity, _self, team, cfg.laserDamage);
-            Effects.Instance?.SpawnFlash(gun + transform.forward * 0.6f, 0.9f, 0.06f, Effects.FlashKind.Muzzle);
+            LaserSystem.Instance?.Fire(gun, dir, _flight.Velocity, _self, team, cfg.laserDamage * DamageScale);
+            Effects.Instance?.SpawnFlash(gun + transform.forward * 0.6f, 0.9f, 0.06f, team == Team.Player ? Effects.FlashKind.Muzzle : Effects.FlashKind.Impact);
             Fired?.Invoke(_gun);
             if (IsPlayer)
             {

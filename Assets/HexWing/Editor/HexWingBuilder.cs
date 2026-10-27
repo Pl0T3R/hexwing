@@ -275,6 +275,11 @@ namespace HexWing.EditorTools
             Faceted(Mats.Drone, Hex("#B8BEC6"), Hex("#3C424C"), Hex("#C8D8E8"), 0.3f, 0.5f, 48f, 0f);
             Faceted(Mats.DroneCore, Hex("#FF5533"), Hex("#FF5533"), Color.white, 0f, 0f, 8f, 1f);
             Faceted(Mats.Missile, Hex("#D8DDE3"), Hex("#4A5058"), Hex("#FFFFFF"), 0.3f, 0.6f, 64f, 0f);
+            // AI fighters: enemies dark with a red rim and red glow, the elite near black, wingmen light grey
+            Faceted(Mats.EnemyHull, Hex("#5A5F68"), Hex("#1A1C21"), Hex("#FF6A50"), 0.45f, 0.4f, 40f, 0f);
+            Faceted(Mats.EliteHull, Hex("#2E3138"), Hex("#0C0D10"), Hex("#FFB347"), 0.55f, 0.5f, 56f, 0f);
+            Faceted(Mats.EnemyGlow, Hex("#FF3B2F"), Hex("#FF3B2F"), Color.white, 0f, 0f, 8f, 1f);
+            Faceted(Mats.AllyHull, Hex("#C9CED6"), Hex("#454B55"), Hex("#9FE4FF"), 0.35f, 0.5f, 48f, 0f);
             Translucent(Mats.FlashShield, new Color(0.5f, 0.78f, 1f, 0.45f), CompareFunction.LessEqual);
             // holographic HUD markers: depth-tested, so the cockpit frame hides them
             Translucent(Mats.HudCyan, new Color(0.37f, 0.83f, 1f, 0.9f), CompareFunction.LessEqual);
@@ -347,7 +352,7 @@ namespace HexWing.EditorTools
 
         /// <summary>
         /// Flight scene: space skybox, the systems (performance, sun, start-up, space dust, lasers, missiles,
-        /// effects, and the modes: rings course and drone range) and
+        /// effects, and the modes: rings course, drone range and survival) and
         /// the player ship: cockpit with the camera rig at the eye point (seated, eye-level tracking), input,
         /// flight model, arena bounds, HUD and instruments, comfort (fade, vignette, recenter) and sound.
         /// </summary>
@@ -377,6 +382,7 @@ namespace HexWing.EditorTools
             modes.AddComponent<ModeDirector>();
             new GameObject("Mode Rings Course").AddComponent<RingsCourse>().transform.SetParent(modes.transform, false);
             new GameObject("Mode Drone Range").AddComponent<DroneRange>().transform.SetParent(modes.transform, false);
+            new GameObject("Mode Survival").AddComponent<Survival>().transform.SetParent(modes.transform, false);
 
             var ship = new GameObject("PlayerShip");
             ship.AddComponent<PlayerCockpit>();
