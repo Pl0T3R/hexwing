@@ -20,6 +20,7 @@ namespace HexWing
         readonly AudioSource[] _world = new AudioSource[6];
         int _nextWorld;
         AudioClip _flyby;
+        AudioSource _flybySource;
         float _nextFlyby;
 
         /// <summary>The engine drone, also used (3D, quieter) by AI ships.</summary>
@@ -58,19 +59,8 @@ namespace HexWing
             _gunLeft.panStereo = -0.45f;
             _gunRight = Source("Gun Right", null, 0.5f);
             _gunRight.panStereo = 0.45f;
-            for (int i = 0; i < _world.Length; i++)
-            {
-                var go = new GameObject("Audio World " + i);
-                go.transform.SetParent(transform.parent, false);   // not on the ship: these stay where things blew up
-                var a = go.AddComponent<AudioSource>();
-                a.spatialBlend = 1f;
-                a.rolloffMode = AudioRolloffMode.Linear;
-                a.minDistance = 30f;
-                a.maxDistance = 1800f;
-                a.dopplerLevel = 0f;
-                a.playOnAwake = false;
-                _world[i] = a;
-            }
+            _flybySource = WorldSource("Audio Flyby");
+            for (int i = 0; i < _world.Length; i++) _world[i] = WorldSource("Audio World " + i);
             _engine.Play();
             _boost.Play();
         }
@@ -117,16 +107,31 @@ namespace HexWing
         /// <summary>Called a few times a second while threatened: fast high beeps for a missile, slower low ones for a lock.</summary>
         public void PlayMissileWarning(bool missile) => _oneShots.PlayOneShot(missile ? _warnMissile : _warnLock, 0.5f);
 
-        /// <summary>An enemy bolt passing close by: a short hiss from where it passed (at most a few per second).</summary>
+        /// <summary>
+        /// An enemy bolt passing close by: a short hiss from where it passed (at most a few per second). It has
+        /// its own source, so it never moves or re-pitches an explosion still ringing out on the shared ones.
+        /// </summary>
         public void PlayFlyby(Vector3 position)
         {
             if (Time.unscaledTime < _nextFlyby) return;
             _nextFlyby = Time.unscaledTime + 0.15f;
-            var a = _world[_nextWorld];
-            _nextWorld = (_nextWorld + 1) % _world.Length;
-            a.transform.position = position;
-            a.pitch = 1f;
-            a.PlayOneShot(_flyby, 0.6f);
+            _flybySource.transform.position = position;
+            _flybySource.PlayOneShot(_flyby, 0.6f);
+        }
+
+        /// <summary>A 3D source placed in the world (not on the ship, so it stays where the sound happened).</summary>
+        AudioSource WorldSource(string name)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(transform.parent, false);
+            var a = go.AddComponent<AudioSource>();
+            a.spatialBlend = 1f;
+            a.rolloffMode = AudioRolloffMode.Linear;
+            a.minDistance = 30f;
+            a.maxDistance = 1800f;
+            a.dopplerLevel = 0f;
+            a.playOnAwake = false;
+            return a;
         }
 
         /// <summary>An explosion out in the world, heard from where it happened.</summary>

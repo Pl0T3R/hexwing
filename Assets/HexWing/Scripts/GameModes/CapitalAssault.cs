@@ -11,7 +11,7 @@ namespace HexWing
     /// </summary>
     public class CapitalAssault : MonoBehaviour, IGameMode, IGuidedMode, IPlayerDeathHandler
     {
-        const string BestKey = "HexWing.Assault.BestScore";
+        const string BestKey = SaveKeys.AssaultBestScore;
         const float ResultSeconds = 9f;
 
         public static CapitalAssault Instance { get; private set; }
@@ -178,7 +178,7 @@ namespace HexWing
         void Win()
         {
             SetPhase(State.Won);
-            PlayerPrefs.SetInt("HexWing.Assault.Won", 1);   // unlocks a cockpit colour
+            PlayerPrefs.SetInt(SaveKeys.AssaultWon, 1);   // unlocks a cockpit colour
             SaveBest();
             PlayerPrefs.Save();
             Debug.Log($"[HexWing] Assault won: score {Score}, {TimeLeft:F0} s left, {LivesLeft} lives left.");

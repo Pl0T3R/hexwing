@@ -22,6 +22,9 @@ namespace HexWing
         MenuPanel _panel;
         PlayerInput _input;
         Page _page, _back;
+        /// <summary>A started run is waiting behind the menu (so the hangar can go back to it).</summary>
+        bool _runInProgress;
+        bool _wasRestarting;
 
         void Awake() => Instance = this;
 
@@ -33,11 +36,16 @@ namespace HexWing
 
         void Update()
         {
-            if (!OVRInput.GetDown(OVRInput.Button.Start, OVRInput.Controller.LTouch)) return;
-            if (ModeDirector.Instance != null && ModeDirector.Instance.Restarting) return;
+            // mode and ship changes apply after their fade: show the new labels once it's done
+            bool restarting = ModeDirector.Instance != null && ModeDirector.Instance.Restarting;
+            if (_wasRestarting && !restarting && Open) _panel.Refresh();
+            _wasRestarting = restarting;
+
+            if (!OVRInput.GetDown(OVRInput.Button.Start, OVRInput.Controller.LTouch) || restarting) return;
             if (!Open) ShowPause();
             else if (_page == Page.Pause) Close();
             else if (_page is Page.Controls or Page.Comfort or Page.Stats) Show(_back);
+            else if (_page == Page.Hangar && _runInProgress) ShowPause();
         }
 
         /// <summary>Opens the hangar (called once the first mode is set up, and from the pause menu).</summary>
@@ -73,7 +81,17 @@ namespace HexWing
             _panel.Hide();
             InHangar = false;
             GamePause.Set(GamePause.Reason.Menu, false);
+            _input?.SuppressUntilReleased();   // the trigger or A that chose the item must not fire or use an ability
         }
+
+        void StartRun(string reason)
+        {
+            Close();
+            _runInProgress = true;
+            ModeDirector.Instance?.Restart(reason);
+        }
+
+        bool Busy => ModeDirector.Instance != null && ModeDirector.Instance.Restarting;
 
         void SubPage(Page page)
         {
@@ -87,22 +105,31 @@ namespace HexWing
         {
             var d = ModeDirector.Instance;
             var player = PlayerShip.Instance;
-            return new List<MenuEntry>
+            var items = new List<MenuEntry>();
+            if (_runInProgress) items.Add(new MenuEntry("< WRÓĆ DO GRY", Close));
+            items.AddRange(new List<MenuEntry>
             {
-                new(() => "> START: " + (d != null ? d.Current.Title : "?"), () =>
+                new(() => "> START: " + (d != null ? d.Current.Title : "?"), () => { if (!Busy) StartRun("start"); }),
+                new(() => "TRYB: " + (d != null ? d.Current.Title : "?") + "  >", () =>
                 {
-                    Close();
-                    d?.Restart("start");
+                    if (Busy) return;
+                    _runInProgress = false;   // switching resets the mode
+                    d?.SelectNextMode();
                 }),
-                new(() => "TRYB: " + (d != null ? d.Current.Title : "?") + "  >", () => d?.SelectNextMode()),
-                new(() => "STATEK: " + (player != null && player.Definition != null ? player.Definition.displayName : "?") + "  >", () => player?.SelectNextShip()),
+                new(() => "STATEK: " + (player != null && player.Definition != null ? player.Definition.displayName : "?") + "  >", () =>
+                {
+                    if (Busy) return;
+                    _runInProgress = false;
+                    player?.SelectNextShip();
+                }),
                 new(() => "KOLOR: " + Progression.Paints[Progression.SelectedPaint].Name + "  (" + Progression.UnlockedCount + "/" + Progression.Paints.Length + ")  >",
                     () => { Progression.NextPaint(); player?.RefreshColor(); }),
                 new("STEROWANIE ...", () => SubPage(Page.Controls)),
                 new("KOMFORT ...", () => SubPage(Page.Comfort)),
                 new("STATYSTYKI ...", () => SubPage(Page.Stats)),
                 new("WYJDŹ Z GRY", Application.Quit),
-            };
+            });
+            return items;
         }
 
         List<MenuEntry> PauseItems()
@@ -110,7 +137,7 @@ namespace HexWing
             return new List<MenuEntry>
             {
                 new("WZNÓW", Close),
-                new("RESTART", () => { Close(); ModeDirector.Instance?.Restart("restart z menu"); }),
+                new("RESTART", () => { if (!Busy) StartRun("restart z menu"); }),
                 new("HANGAR", ShowHangar),
                 new("STEROWANIE ...", () => SubPage(Page.Controls)),
                 new("KOMFORT ...", () => SubPage(Page.Comfort)),
@@ -155,10 +182,10 @@ namespace HexWing
             return new List<MenuEntry>
             {
                 new(() => "ZESTRZELENIA: " + Progression.TotalKills, null),
-                new(() => "PRZETRWANIE: " + PlayerPrefs.GetInt("HexWing.Survival.BestScore", 0) + " (FALA " + PlayerPrefs.GetInt("HexWing.Survival.BestWave", 0) + ")", null),
-                new(() => "SZTURM: " + PlayerPrefs.GetInt("HexWing.Assault.BestScore", 0), null),
-                new(() => "ESKORTA: " + PlayerPrefs.GetInt("HexWing.Escort.BestScore", 0), null),
-                new(() => "TRENING: " + (PlayerPrefs.GetInt("HexWing.TrainingDone", 0) == 1 ? "UKOŃCZONY" : "NIE"), null),
+                new(() => "PRZETRWANIE: " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestScore, 0) + " (FALA " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) + ")", null),
+                new(() => "SZTURM: " + PlayerPrefs.GetInt(SaveKeys.AssaultBestScore, 0), null),
+                new(() => "ESKORTA: " + PlayerPrefs.GetInt(SaveKeys.EscortBestScore, 0), null),
+                new(() => "TRENING: " + (PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 ? "UKOŃCZONY" : "NIE"), null),
                 new(() => "KOLORY: " + Progression.UnlockedCount + "/" + Progression.Paints.Length + NextUnlock(), null),
                 new("< WSTECZ", () => Show(_back)),
             };

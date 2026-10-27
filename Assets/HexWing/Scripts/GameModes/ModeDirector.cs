@@ -81,6 +81,7 @@ namespace HexWing
             LaserSystem.Instance?.ClearAll();
             MissileSystem.Instance?.ClearAll();
             Effects.Instance?.ClearAll();
+            Damageable.PruneCache();
             if (modeIndex != _index) Activate(modeIndex);
             MapTheme.Apply(Current is IMapMode mapped ? mapped.Map : Map.Orbit);
             PlayerShip.Instance?.Respawn(Current.StartPose);

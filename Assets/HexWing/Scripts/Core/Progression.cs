@@ -9,8 +9,8 @@ namespace HexWing
     /// </summary>
     public static class Progression
     {
-        const string KillsKey = "HexWing.Stats.Kills";
-        const string ColorKey = "HexWing.CockpitColor";
+        const string KillsKey = SaveKeys.Kills;
+        const string ColorKey = SaveKeys.CockpitColor;
 
         public struct Paint
         {
@@ -26,12 +26,12 @@ namespace HexWing
         public static readonly Paint[] Paints =
         {
             new() { Name = "KLASY", Color = Color.clear, Unlock = "", Unlocked = () => true },
-            new() { Name = "BIEL", Color = new Color(0.9f, 0.94f, 1f), Unlock = "TRENING", Unlocked = () => PlayerPrefs.GetInt("HexWing.TrainingDone", 0) == 1 },
+            new() { Name = "BIEL", Color = new Color(0.9f, 0.94f, 1f), Unlock = "TRENING", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 },
             new() { Name = "ZIELEŃ", Color = new Color(0.33f, 1f, 0.6f), Unlock = "25 ZESTRZELEŃ", Unlocked = () => TotalKills >= 25 },
             new() { Name = "FIOLET", Color = new Color(0.7f, 0.55f, 1f), Unlock = "100 ZESTRZELEŃ", Unlocked = () => TotalKills >= 100 },
-            new() { Name = "BŁĘKIT", Color = new Color(0.3f, 0.66f, 1f), Unlock = "FALA 10", Unlocked = () => PlayerPrefs.GetInt("HexWing.Survival.BestWave", 0) >= 10 },
-            new() { Name = "CZERWIEŃ", Color = new Color(1f, 0.35f, 0.29f), Unlock = "ESKORTA", Unlocked = () => PlayerPrefs.GetInt("HexWing.Escort.Won", 0) == 1 },
-            new() { Name = "ZŁOTO", Color = new Color(1f, 0.82f, 0.29f), Unlock = "SZTURM", Unlocked = () => PlayerPrefs.GetInt("HexWing.Assault.Won", 0) == 1 },
+            new() { Name = "BŁĘKIT", Color = new Color(0.3f, 0.66f, 1f), Unlock = "FALA 10", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) >= 10 },
+            new() { Name = "CZERWIEŃ", Color = new Color(1f, 0.35f, 0.29f), Unlock = "ESKORTA", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.EscortWon, 0) == 1 },
+            new() { Name = "ZŁOTO", Color = new Color(1f, 0.82f, 0.29f), Unlock = "SZTURM", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.AssaultWon, 0) == 1 },
         };
 
         public static int SelectedPaint

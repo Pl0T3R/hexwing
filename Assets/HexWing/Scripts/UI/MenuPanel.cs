@@ -35,7 +35,7 @@ namespace HexWing
         CockpitDisplay _title;
         readonly CockpitDisplay[] _rows = new CockpitDisplay[MaxRows];
         readonly List<MenuEntry> _items = new();
-        int _hover = -1, _selected;
+        int _hover = -1, _selected, _colored = -2;
         bool _trigger, _stickMoved;
         PlayerCockpit _cockpit;
         PlayerInput _input;
@@ -93,7 +93,8 @@ namespace HexWing
             _items.Clear();
             _items.AddRange(items);
             _title.SetText(title);
-            _selected = Mathf.Clamp(_selected, 0, Mathf.Max(0, _items.Count - 1));
+            _selected = 0;   // a new page starts at its first line, so a quick second press can't hit an unrelated row
+            _colored = -2;
             Refresh();
             SetVisible(true);
         }
@@ -160,7 +161,12 @@ namespace HexWing
 
             _highlight.gameObject.SetActive(_selected >= 0 && _selected < _items.Count);
             if (_selected >= 0) _highlight.localPosition = new Vector3(0f, RowY(_selected), 0f);
-            for (int i = 0; i < MaxRows; i++) _rows[i].SetColor(i == _selected ? new Color(0.02f, 0.05f, 0.08f) : Color.white);
+            if (_colored != _selected)
+            {
+                // only when the selection moves: setting a TextMesh colour rebuilds its mesh
+                _colored = _selected;
+                for (int i = 0; i < MaxRows; i++) _rows[i].SetColor(i == _selected ? new Color(0.02f, 0.05f, 0.08f) : Color.white);
+            }
 
             bool trigger = OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger, hand) > 0.6f;
             bool pressed = (trigger && !_trigger) || OVRInput.GetDown(OVRInput.Button.One, hand);

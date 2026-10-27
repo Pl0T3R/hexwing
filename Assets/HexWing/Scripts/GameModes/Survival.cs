@@ -18,8 +18,8 @@ namespace HexWing
     /// </summary>
     public class Survival : MonoBehaviour, IGameMode, IPlayerDeathHandler
     {
-        const string BestScoreKey = "HexWing.Survival.BestScore";
-        const string BestWaveKey = "HexWing.Survival.BestWave";
+        const string BestScoreKey = SaveKeys.SurvivalBestScore;
+        const string BestWaveKey = SaveKeys.SurvivalBestWave;
         const float SpawnInterval = 1.5f;
         const float ResultSeconds = 6f;
 

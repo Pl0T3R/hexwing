@@ -10,7 +10,7 @@ namespace HexWing
     /// </summary>
     public class Escort : MonoBehaviour, IGameMode, IGuidedMode, IPlayerDeathHandler, IMapMode
     {
-        const string BestKey = "HexWing.Escort.BestScore";
+        const string BestKey = SaveKeys.EscortBestScore;
         const float ResultSeconds = 9f;
 
         public static Escort Instance { get; private set; }
@@ -189,7 +189,7 @@ namespace HexWing
             foreach (var t in _transports) if (t.gameObject.activeSelf && t.Health.Alive) arrived++;
             Score += arrived * GameConfig.Instance.escort.scorePerTransport;
             SetPhase(State.Won);
-            PlayerPrefs.SetInt("HexWing.Escort.Won", 1);   // unlocks a cockpit colour
+            PlayerPrefs.SetInt(SaveKeys.EscortWon, 1);   // unlocks a cockpit colour
             SaveBest();
             PlayerPrefs.Save();
             Debug.Log($"[HexWing] Escort won: {arrived} transports through, score {Score}.");

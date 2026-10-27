@@ -94,6 +94,17 @@ namespace HexWing
             return d;
         }
 
+        static readonly List<Collider> Stale = new();
+
+        /// <summary>Drops cache entries of destroyed colliders (turret drones and such); called at each restart.</summary>
+        public static void PruneCache()
+        {
+            Stale.Clear();
+            foreach (var pair in ByCollider) if (pair.Key == null || pair.Value == null) Stale.Add(pair.Key);
+            foreach (var c in Stale) ByCollider.Remove(c);
+            Stale.Clear();
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {

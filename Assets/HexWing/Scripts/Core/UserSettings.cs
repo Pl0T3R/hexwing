@@ -5,8 +5,8 @@ namespace HexWing
     /// <summary>
     /// The player's own choices from the hangar menu (controls, comfort, haptics, volume, colour), kept in
     /// PlayerPrefs and laid over GameConfig at start. Only values the player changed are stored; everything
-    /// else keeps the config's value. In the Editor the config asset is restored when play mode ends, so
-    /// menu choices never change the asset.
+    /// else keeps the config's value. In the Editor the fields the menus own are put back when play mode
+    /// ends, so menu choices never change the asset, while Inspector tuning of anything else is kept.
     /// </summary>
     public static class UserSettings
     {
@@ -16,7 +16,16 @@ namespace HexWing
         public static readonly float[] HapticLevels = { 1f, 0.5f, 0f };
 
 #if UNITY_EDITOR
-        static string _snapshot;
+        /// <summary>The asset's own values of the menu-owned fields, put back when play mode ends.</summary>
+        struct Original
+        {
+            public bool SwapHands, InvertPitch, AutoLevel;
+            public float Sensitivity, TurnLimit, Haptics;
+            public VignetteLevel Vignette;
+            public EvasiveStyle Evasive;
+        }
+
+        static Original? _original;
 #endif
 
         public static float Volume { get; private set; } = 1f;
@@ -26,9 +35,14 @@ namespace HexWing
         {
             var cfg = GameConfig.Instance;
 #if UNITY_EDITOR
-            if (_snapshot == null)
+            if (_original == null)
             {
-                _snapshot = JsonUtility.ToJson(cfg);
+                _original = new Original
+                {
+                    SwapHands = cfg.controls.swapHands, InvertPitch = cfg.controls.invertPitch, Sensitivity = cfg.controls.sensitivity,
+                    Vignette = cfg.comfort.vignette, AutoLevel = cfg.comfort.autoLevel, TurnLimit = cfg.comfort.turnRateLimit,
+                    Evasive = cfg.combat.evasiveStyle, Haptics = cfg.haptics.master,
+                };
                 UnityEditor.EditorApplication.playModeStateChanged += RestoreOnExit;
             }
 #endif
@@ -47,9 +61,18 @@ namespace HexWing
 #if UNITY_EDITOR
         static void RestoreOnExit(UnityEditor.PlayModeStateChange change)
         {
-            if (change != UnityEditor.PlayModeStateChange.ExitingPlayMode || _snapshot == null) return;
-            JsonUtility.FromJsonOverwrite(_snapshot, GameConfig.Instance);
-            _snapshot = null;
+            if (change != UnityEditor.PlayModeStateChange.ExitingPlayMode || _original == null) return;
+            var o = _original.Value;
+            var cfg = GameConfig.Instance;
+            cfg.controls.swapHands = o.SwapHands;
+            cfg.controls.invertPitch = o.InvertPitch;
+            cfg.controls.sensitivity = o.Sensitivity;
+            cfg.comfort.vignette = o.Vignette;
+            cfg.comfort.autoLevel = o.AutoLevel;
+            cfg.comfort.turnRateLimit = o.TurnLimit;
+            cfg.combat.evasiveStyle = o.Evasive;
+            cfg.haptics.master = o.Haptics;
+            _original = null;
             UnityEditor.EditorApplication.playModeStateChanged -= RestoreOnExit;
         }
 #endif

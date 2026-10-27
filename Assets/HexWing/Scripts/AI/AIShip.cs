@@ -106,6 +106,9 @@ namespace HexWing
 
         void Update()
         {
+            // AudioSources ignore the time scale: hold the hum while a menu or focus loss pauses the game
+            if (GamePause.Paused) { if (_engine.isPlaying) _engine.Pause(); }
+            else if (!_engine.isPlaying && _engine.clip != null) _engine.UnPause();
             if (!Health.Alive || Health.Hull > Health.MaxHull * 0.5f) return;
             _smokeTimer -= Time.deltaTime;
             if (_smokeTimer > 0f) return;

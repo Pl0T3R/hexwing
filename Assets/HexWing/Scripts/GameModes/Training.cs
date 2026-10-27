@@ -10,7 +10,7 @@ namespace HexWing
     /// </summary>
     public class Training : MonoBehaviour, IGameMode, IGuidedMode
     {
-        const string DoneKey = "HexWing.TrainingDone";
+        const string DoneKey = SaveKeys.TrainingDone;
 
         public static Training Instance { get; private set; }
 

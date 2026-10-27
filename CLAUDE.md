@@ -118,7 +118,7 @@ Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`
 ## M5 checklist
 
 - [ ] First start: the game opens in `TRENING` (log `Mode: TRENING`). Each step shows on the right display with a hint for your scheme, the arrow points at rings and drones, a finished step chimes. Steps: throttle, left and right, 3 rings, a drone with guns, a drone with a missile, X, A and B. The end says `TRENING UKOŃCZONY!` (log `Training completed.`).
-- [ ] Hold Y for 1 s: a fade, the next ship (log `Ship: ...`). The cockpit lights change colour (Sokół cyan, Jastrząb green, Żubr amber); the side-right display shows the ship and its passive. A short Y press still changes the control scheme.
+- [ ] Hold Y (B with swapped hands) for 1 s: a fade, the next ship (log `Ship: ...`). The cockpit lights change colour (Sokół cyan, Jastrząb green, Żubr amber); the side-right display shows the ship and its passive. A short Y press still changes the control scheme.
 - [ ] Jastrząb is clearly faster and turns quicker but dies sooner; Żubr is slow, takes many hits and hits harder.
 - [ ] The centre display shows both abilities (`A:NAPRAWA OK  B:...`), their cooldown in seconds, `AKTYWNA` while running, the aiming percentage for the salvo.
 - [ ] Sokół: A = pursuit missile (needs a target: a sharply turning missile, 14 s), B = repair (hull back up by 40 over 3 s, 25 s). Passive: shields come back sooner and faster.
@@ -153,7 +153,8 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 
 - [ ] Start: the cockpit fades in with the **HANGAR** panel 1.5 m ahead (dark glass, amber title, white lines) and soft music. A cyan laser comes from the flying hand; the line under it lights up (with a light tick), the trigger (or A) chooses it. The thumbstick moves the highlight too. Game time is stopped (enemies frozen).
 - [ ] `> START: <mode>` closes the menu and starts the mode behind a fade. `TRYB` and `STATEK` switch behind a fade. `KOLOR` cycles the unlocked cockpit colours (the lights change at once). `WYJDŹ Z GRY` quits.
-- [ ] While flying, the menu button opens **PAUZA** (everything stops, the music gets louder): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page).
+- [ ] While flying, the menu button opens **PAUZA** (everything stops, the music gets louder, AI engines go quiet): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page). HANGAR from the pause menu has `< WRÓĆ DO GRY` at the top; the menu button there goes back to the pause page.
+- [ ] Choosing WZNÓW or START with the trigger or A and keeping it held: the guns don't fire and no ability triggers until the button is released.
 - [ ] **STEROWANIE**: scheme, flying hand (left/right swaps the hands at once), invert pitch, sensitivity 0.6–1.6, vibration 100/50/0%, volume 100/75/50/25/0%. **KOMFORT**: three presets (most comfortable: strong vignette, auto-level, 60°/s limit, jink; balanced; no aids: no vignette, roll), then each setting on its own. Everything survives an app restart (and in the Editor the GameConfig asset is unchanged after play).
 - [ ] **STATYSTYKI**: total kills, the best of each mode, training, colours unlocked and what unlocks the next (white: training, green: 25 kills, violet: 100, blue: wave 10, red: escort won, gold: assault won).
 - [ ] Sound: AI fighters hum as they pass (Doppler), enemy bolts that just miss hiss by, the music pad is quiet in flight and louder in menus. Pausing quiets the engine.
@@ -194,7 +195,7 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 
 - **Builder APIs:** `ConfigureOpenXR` uses reflection and logs what it can't find; set those values by hand if the log says so. The rest of the builder is the Stopklatka builder adapted for pure VR (EyeLevel tracking, no passthrough or scene).
 - **Menu over the canopy:** the panel sits in the window's clear centre; if a strut or the inner hex ring cuts through it on the headset, move it (`MenuPanel.Distance`, the y offset in `Build`) or shrink it.
-- **Player settings vs GameConfig:** settings changed in the menus are stored in PlayerPrefs and written over the config at start. To test a config value from the Inspector, reset the player's choice first (or clear PlayerPrefs), or the stored choice wins.
+- **Player settings vs GameConfig:** settings changed in the menus (hands, invert, sensitivity, vignette, auto-level, turn limit, evasive style, haptics, volume) are stored in PlayerPrefs and written over the config at start. To test one of those from the Inspector, reset the player's choice first (or clear PlayerPrefs), or the stored choice wins. In the Editor only those fields are put back after play; other Inspector tuning in Play mode stays.
 - **Text:** the cockpit screens use the legacy `TextMesh` with the built-in `LegacyRuntime.ttf`, so no TMP import is needed in M1. If Polish letters show as boxes, check the font's dynamic character set.
 - **Recenter:** `OVRManager.display.RecenterPose()` with EyeLevel tracking. If the view doesn't return to the seat, check that the tracking origin really is EyeLevel on the rig's `OVRManager`.
 - **Virtual stick (B):** positions come from `OVRInput.GetLocalControllerPosition` in tracking space, which is fixed to the cockpit. If the stick reacts to turning the ship, check that the rig has no rotation relative to the ship. If it's too twitchy or too lazy, tune `controls.stickRange` first, then `deadzone` and `curve`.

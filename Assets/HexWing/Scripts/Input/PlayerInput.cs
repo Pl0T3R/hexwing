@@ -75,12 +75,23 @@ namespace HexWing
         };
 
         float _yHeld;
+        bool _suppress;
 
-        /// <summary>Y: a short press cycles the control scheme, holding it for a second switches the ship class.</summary>
+        /// <summary>
+        /// Ignores fire, lock, abilities and evasive until all of them have been let go (after a menu closes
+        /// with the trigger or A still held, so the ship doesn't shoot or use an ability by itself).
+        /// </summary>
+        public void SuppressUntilReleased() => _suppress = true;
+
+        /// <summary>
+        /// The other hand's upper button (Y, or B with hands swapped): a short press cycles the control
+        /// scheme, holding it for a second switches the ship class. The flying hand's buttons stay abilities.
+        /// </summary>
         void Update()
         {
             var cfg = GameConfig.Instance.controls;
-            if (OVRInput.Get(OVRInput.Button.Two, OVRInput.Controller.LTouch))
+            if (GameMenu.Instance != null && GameMenu.Instance.Open) { _yHeld = 0f; return; }
+            if (OVRInput.Get(OVRInput.Button.Two, ThrottleHand))
             {
                 _yHeld += Time.unscaledDeltaTime;
                 if (_yHeld >= 1f)
@@ -153,6 +164,12 @@ namespace HexWing
             c.Ability1 = OVRInput.Get(OVRInput.Button.One, FlyHand);
             c.Ability2 = OVRInput.Get(OVRInput.Button.Two, FlyHand);
             c.Evasive = OVRInput.Get(OVRInput.Button.One, ThrottleHand);
+            if (_suppress)
+            {
+                bool any = c.Fire || c.Lock || c.Ability1 || c.Ability2 || c.Evasive;
+                if (!any) _suppress = false;
+                c.Fire = c.Lock = c.Ability1 = c.Ability2 = c.Evasive = false;
+            }
         }
 
         void VirtualStick(ref float pitch, ref float yaw, ref float roll)

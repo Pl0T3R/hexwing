@@ -82,6 +82,7 @@ namespace HexWing
         /// <summary>Switches to the next ship class (takes effect at the restart that follows).</summary>
         public void SelectNextShip()
         {
+            if (ModeDirector.Instance != null && ModeDirector.Instance.Restarting) return;   // one change per fade
             ShipIndex = (ShipIndex + 1) % ShipDefinition.All.Count;
             PlayerPrefs.SetInt(ShipKey, ShipIndex);
             PlayerPrefs.Save();

@@ -81,6 +81,15 @@ Updated after every step, so any session can pick up the work.
 - `Visuals/PipelineWarmup.cs`: draws every material during the black start. `Core/PerformanceManager.cs`: DC, triangles and GC per frame in the readout (Development builds).
 - Compile check: 0 errors, 0 warnings.
 
+**Review pass after M8** (cloud session; static review of all scripts, compiled)
+- Closing a menu with the trigger or A no longer fires the guns or uses an ability (`PlayerInput.SuppressUntilReleased`).
+- The scheme/ship shortcut is the other hand's upper button (Y, or B with hands swapped), so it no longer collides with ability B.
+- The hangar opened from pause has `< WRÓĆ DO GRY`, and the menu button goes back to the pause page. TRYB and STATEK labels refresh after their fade, and a second click during the fade is ignored.
+- A new page starts at its first line, and row colours are set only when the selection moves.
+- The bolt flyby has its own audio source (it no longer moves explosions). AI engine hums pause with the game.
+- The Editor restores only the menu-owned GameConfig fields after play, so Inspector tuning is kept.
+- Progress keys are in `Core/SaveKeys.cs`. The `Damageable` collider cache drops destroyed colliders at each restart.
+
 ## Next
 
 1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M8 checklists, record fps and p95 per mode in `PLAN.md`, and report the best control scheme and any discomfort. Fix what the real Unity and headset show (expect some API or tuning surprises: none of this has run yet).
