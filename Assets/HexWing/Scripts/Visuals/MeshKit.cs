@@ -1,0 +1,314 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace HexWing
+{
+    /// <summary>
+    /// Builds low-poly, flat-shaded (faceted) meshes in code. Every triangle gets its own vertices so
+    /// each facet catches light separately. Faces are turned outward from the shape's center, so
+    /// shapes must be roughly convex; <see cref="Builder.TriToward"/> builds inward-facing shells
+    /// (the cockpit). Copied from Stopklatka.
+    /// </summary>
+    public static class MeshKit
+    {
+        public class Builder
+        {
+            readonly List<Vector3> _v = new();
+            readonly List<Vector3> _n = new();
+            readonly List<int> _t = new();
+            Matrix4x4 _matrix = Matrix4x4.identity;
+            bool _hasMatrix;
+
+            /// <summary>
+            /// Moves everything added from now on by this matrix (e.g. a body part posed at its joint,
+            /// for the statues). Identity turns it off.
+            /// </summary>
+            public void SetTransform(Matrix4x4 matrix)
+            {
+                _matrix = matrix;
+                _hasMatrix = !matrix.isIdentity;
+            }
+
+            public void Tri(Vector3 a, Vector3 b, Vector3 c, Vector3 shapeCenter)
+            {
+                if (_hasMatrix)
+                {
+                    a = _matrix.MultiplyPoint3x4(a);
+                    b = _matrix.MultiplyPoint3x4(b);
+                    c = _matrix.MultiplyPoint3x4(c);
+                    shapeCenter = _matrix.MultiplyPoint3x4(shapeCenter);
+                }
+                var n = Vector3.Cross(b - a, c - a);
+                if (n.sqrMagnitude < 1e-12f) return;
+                if (Vector3.Dot(n, (a + b + c) / 3f - shapeCenter) < 0f) { (b, c) = (c, b); n = -n; }
+                n.Normalize();
+                int i = _v.Count;
+                _v.Add(a); _v.Add(b); _v.Add(c);
+                _n.Add(n); _n.Add(n); _n.Add(n);
+                _t.Add(i); _t.Add(i + 1); _t.Add(i + 2);
+            }
+
+            /// <summary>A triangle whose front faces the point <paramref name="viewer"/> (inside of a shell).</summary>
+            public void TriToward(Vector3 a, Vector3 b, Vector3 c, Vector3 viewer)
+            {
+                var centroid = (a + b + c) / 3f;
+                Tri(a, b, c, centroid * 2f - viewer);   // Tri faces away from its center: mirror the viewer
+            }
+
+            public void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 center)
+            {
+                Tri(a, b, c, center);
+                Tri(a, c, d, center);
+            }
+
+            /// <summary>Box with an optional narrower/wider top (taper) and random corner jitter.</summary>
+            public void Box(Vector3 center, Vector3 size, Quaternion rotation, float topTaper = 1f, float jitter = 0f, System.Random rng = null)
+            {
+                var h = size * 0.5f;
+                var c = new Vector3[8];
+                for (int i = 0; i < 8; i++)
+                {
+                    float sx = (i & 1) == 0 ? -1f : 1f, sy = (i & 2) == 0 ? -1f : 1f, sz = (i & 4) == 0 ? -1f : 1f;
+                    float k = sy > 0f ? topTaper : 1f;
+                    var p = new Vector3(sx * h.x * k, sy * h.y, sz * h.z * k);
+                    if (jitter > 0f && rng != null) p += Jitter(rng, jitter);
+                    c[i] = center + rotation * p;
+                }
+                Quad(c[0], c[1], c[3], c[2], center); // -z
+                Quad(c[4], c[5], c[7], c[6], center); // +z
+                Quad(c[0], c[2], c[6], c[4], center); // -x
+                Quad(c[1], c[3], c[7], c[5], center); // +x
+                Quad(c[0], c[1], c[5], c[4], center); // -y
+                Quad(c[2], c[3], c[7], c[6], center); // +y
+            }
+
+            /// <summary>Frustum between two points with N sides (a limb, a barrel, a bottle).</summary>
+            public void Prism(Vector3 from, Vector3 to, float radiusFrom, float radiusTo, int sides, float jitter = 0f, System.Random rng = null, bool caps = true)
+            {
+                var axis = to - from;
+                if (axis.sqrMagnitude < 1e-10f) return;
+                var rot = Quaternion.FromToRotation(Vector3.up, axis.normalized);
+                var center = (from + to) * 0.5f;
+                var a = new Vector3[sides];
+                var b = new Vector3[sides];
+                for (int i = 0; i < sides; i++)
+                {
+                    float ang = i * Mathf.PI * 2f / sides;
+                    var dir = new Vector3(Mathf.Cos(ang), 0f, Mathf.Sin(ang));
+                    a[i] = from + rot * (dir * radiusFrom);
+                    b[i] = to + rot * (dir * radiusTo);
+                    if (jitter > 0f && rng != null) { a[i] += Jitter(rng, jitter); b[i] += Jitter(rng, jitter); }
+                }
+                for (int i = 0; i < sides; i++)
+                {
+                    int j = (i + 1) % sides;
+                    Quad(a[i], a[j], b[j], b[i], center);
+                    if (caps)
+                    {
+                        Tri(from, a[i], a[j], center);
+                        Tri(to, b[j], b[i], center);
+                    }
+                }
+            }
+
+            /// <summary>
+            /// Half of an upright N-sided prism, flat side at z = 0 (against a wall), round side toward +z:
+            /// half columns and posts that must not stick out more than their radius.
+            /// </summary>
+            public void HalfPrism(Vector3 baseCenter, float radius, float height, int segments)
+            {
+                if (segments < 2 || height <= 0f) return;
+                var center = baseCenter + new Vector3(0f, height * 0.5f, radius * 0.4f);
+                var up = Vector3.up * height;
+                for (int i = 0; i < segments; i++)
+                {
+                    float a0 = Mathf.PI * i / segments, a1 = Mathf.PI * (i + 1) / segments;
+                    var p0 = baseCenter + new Vector3(Mathf.Cos(a0) * radius, 0f, Mathf.Sin(a0) * radius);
+                    var p1 = baseCenter + new Vector3(Mathf.Cos(a1) * radius, 0f, Mathf.Sin(a1) * radius);
+                    Quad(p0, p1, p1 + up, p0 + up, center);                 // round side
+                    Tri(baseCenter, p0, p1, center);                         // bottom
+                    Tri(baseCenter + up, p0 + up, p1 + up, center);          // top
+                }
+                var r = new Vector3(radius, 0f, 0f);
+                Quad(baseCenter - r, baseCenter + r, baseCenter + r + up, baseCenter - r + up, center);   // back, on the wall
+            }
+
+            /// <summary>Icosahedron (20 facets) with per-axis radii: heads, shards, gems.</summary>
+            public void Ico(Vector3 center, Vector3 radii, float jitter = 0f, System.Random rng = null)
+            {
+                float t = (1f + Mathf.Sqrt(5f)) / 2f;
+                var p = new[]
+                {
+                    new Vector3(-1, t, 0), new Vector3(1, t, 0), new Vector3(-1, -t, 0), new Vector3(1, -t, 0),
+                    new Vector3(0, -1, t), new Vector3(0, 1, t), new Vector3(0, -1, -t), new Vector3(0, 1, -t),
+                    new Vector3(t, 0, -1), new Vector3(t, 0, 1), new Vector3(-t, 0, -1), new Vector3(-t, 0, 1),
+                };
+                for (int i = 0; i < p.Length; i++)
+                {
+                    var q = p[i].normalized;
+                    if (jitter > 0f && rng != null) q += Jitter(rng, jitter);
+                    p[i] = center + Vector3.Scale(q, radii);
+                }
+                int[] f =
+                {
+                    0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11, 1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
+                    3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9, 4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1,
+                };
+                for (int i = 0; i < f.Length; i += 3) Tri(p[f[i]], p[f[i + 1]], p[f[i + 2]], center);
+            }
+
+            /// <summary>
+            /// A faceted solid through horizontal rings (body parts: chest wedge, hips, the long head).
+            /// Each ring is (height, x radius, z radius, z offset) around origin; a ring with zero radii
+            /// is a point (an apex). Every face is turned outward from the axis at its own height, so the
+            /// shape may widen and narrow freely along its length. Ends are closed.
+            /// </summary>
+            /// <param name="angleOffset">Degrees; 0 puts corners at the sides (+x/-x) and a flat face at the front.</param>
+            public void Loft(Vector3 origin, Vector4[] rings, int sides, float angleOffset = 0f, float jitter = 0f, System.Random rng = null)
+            {
+                if (rings.Length < 2 || sides < 3) return;
+                var pts = new Vector3[rings.Length, sides];
+                for (int r = 0; r < rings.Length; r++)
+                {
+                    var ring = rings[r];
+                    for (int i = 0; i < sides; i++)
+                    {
+                        float ang = (angleOffset + i * 360f / sides) * Mathf.Deg2Rad;
+                        var p = new Vector3(Mathf.Cos(ang) * ring.y, ring.x, ring.w + Mathf.Sin(ang) * ring.z);
+                        bool apex = ring.y <= 0f && ring.z <= 0f;
+                        if (!apex && jitter > 0f && rng != null) p += Jitter(rng, jitter);
+                        pts[r, i] = origin + p;
+                    }
+                }
+                for (int r = 0; r < rings.Length - 1; r++)
+                {
+                    var a = rings[r];
+                    var b = rings[r + 1];
+                    var axis = origin + new Vector3(0f, (a.x + b.x) * 0.5f, (a.w + b.w) * 0.5f);
+                    for (int i = 0; i < sides; i++)
+                    {
+                        int j = (i + 1) % sides;
+                        Quad(pts[r, i], pts[r, j], pts[r + 1, j], pts[r + 1, i], axis);
+                    }
+                }
+                // end caps, turned away from a point just inside each end
+                var first = rings[0];
+                var last = rings[rings.Length - 1];
+                float inward = Mathf.Sign(rings[1].x - first.x) * 0.01f;
+                var bottom = origin + new Vector3(0f, first.x, first.w);
+                var top = origin + new Vector3(0f, last.x, last.w);
+                for (int i = 0; i < sides; i++)
+                {
+                    int j = (i + 1) % sides;
+                    Tri(bottom, pts[0, i], pts[0, j], bottom + Vector3.up * inward);
+                    Tri(top, pts[rings.Length - 1, j], pts[rings.Length - 1, i], top - Vector3.up * inward);
+                }
+            }
+
+            /// <summary>Irregular tetrahedron (4 facets): a sharp shard.</summary>
+            public void Tetra(Vector3 center, float radius, float jitter = 0f, System.Random rng = null)
+            {
+                var p = new[]
+                {
+                    new Vector3(1f, 1f, 1f), new Vector3(1f, -1f, -1f), new Vector3(-1f, 1f, -1f), new Vector3(-1f, -1f, 1f),
+                };
+                for (int i = 0; i < 4; i++)
+                {
+                    var q = p[i] * (radius * 0.577f);
+                    if (jitter > 0f && rng != null) q += Jitter(rng, jitter * radius);
+                    p[i] = center + q;
+                }
+                Tri(p[0], p[1], p[2], center);
+                Tri(p[0], p[1], p[3], center);
+                Tri(p[0], p[2], p[3], center);
+                Tri(p[1], p[2], p[3], center);
+            }
+
+            /// <summary>Thin triangular plate (a flake): a triangle of the given size, extruded by thickness.</summary>
+            public void Plate(Vector3 center, float size, float thickness, System.Random rng = null)
+            {
+                var c = new Vector3[3];
+                for (int i = 0; i < 3; i++)
+                {
+                    float ang = i * Mathf.PI * 2f / 3f + (rng != null ? (float)(rng.NextDouble() - 0.5) * 0.9f : 0f);
+                    float r = size * 0.5f * (rng != null ? 0.7f + (float)rng.NextDouble() * 0.6f : 1f);
+                    c[i] = new Vector3(Mathf.Cos(ang) * r, 0f, Mathf.Sin(ang) * r);
+                }
+                var h = Vector3.up * (thickness * 0.5f);
+                Tri(center + c[0] + h, center + c[1] + h, center + c[2] + h, center);
+                Tri(center + c[0] - h, center + c[1] - h, center + c[2] - h, center);
+                for (int i = 0; i < 3; i++)
+                {
+                    int j = (i + 1) % 3;
+                    Quad(center + c[i] - h, center + c[j] - h, center + c[j] + h, center + c[i] + h, center);
+                }
+            }
+
+            /// <summary>Double pyramid (octahedron), used for the start target.</summary>
+            public void Octahedron(Vector3 center, float radius, float height)
+            {
+                var top = center + Vector3.up * height;
+                var bottom = center - Vector3.up * height;
+                var ring = new Vector3[4];
+                for (int i = 0; i < 4; i++)
+                {
+                    float a = i * Mathf.PI * 0.5f;
+                    ring[i] = center + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * radius;
+                }
+                for (int i = 0; i < 4; i++)
+                {
+                    int j = (i + 1) % 4;
+                    Tri(top, ring[i], ring[j], center);
+                    Tri(bottom, ring[j], ring[i], center);
+                }
+            }
+
+            /// <summary>Flat ring (or disc when inner is 0) in the XZ plane of rotation, for floor marks and the hit vignette.</summary>
+            public void Ring(Vector3 center, Quaternion rotation, float inner, float outer, int segments)
+            {
+                for (int i = 0; i < segments; i++)
+                {
+                    float a0 = i * Mathf.PI * 2f / segments, a1 = (i + 1) * Mathf.PI * 2f / segments;
+                    var d0 = rotation * new Vector3(Mathf.Cos(a0), 0f, Mathf.Sin(a0));
+                    var d1 = rotation * new Vector3(Mathf.Cos(a1), 0f, Mathf.Sin(a1));
+                    if (inner <= 0f) Tri(center, center + d0 * outer, center + d1 * outer, center);
+                    else Quad(center + d0 * inner, center + d0 * outer, center + d1 * outer, center + d1 * inner, center);
+                }
+            }
+
+            /// <param name="color">Vertex color from the vertex position (used by the transparent shader
+            /// for fades along streaks and toward the edges of shadows). White when omitted.</param>
+            public Mesh ToMesh(string name, System.Func<Vector3, Color> color = null)
+            {
+                var m = new Mesh { name = name };
+                if (_v.Count > 65000) m.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                var colors = new List<Color>(_v.Count);
+                foreach (var v in _v) colors.Add(color != null ? color(v) : Color.white);
+                m.SetVertices(_v);
+                m.SetNormals(_n);
+                m.SetColors(colors);
+                m.SetTriangles(_t, 0);
+                m.RecalculateBounds();
+                m.UploadMeshData(true);
+                return m;
+            }
+        }
+
+        static Vector3 Jitter(System.Random rng, float amount) =>
+            new Vector3((float)(rng.NextDouble() * 2 - 1), (float)(rng.NextDouble() * 2 - 1), (float)(rng.NextDouble() * 2 - 1)) * amount;
+
+        public static GameObject Part(string name, Transform parent, Mesh mesh, Material mat)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var r = go.AddComponent<MeshRenderer>();
+            r.sharedMaterial = mat;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+            r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+            return go;
+        }
+    }
+}
