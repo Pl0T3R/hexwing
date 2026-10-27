@@ -18,6 +18,10 @@ namespace HexWing
         public const string Fade = "ScreenFade";               // black fade sphere, drawn over everything
         public const string Text = "DisplayText";              // TextMesh on cockpit displays
         public const string Sky = "SpaceSky";                  // procedural skybox
+        public const string Vignette = "ComfortVignette";      // black edge darkening while turning, over everything
+        public const string Ring = "CourseRing";               // course rings waiting their turn, and passed ones
+        public const string RingNext = "CourseRingNext";       // the ring to fly through next (glows)
+        public const string Dust = "SpaceDust";                // small specks around the ship that show speed
 
         static readonly Dictionary<string, Material> Cache = new();
 
@@ -40,7 +44,7 @@ namespace HexWing
         {
             string shaderName = name switch
             {
-                Glass or Fade => "HexWing/Transparent",
+                Glass or Fade or Vignette => "HexWing/Transparent",
                 Text => "HexWing/Text",
                 Sky => "HexWing/SpaceSky",
                 _ => "HexWing/Faceted",
@@ -57,12 +61,20 @@ namespace HexWing
                 Accent => Hex("#5FD3FF"),
                 Screen => Hex("#0B1117"),
                 Glass => new Color(0.55f, 0.75f, 0.9f, 0.06f),
-                Fade => Color.black,
+                Fade or Vignette => Color.black,
+                Ring => Hex("#4A5868"),
+                RingNext => Hex("#FFB347"),
+                Dust => Hex("#9AA8B8"),
                 _ => Color.white,
             };
             m.SetColor("_BaseColor", color);
-            if (name == Accent) m.SetFloat("_Emission", 1f);
-            if (name == Fade) m.renderQueue = 4000;
+            if (name is Accent or RingNext) m.SetFloat("_Emission", 1f);
+            if (name == Dust) m.SetFloat("_Emission", 0.6f);
+            if (name is Fade or Vignette)
+            {
+                m.SetFloat("_ZTest", (float)UnityEngine.Rendering.CompareFunction.Always);
+                m.renderQueue = name == Fade ? 4000 : 3990;
+            }
             return m;
         }
     }

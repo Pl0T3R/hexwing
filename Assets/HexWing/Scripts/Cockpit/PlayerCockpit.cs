@@ -3,10 +3,10 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// The player's ship (M1: a parked cockpit). Builds the cockpit, puts the camera rig at the eye point
-    /// so the ship turns around the pilot's eyes (no sideways swing of the head when turning), and fills
-    /// the displays. The rig is a child of the ship: the head stays the only thing that moves the view
-    /// inside the cockpit.
+    /// The player's ship. Builds the cockpit, puts the camera rig at the eye point so the ship turns
+    /// around the pilot's eyes (no sideways swing of the head when turning), and creates the display
+    /// texts (<see cref="CockpitHud"/> fills them). The rig is a child of the ship: the head stays the only
+    /// thing that moves the view inside the cockpit.
     /// </summary>
     [DefaultExecutionOrder(-50)]
     public class PlayerCockpit : MonoBehaviour
@@ -17,8 +17,11 @@ namespace HexWing
         public Transform Head => Rig != null ? Rig.centerEyeAnchor : transform;
         public CockpitFactory.Displays Displays { get; private set; }
 
-        CockpitDisplay _center, _left, _right;
-        float _nextReadout;
+        public CockpitDisplay Center { get; private set; }
+        public CockpitDisplay Left { get; private set; }
+        public CockpitDisplay Right { get; private set; }
+        public CockpitDisplay SideLeft { get; private set; }
+        public CockpitDisplay SideRight { get; private set; }
 
         void Awake()
         {
@@ -35,26 +38,18 @@ namespace HexWing
             }
 
             var cyan = new Color(0.37f, 0.83f, 1f);
-            _center = CockpitDisplay.Create(Displays.Center, cyan);
-            _left = CockpitDisplay.Create(Displays.Left, cyan);
-            _right = CockpitDisplay.Create(Displays.Right, cyan);
-            _left.SetText("KADŁUB  100%\nOSŁONY  --");
-            _right.SetText("RADAR\n(M3)");
+            Center = CockpitDisplay.Create(Displays.Center, cyan);
+            Left = CockpitDisplay.Create(Displays.Left, cyan);
+            Right = CockpitDisplay.Create(Displays.Right, cyan);
+            SideLeft = CockpitDisplay.Create(Displays.SideLeft, cyan, 0.011f);
+            SideRight = CockpitDisplay.Create(Displays.SideRight, cyan, 0.011f);
         }
 
         void Start()
         {
-            var fader = GetComponent<ScreenFader>();
-            if (fader != null && Rig != null) fader.Attach(Rig.centerEyeAnchor);
-        }
-
-        void Update()
-        {
-            var debug = GameConfig.Instance.debug;
-            if (Time.unscaledTime < _nextReadout) return;
-            _nextReadout = Time.unscaledTime + debug.readoutInterval;
-            var perf = PerformanceManager.Instance;
-            _center.SetText(debug.performanceReadout && perf != null ? "HEX WING  M1\n" + perf.Readout : "HEX WING");
+            if (Rig == null) return;
+            if (TryGetComponent(out ScreenFader fader)) fader.Attach(Rig.centerEyeAnchor);
+            if (TryGetComponent(out ComfortVignette vignette)) vignette.Attach(Rig.centerEyeAnchor, GetComponent<ShipFlight>());
         }
     }
 }

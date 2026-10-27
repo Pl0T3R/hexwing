@@ -9,6 +9,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 ## Current state
 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
+- M2 is written: the flight model with throttle bands and arena bounds, the input layer with control schemes A/B/C, comfort options (vignette, auto-level, turn limit), the rings course, cockpit texts, the moving stick and throttle, space dust and synthesized ship sounds.
 - It was written in a cloud session with no Unity editor. It compiles to 0 errors and 0 warnings against the Unity 6000.0.85f1 DLLs plus stubs copied from the Meta XR Core SDK sources.
 - It has **never been opened in Unity or run on a headset**. Expect to fix compile errors against the real packages and to tune on the device.
 - The Unity project scaffold (`Packages/`, `ProjectSettings/`) does not exist yet. You create it in step 1.
@@ -55,6 +56,31 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 - [ ] Stable 90 fps in `metavr perf` / OVR Metrics, 60 s seated looking around. p95 frame time under 11.1 ms.
 - [ ] No pink materials: all four shaders in `Shaders/` compile for Android/Vulkan with multiview.
 
+## M2 checklist
+
+Control schemes (Y cycles them; the side-left display explains the current one):
+- **A, controller tilt:** tilt the right controller to steer (click its thumbstick to set the neutral pose), left stick up/down = throttle, left/right = roll.
+- **B, virtual stick (default):** hold the right grip anywhere to take the stick; move the hand forward/back (pitch) and sideways (yaw), twist the wrist (roll). Hold the left grip to take the throttle lever: push forward = faster. Letting go of the stick centres it; the throttle stays. Left stick X also rolls.
+- **C, thumbsticks:** right stick = pitch/yaw (forward = nose down), left stick Y = throttle (centred = cruise), X = roll.
+
+Check:
+- [ ] The log shows `Rings course: 16 rings, seed 7, farthest N m from the centre (arena 3000 m)`, then `M2 flight scene running.`
+- [ ] The ship always flies forward and never stops. The left display shows speed, throttle and band (`WOLNO` / `OPTYMALNIE` in amber / `PRZELOT` / `DOPALACZ`) and `SKRĘT x1.4` in the sweet spot (20–50% throttle), `x0.6` when boosting (above 85%). Turns at about a third of throttle are clearly tighter than at full speed.
+- [ ] Boost: a quiet airy rush and a light rumble in both controllers.
+- [ ] The stick in the cockpit tilts and twists with your input in every scheme; the throttle lever swings with the throttle.
+- [ ] Each scheme flies the whole course. Note which one feels best, and the times (best time per scheme on the right display).
+- [ ] The next ring glows amber; the small cyan arrow above the centre display points at it. Flying through gives a chime and a haptic pulse; the last ring a double chime. Flying past outside the ring shows `MINIĘTY! ZAWRÓĆ`.
+- [ ] Scraping a ring frame: a thud, a strong haptic, the ship slides off and slows down. No getting stuck.
+- [ ] After the last ring: `META` or `NOWY REKORD!`, the time and collisions. About 5 s later a fade and the course starts again. The left menu button restarts at any time.
+- [ ] Flying more than 3 km from the centre: `POZA STREFĄ! WRACAJ 5…1` in red, a haptic tick each second, the arrow points home; at 0 the course restarts with a fade.
+- [ ] Vignette (default medium): the edges darken during fast turns and clear when flying straight; no hard edge visible. Try Off / Low / High in GameConfig `comfort.vignette`.
+- [ ] Auto-level: after letting go of roll, the ship rolls gently back to level (`POZIOM` on the left display). Off with `comfort.autoLevel`.
+- [ ] Turn limit: `comfort.turnRateLimit` 45 makes turns slower; 0 is off.
+- [ ] Space dust specks stream past and show speed; they never pop up inside the cockpit.
+- [ ] Opening the system menu or taking the headset off pauses everything (log `Paused`), coming back resumes it.
+- [ ] 10 minutes of flying in your best scheme: report any discomfort, and at which moments.
+- [ ] Still 90 fps (centre display), p95 under 11.1 ms in `metavr perf`.
+
 ## Where to tune
 
 - `Resources/GameConfig.asset` (made by Build Game; edit in the Inspector, also in Play mode):
@@ -62,6 +88,12 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
   - `comfort`: fade times, auto-recenter delay, recenter hold time,
   - `cockpit`: the eye point in the ship, the shell radius, the window angle,
   - `debug`: the readout on the centre screen and its interval.
+  - `controls`: scheme (default B), Y cycling, swapped hands, inverted pitch, deadzone, response curve, sensitivity; B's stick range (9 cm), twist range (40°), throttle range (18 cm) and grip threshold; A's tilt range; the stick throttle's cruise value and response,
+  - `flight`: minimum/maximum speed (35 / 150 m/s), acceleration, pitch / yaw / roll rates (70 / 50 / 140 °/s), angular response, nose lag (0.2 s), throttle bands (sweet spot 0.2–0.5 at 1.4x, boost from 0.85 at 0.6x, blend), collision radius and speed kept after a collision,
+  - `comfort` (also): vignette level, start/full turn rates and response; auto-level on/off, delay and rate; pitch/yaw and roll rate limits,
+  - `arena`: radius (3 km) and the out-of-bounds countdown,
+  - `course`: ring count, seed, ring radius, spacing, maximum turn and climb, result time,
+  - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab), boost rumble.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
 - `Editor/HexWingBuilder.cs` → `CreateMaterials`: every color as a hex value. Run Build Game again after changing them.
 - `Shaders/SpaceSky.shader`: star density and brightness, nebula colors, the planet direction, size and colors. Tune them on the `SpaceSky` material.
@@ -72,4 +104,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 - **Builder APIs:** `ConfigureOpenXR` uses reflection and logs what it can't find; set those values by hand if the log says so. The rest of the builder is the Stopklatka builder adapted for pure VR (EyeLevel tracking, no passthrough or scene).
 - **Text:** the cockpit screens use the legacy `TextMesh` with the built-in `LegacyRuntime.ttf`, so no TMP import is needed in M1. If Polish letters show as boxes, check the font's dynamic character set.
 - **Recenter:** `OVRManager.display.RecenterPose()` with EyeLevel tracking. If the view doesn't return to the seat, check that the tracking origin really is EyeLevel on the rig's `OVRManager`.
+- **Virtual stick (B):** positions come from `OVRInput.GetLocalControllerPosition` in tracking space, which is fixed to the cockpit. If the stick reacts to turning the ship, check that the rig has no rotation relative to the ship. If it's too twitchy or too lazy, tune `controls.stickRange` first, then `deadzone` and `curve`.
+- **Twist roll and axes:** the sign conventions (push forward = nose down, twist clockwise = roll right) were derived on paper. If any axis is reversed on the headset, fix it in `PlayerInput`, not with the invert option.
+- **Grip conflict:** in scheme B the right grip holds the stick, so lock-on (planned on the right grip) needs another button in M3.
 - **Near clip:** 0.03 m because the cockpit is close. If the far ships flicker later (z-fighting), raise it before lowering the far plane.

@@ -256,6 +256,16 @@ namespace HexWing.EditorTools
             fade.SetColor("_BaseColor", Color.black);
             fade.SetFloat("_ZTest", (float)CompareFunction.Always);   // over everything, the cockpit included
             fade.renderQueue = 4000;
+            var vignette = Material(Mats.Vignette, "HexWing/Transparent");
+            vignette.SetColor("_BaseColor", new Color(0f, 0f, 0f, 0f));   // strength is set at runtime
+            vignette.SetFloat("_ZTest", (float)CompareFunction.Always);
+            vignette.renderQueue = 3990;   // over the cockpit and texts, under the fade
+
+            // course rings: dull metal while waiting, warm glow for the next one
+            Faceted(Mats.Ring, Hex("#4A5868"), Hex("#161B22"), Hex("#8FA6BC"), 0.4f, 0.4f, 48f, 0.05f);
+            Faceted(Mats.RingNext, Hex("#FFB347"), Hex("#7A4410"), Hex("#FFE2B0"), 0.6f, 0.3f, 32f, 0.75f);
+            Faceted(Mats.Dust, Hex("#9AA8B8"), Hex("#4A5260"), Color.white, 0f, 0f, 8f, 0.6f);
+
             var text = Material(Mats.Text, "HexWing/Text");
             text.SetColor("_BaseColor", Color.white);
             Material(Mats.Sky, "HexWing/SpaceSky");
@@ -313,8 +323,9 @@ namespace HexWing.EditorTools
         // --- scene -------------------------------------------------------------------------
 
         /// <summary>
-        /// M1 flight scene: space skybox, the systems object, and the player ship with the cockpit, the
-        /// camera rig at the eye point (seated, eye-level tracking), the screen fader and the recenter.
+        /// Flight scene: space skybox, the systems (performance, sun, start-up, rings course, space dust) and
+        /// the player ship: cockpit with the camera rig at the eye point (seated, eye-level tracking), input,
+        /// flight model, arena bounds, HUD and instruments, comfort (fade, vignette, recenter) and sound.
         /// </summary>
         [MenuItem("HexWing/4. Build Flight Scene", priority = 23)]
         public static void BuildFlightScene()
@@ -331,11 +342,20 @@ namespace HexWing.EditorTools
             systems.AddComponent<PerformanceManager>();
             systems.AddComponent<SpaceEnvironment>();
             systems.AddComponent<GameBootstrap>();
+            systems.AddComponent<RingsCourse>();
+            systems.AddComponent<SpaceDust>();
 
             var ship = new GameObject("PlayerShip");
             ship.AddComponent<PlayerCockpit>();
+            ship.AddComponent<PlayerInput>();
+            ship.AddComponent<ShipFlight>();
+            ship.AddComponent<ArenaBounds>();
+            ship.AddComponent<CockpitHud>();
+            ship.AddComponent<CockpitInstruments>();
             ship.AddComponent<ScreenFader>();
+            ship.AddComponent<ComfortVignette>();
             ship.AddComponent<SeatedRecenter>();
+            ship.AddComponent<ShipAudio>();
             rig.transform.SetParent(ship.transform, false);   // PlayerCockpit also does this at runtime
 
             Directory.CreateDirectory(Path.GetDirectoryName(ScenePath));
