@@ -1,0 +1,9 @@
+Trident      LOD0   3226  LOD1    966  LOD2    258  tex 1024  (313 s)
+Swallow      LOD0   2876  LOD1    862  LOD2    229  tex 1024  (293 s)
+Transport    LOD0   2196  LOD1    658  LOD2    194  tex 1024  (298 s)
+Asteroids    LOD0   1228  LOD1    368  LOD2     98  tex 1024  (212 s)
+Sky          LOD0      0  LOD1      0  LOD2      0  tex 4096  (115 s)
+Kolos        LOD0  11956  LOD1   4184  LOD2   1194  tex 2048  (663 s)
+Station      LOD0   8680  LOD1   3038  LOD2    868  tex 2048  (511 s)
+Hornet       LOD0   4488  LOD1   1346  LOD2    349  tex 1024
+Cockpit      LOD0  14328  LOD1      0  LOD2      0  tex 2048  (stick 568, throttle 280)
