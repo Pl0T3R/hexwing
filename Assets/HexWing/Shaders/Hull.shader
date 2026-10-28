@@ -151,7 +151,13 @@ Shader "HexWing/Hull"
 
                 half rim = pow(1.0h - saturate(dot(n, v)), _RimPower) * _RimStrength;
                 half3 color = direct + ambient + _RimColor.rgb * rim * ao;
-                color += albedo.rgb * mask.b * _EmissionColor.rgb * _EmissionStrength;
+                // the tint colours white lights only (the cockpit's light strips take the ship class colour);
+                // saturated lights (red, green, blue buttons) keep their colour and follow only its brightness
+                half hi = max(albedo.r, max(albedo.g, albedo.b));
+                half sat = (hi - min(albedo.r, min(albedo.g, albedo.b))) / max(hi, 0.001h);
+                half tintMax = max(_EmissionColor.r, max(_EmissionColor.g, _EmissionColor.b));
+                half3 tint = lerp(_EmissionColor.rgb, tintMax.xxx, saturate(sat * 1.6h));
+                color += albedo.rgb * mask.b * tint * _EmissionStrength;
                 color = lerp(color, half3(1.0h, 0.85h, 0.7h), _Flash);
                 return half4(color, 1.0h);
             }

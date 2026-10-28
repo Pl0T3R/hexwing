@@ -43,6 +43,7 @@ namespace HexWing
             Right = CockpitDisplay.Create(Displays.Right, cyan);
             SideLeft = CockpitDisplay.Create(Displays.SideLeft, cyan, 0.011f);
             SideRight = CockpitDisplay.Create(Displays.SideRight, cyan, 0.011f);
+            gameObject.AddComponent<CockpitInstrumentPanel>();   // radar blips and bar graphs on the Blender cockpit
         }
 
         void Start()
