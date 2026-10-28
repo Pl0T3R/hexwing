@@ -168,9 +168,9 @@ Modes are chosen in the hangar (M8): TRAINING → RING COURSE → DRONE RANGE �
 
 ## M8 checklist
 
-- [ ] Start: the cockpit fades in with the **HANGAR** panel 1.5 m ahead (dark glass, amber title, white lines) and soft music. A cyan laser comes from the flying hand; the line under it lights up (with a light tick), the trigger (or A) chooses it. The thumbstick moves the highlight too. Game time is stopped (enemies frozen).
-- [ ] `> START: <mode>` closes the menu and starts the mode behind a fade. `MODE` and `SHIP` switch behind a fade. `COLOUR` cycles the unlocked cockpit colours (the lights change at once). `QUIT GAME` quits.
-- [ ] While flying, the menu button opens **PAUSED** (everything stops, the music gets louder, AI engines go quiet): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page). HANGAR from the pause menu has `< BACK TO GAME` at the top; the menu button there goes back to the pause page.
+- [ ] Start: the cockpit fades in with the **HANGAR** panel (preview: `Art/previews/Menu.jpg`) and soft music. The panel floats 0.74 m ahead, a little above eye level, in front of the window frame: no spoke or hub ring cuts it, and it clears the scope pod. Dark glass with cut corners, a cyan frame, an amber title and accents; the entries are tiles in three columns, the main action (START, RESUME) a wide amber tile on top. A cyan laser comes from the flying hand; the tile under it lights up teal with an amber edge (with a light tick), the trigger (or A) chooses it. The thumbstick moves between tiles. Long values shrink to fit their tile. Game time is stopped (enemies frozen).
+- [ ] `START <mode>` closes the menu and starts the mode behind a fade. `MODE` and `SHIP` switch behind a fade. `COLOUR` cycles the unlocked cockpit colours (the lights change at once). `QUIT GAME` quits.
+- [ ] While flying, the menu button opens **PAUSED** (everything stops, the music gets louder, AI engines go quiet): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page). HANGAR from the pause menu has a `BACK TO GAME` tile after START; the menu button there goes back to the pause page.
 - [ ] Choosing RESUME or START with the trigger or A and keeping it held: the guns don't fire and no ability triggers until the button is released.
 - [ ] **CONTROLS**: scheme, flying hand (left/right swaps the hands at once), invert pitch, sensitivity 0.6–1.6, vibration 100/50/0%, volume 100/75/50/25/0%. **COMFORT**: three presets (most comfortable: strong vignette, auto-level, 60°/s limit, jink; balanced; no aids: no vignette, roll), then each setting on its own. Everything survives an app restart (and in the Editor the GameConfig asset is unchanged after play).
 - [ ] **STATS**: total kills, the best of each mode, training, colours unlocked and what unlocks the next (white: training, green: 25 kills, violet: 100, blue: wave 10, red: escort won, silver: team dogfight won, gold: assault won).
@@ -261,10 +261,11 @@ Everything visible was redone with real models, textures and effects (approved p
 - [ ] Explosions: a white flash, a fireball turning into dark smoke and two smaller late blasts, plus shards. Impacts and muzzle flashes are soft glows. Laser bolts have a coloured glow. Engines have soft plumes.
 - [ ] HUD: a hexagon crosshair with ticks, diamond corners on enemies, chevrons on allies, brackets on the target, a turning amber lock ring when locked, the lead pip; all glow and hide behind the cockpit frame.
 - [ ] Menu:
-  - a glass panel with a cyan frame and an amber title accent,
-  - the chosen row has a glowing bar and amber text,
+  - a dark glass panel with cut corners, a cyan frame and amber accents, tiles with a faint cyan edge,
+  - the chosen tile lights up teal with an amber edge and amber key text,
+  - the panel's layers never flicker or swap order (glass, tiles, edges, texts draw in a fixed order: `Mats.MenuQueue`),
   - texts in Rajdhani with Polish letters,
-  - in the hangar, the selected ship turns on a lit pad to the right of the panel.
+  - in the hangar, the selected ship (about 20 cm long) turns on a lit pad inside the cockpit, to the right of the panel.
 - [ ] Performance in the biggest fights (Assault, Escort, Team Dogfight): 90 fps, p95 under 11.1 ms, at most 150 draw calls in the readout. If over, lower `visuals.lodScreenHeights` first (LODs switch sooner), then the texture sizes in `ArtImport` (Android max size).
 
 ## Where to tune
@@ -288,7 +289,7 @@ Everything visible was redone with real models, textures and effects (approved p
   - `dogfight`: team size, kills to win, time limit, respawn times, ally and enemy skill, base distance, spawn spread, bot hull and shields, score values,
   - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
   - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
-- `Scripts/Core/UserSettings.cs`: which values the menus offer (turn limits, haptic levels, presets). `Scripts/Core/Progression.cs`: the colours and what unlocks them. `Scripts/UI/MenuPanel.cs`: panel size and distance (1.5 m), row height. `Scripts/Audio/ShipAudio.cs`: all synthesized sounds and the music pad.
+- `Scripts/Core/UserSettings.cs`: which values the menus offer (turn limits, haptic levels, presets). `Scripts/Core/Progression.cs`: the colours and what unlocks them. `Scripts/UI/MenuPanel.cs`: distance (0.74 m) and elevation (12°), tile size, columns, margins; the glass and edge colours are `Mats.MenuColor`. `Scripts/UI/HangarShowcase.cs`: the hangar ship's size and place. `Scripts/Audio/ShipAudio.cs`: all synthesized sounds and the music pad.
 - `Resources/Ships/Falcon.asset`, `Hawk.asset`, `Bison.asset` (made by Build Game, kept when it runs again; the old Polish-named ones are removed): each class's flight numbers, hull, shields, gun multipliers, the two abilities, the passive and the cockpit colour. `ShipDefinition.Defaults()` has the same starting values in code.
 - `Scripts/Combat/CapitalShip.cs`: the capital ship's shape, part positions, hit points of generators (400), turrets (120) and reactor (800); `CapitalTurret.cs`: turret range, fire rate, damage and aim error. `Scripts/World/MapTheme.cs`: the Belt map's sky and sun. `Scripts/GameModes/Escort.cs`: the convoy route's waypoints.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
@@ -304,7 +305,7 @@ Everything visible was redone with real models, textures and effects (approved p
 - **Mesh colliders:** the station and the wrecks use their LOD2 meshes as static mesh colliders (the importer keeps them readable). Ships sweep spheres against them like any collider.
 
 - **Builder APIs:** `ConfigureOpenXR` uses reflection and logs what it can't find; set those values by hand if the log says so. The rest of the builder is the Stopklatka builder adapted for pure VR (EyeLevel tracking, no passthrough or scene).
-- **Menu over the canopy:** the panel sits in the window's clear centre; if a strut or the inner hex ring cuts through it on the headset, move it (`MenuPanel.Distance`, the y offset in `Build`) or shrink it.
+- **Menu placement:** the panel is inside the cockpit (0.74 m, 12° up), closer than the window frame, so the frame can't cut it; its lowest edge just clears the scope pod. If the pod still hides the bottom row, raise `MenuPanel.Elevation`; if it feels too high, lower it and shrink `TileH`. The old panel stood 1.5 m out, behind the spokes and the hub ring, which cut through it.
 - **Player settings vs GameConfig:** settings changed in the menus (hands, invert, sensitivity, vignette, auto-level, turn limit, evasive style, haptics, volume) are stored in PlayerPrefs and written over the config at start. To test one of those from the Inspector, reset the player's choice first (or clear PlayerPrefs), or the stored choice wins. In the Editor only those fields are put back after play; other Inspector tuning in Play mode stays.
 - **Text:** the cockpit screens use the legacy `TextMesh` with the built-in `LegacyRuntime.ttf`, so no TMP import is needed in M1. If Polish letters show as boxes, check the font's dynamic character set.
 - **Recenter:** `OVRManager.display.RecenterPose()` with EyeLevel tracking. If the view doesn't return to the seat, check that the tracking origin really is EyeLevel on the rig's `OVRManager`.

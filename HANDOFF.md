@@ -166,6 +166,10 @@ Updated after every step, so any session can pick up the work.
 - Names: the player's classes are Falcon, Hawk and Bison (were Sokół, Jastrząb, Żubr), the capital ship Colossus (was Kolos), the station Dawn (was Brzask). Files, models, textures and ship assets are renamed the same way; Build Game removes the old Polish-named ship assets and art materials from the Unity project.
 - The docs and the checklists quote the English texts.
 
+**Cockpit instruments and the new menu** (cloud session, 2026-10-28, owner's references and first-test feedback)
+- The cockpit (surroundings unchanged) gained angular display frames with blue and red lit edges, a scope pod with a radar, a gauge panel, a button grid, side bar graphs and buttons, corrugated hoses and red stick buttons (20.9k triangles). `CockpitInstrumentPanel` draws live radar blips (enemies red, allies green, 2 km) and four lit bars (throttle, gun heat, shields, hull). The Hull shader's class tint now colours only white lights, so coloured buttons keep their colour.
+- The menu looked bad in the first test (text, panel, placement). It is now a hologram inside the cockpit: 0.74 m ahead and 12° up, in front of the window frame (the old panel stood 1.5 m out, behind the spokes and hub ring), dark glass with cut corners, tiles in three columns with a wide amber main action, a fixed draw order and text that shrinks to fit. The hangar ship is 20 cm long, inside the cockpit. Preview from the pilot's eye: `Art/previews/Menu.jpg`.
+
 ## Next
 
 1. **On the laptop, controls test:** `git pull`, Build Game, Build And Run. Try each scheme (Y) for a minute with the input readout on, save the log (`adb logcat -s Unity | findstr "[HexWing] Input"`) and push it as `docs/input-log.txt`. If the pose source shows BRAK or the positions stay at 0, the motion schemes still can't work and the log says why.
