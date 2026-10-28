@@ -415,6 +415,13 @@ namespace HexWing.EditorTools
                 bool enemy = name == "Hornet" || name == "Trident";
                 m.SetColor("_RimColor", enemy ? Hex("#FF8A6A") : Hex("#8FC8FF"));
                 m.SetFloat("_RimStrength", enemy ? 0.3f : 0.35f);
+                // the cockpit: the baked glow of its lights, the sun only through the window, a little more ambient
+                bool cockpit = name == "Cockpit";
+                var light = cockpit ? AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/{name}_Light.png") : null;
+                m.SetTexture("_LightMap", light);
+                m.SetFloat("_ShellRadius", cockpit ? 1.05f : 0f);
+                m.SetFloat("_WindowCos", Mathf.Cos(52f * Mathf.Deg2Rad));
+                m.SetFloat("_Ambient", cockpit ? 1.3f : 1f);
                 made++;
             }
             AssetDatabase.SaveAssets();

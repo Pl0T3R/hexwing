@@ -3,6 +3,9 @@
 // tangent-space normal map. Lit by one sun (global _HexSunDirection / _HexSunColor) and a sky/ground
 // ambient (_HexSkyColor / _HexGroundColor), all set by SpaceEnvironment and MapTheme; no real-time lights
 // or shadows. A cheap GGX highlight, a sky reflection by smoothness, a fresnel rim and emission.
+// The cockpit also uses two extras (off for every other model): a baked light map of the glow its strips,
+// frames and buttons throw on the panels around them (_LightMap), and the sun only through the window: a ray
+// toward the sun must leave the ball (_ShellRadius) inside the window opening (_WindowCos), else no sunlight.
 // Single pass instanced (multiview) and SRP-batcher compatible; no keywords.
 Shader "HexWing/Hull"
 {
@@ -20,6 +23,10 @@ Shader "HexWing/Hull"
         _RimStrength("Rim Strength", Range(0, 2)) = 0.35
         _Ambient("Ambient Strength", Range(0, 2)) = 1
         _Flash("Hit Flash", Range(0, 1)) = 0
+        [NoScaleOffset] _LightMap("Baked Glow (cockpit)", 2D) = "black" {}
+        _LightMapStrength("Baked Glow Strength", Range(0, 8)) = 4
+        _ShellRadius("Window Shadow: Ball Radius (0 = off)", Float) = 0
+        _WindowCos("Window Shadow: Cos of the Window Half-Angle", Float) = 0.6157
     }
 
     SubShader
@@ -45,6 +52,7 @@ Shader "HexWing/Hull"
             TEXTURE2D(_BaseMap);    SAMPLER(sampler_BaseMap);
             TEXTURE2D(_MaskMap);    SAMPLER(sampler_MaskMap);
             TEXTURE2D(_NormalMap);  SAMPLER(sampler_NormalMap);
+            TEXTURE2D(_LightMap);   SAMPLER(sampler_LightMap);
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
@@ -57,6 +65,9 @@ Shader "HexWing/Hull"
                 half _RimStrength;
                 half _Ambient;
                 half _Flash;
+                half _LightMapStrength;
+                float _ShellRadius;
+                float _WindowCos;
             CBUFFER_END
 
             // Set by SpaceEnvironment (and MapTheme per map): toward the sun, its colour, the ambient.
@@ -143,6 +154,18 @@ Shader "HexWing/Hull"
                 half specTerm = a2 / (d * d * max(0.1h, lh * lh) * (rough * 4.0h + 2.0h));
                 half3 direct = (diffuseColor + f0 * min(specTerm, 64.0h)) * sunColor * nl;
 
+                // cockpit: the sun reaches a point only if its ray leaves the ball through the window
+                if (_ShellRadius > 0.0)
+                {
+                    float3 pO = TransformWorldToObject(i.positionWS);
+                    float3 dO = normalize(TransformWorldToObjectDir((float3)l));
+                    float b = dot(pO, dO);
+                    float c = dot(pO, pO) - _ShellRadius * _ShellRadius;
+                    float t = -b + sqrt(max(0.0, b * b - c));
+                    float exitZ = (pO.z + dO.z * t) / _ShellRadius;
+                    direct *= (half)smoothstep(_WindowCos - 0.03, _WindowCos + 0.03, exitZ);
+                }
+
                 // ambient: the sky/ground gradient for diffuse, and its reflection for the shine
                 half3 fresnel = f0 + (max(smooth.xxx, f0) - f0) * pow(1.0h - nv, 5.0h);
                 half3 envDiffuse = SkyAt(n) * diffuseColor;
@@ -158,6 +181,12 @@ Shader "HexWing/Hull"
                 half tintMax = max(_EmissionColor.r, max(_EmissionColor.g, _EmissionColor.b));
                 half3 tint = lerp(_EmissionColor.rgb, tintMax.xxx, saturate(sat * 1.6h));
                 color += albedo.rgb * mask.b * tint * _EmissionStrength;
+                // the baked glow of the cockpit's own lights on its panels, tinted by the same rule (white light
+                // takes the class colour, coloured light keeps its colour)
+                half3 glow = SAMPLE_TEXTURE2D(_LightMap, sampler_LightMap, i.uv).rgb * _LightMapStrength;
+                half ghi = max(glow.r, max(glow.g, glow.b));
+                half gsat = (ghi - min(glow.r, min(glow.g, glow.b))) / max(ghi, 0.001h);
+                color += albedo.rgb * glow * lerp(_EmissionColor.rgb, tintMax.xxx, saturate(gsat * 1.6h));
                 color = lerp(color, half3(1.0h, 0.85h, 0.7h), _Flash);
                 return half4(color, 1.0h);
             }

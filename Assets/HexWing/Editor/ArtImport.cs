@@ -8,7 +8,7 @@ namespace HexWing.EditorTools
     /// - Resources/Models/*.fbx: metres as exported, no materials, rig or animation, normals from the file
     ///   (bevels and weighted normals), MikkTSpace tangents (the same space the normal maps were baked in),
     ///   light mesh compression; Read/Write only for collision proxies ("_COL").
-    /// - Resources/Textures/*_Albedo (sRGB), *_Mask (linear, alpha = AO), *_Normal (normal map): mipmaps,
+    /// - Resources/Textures/*_Albedo and *_Light (sRGB), *_Mask (linear, alpha = AO), *_Normal (normal map): mipmaps,
     ///   ASTC 6x6 on Android (4x4 for normal maps), at most 2048.
     /// - Resources/Textures/Sky_* and Planet_* (lat-long backdrops): no mipmaps, repeat across, up to 4096.
     /// Logs one line per model so the PC session can check that the art arrived.

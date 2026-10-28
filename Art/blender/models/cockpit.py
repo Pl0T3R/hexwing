@@ -8,7 +8,8 @@ their texts and the moving stick and throttle; this model gives everything aroun
 - the window frame: the heavy round edge, eight spokes and the hub ring (clear glass inside it),
 - the front console with bezels for the three displays, side consoles with switches and bezels,
 - the seat with harness and headrest, the floor plate with pedals, the stick and throttle housings,
-- light strips (emission tinted at runtime with the ship class's accent colour).
+- light strips (emission tinted at runtime with the ship class's accent colour),
+- Cockpit_Light.png: the light its glowing parts throw on the panels around them, baked (Hull shader _LightMap).
 A second small model, CockpitControls, holds the stick and the throttle lever, each around its pivot.
 Nothing comes closer than 30 cm to the eye.
 """
@@ -561,6 +562,10 @@ def preview_from_fbx():
 def main(preview=True):
     main_ob = build_cockpit()
     bake.unwrap(main_ob, margin=0.002)
+    # the glow of the strips, frames, buttons and scope on the panels around them (Hull shader _LightMap);
+    # before the main bake, which merges the parts' materials into one
+    light, peak = bake.bake_light(main_ob, NAME, 1024, export.TEXTURES)
+    print(f"Cockpit light: brightest {peak:.2f} (stored up to {1.0 / bake.LIGHT_SCALE:.1f})")
     paths = bake.bake(main_ob, NAME, TEX, export.TEXTURES, ao_distance=0.3, margin=6)
     export.fbx([main_ob] + [o for o in bpy.data.objects if o.name.startswith("SOCKET_")], NAME)
     tris = geo.triangles(main_ob)
