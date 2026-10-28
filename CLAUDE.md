@@ -212,7 +212,7 @@ Everything visible was redone with real models, textures and effects (approved p
 | Cockpit + CockpitControls | the cockpit, stick and throttle | 14.3k + 0.8k | 2048 + 512 |
 | Kolos | capital ship | 16.8k | 2048 |
 | Station | landmark on Orbit | 8.7k | 2048 |
-| Wrecks | four cruiser sections | see report | 2048 |
+| Wrecks | four cruiser sections | 2.3–2.6k each | 2048 |
 | Asteroids | five rock shapes | 1.2k each | 1024 |
 | Sky | nebulae 4096×2048 and planets 2048×1024 per map | – | – |
 

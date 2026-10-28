@@ -152,6 +152,7 @@ Updated after every step, so any session can pick up the work.
 - Menu: the textured glass panel (`Panel.shader`), a glowing highlight bar, and the selected ship turning on a pad in the hangar (`UI/HangarShowcase.cs`).
 - Every model has a fallback to the old code-built mesh (`visuals.useArtModels` off switches them all off).
 - C#: 0 errors, 0 warnings against the Unity DLLs with stubs. The shaders have only been checked by structure: the first Unity run is the real test.
+- Blender builds use at most 80% of the cores at low priority (`HEXWING_CPU_SHARE`, owner's request). Triangle counts per model in `Art/previews/report.txt`.
 
 ## Next
 
