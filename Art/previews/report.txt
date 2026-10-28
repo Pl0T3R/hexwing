@@ -1,6 +1,6 @@
 Asteroids    LOD0   1228  LOD1    368  LOD2     98  tex 1024  (212 s)
 Bison        LOD0   8168  LOD1   2612  LOD2    816  tex 1024  (143 s)
-Cockpit      LOD0  15100  LOD1    568  LOD2    280  tex 2048  (1132 s)
+Cockpit      LOD0  20882  LOD1    628  LOD2    280  tex 2048  (1057 s)
 Colossus     LOD0  16800  LOD1   5880  LOD2   1680  tex 2048
 ColossusTurret LOD0    960  LOD1    288  LOD2     76  tex 512  (86 s)
 Drone        LOD0   1716  LOD1    514  LOD2    136  tex 512  (71 s)
