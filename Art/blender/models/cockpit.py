@@ -38,7 +38,16 @@ PALETTE = {
     "STRAP": dict(base=(0.42, 0.17, 0.03), metal=0.0, rough=0.8, panel=0.0, wear=0.0, grime=0.2, ao_dist=0.1),
     "METAL": dict(base=(0.32, 0.32, 0.34), metal=0.9, rough=0.3, panel=0.0, wear=0.2, ao_dist=0.15),
     "LIGHT": dict(base=(0.9, 0.95, 1.0), emit=1.0, emit_color=(0.92, 0.96, 1.0), panel=0.0, wear=0.0, grime=0.0),
+    # coloured lamps and buttons: saturated, so the Hull shader keeps their colour (only white lights take the class tint)
+    "L_RED": dict(base=(1.0, 0.08, 0.05), emit=1.0, emit_color=(1.0, 0.08, 0.05), panel=0.0, wear=0.0, grime=0.0),
+    "L_GREEN": dict(base=(0.15, 1.0, 0.25), emit=1.0, emit_color=(0.15, 1.0, 0.25), panel=0.0, wear=0.0, grime=0.0),
+    "L_BLUE": dict(base=(0.1, 0.45, 1.0), emit=1.0, emit_color=(0.1, 0.45, 1.0), panel=0.0, wear=0.0, grime=0.0),
+    "L_YELLOW": dict(base=(1.0, 0.8, 0.1), emit=1.0, emit_color=(1.0, 0.8, 0.1), panel=0.0, wear=0.0, grime=0.0),
+    "SCOPE": dict(base=(0.004, 0.012, 0.012), metal=0.0, rough=0.08, panel=0.0, wear=0.0, grime=0.05, bump=0.0),
 }
+
+RADAR = Vector((0.0, -0.02, 0.6))       # the scope's face on the pod above the centre display (the game draws the blips)
+GAUGES = Vector((-0.27, -0.355, 0.455))  # the bar graph panel below the left display (the game draws the bars)
 
 
 def sphere(r, theta, phi):
@@ -204,8 +213,122 @@ def build_cockpit():
         path = arc(80.0, 120.0, phi - 30.0, R - 0.07, n=8)
         P(geo.sweep("RibLight", path, geo.rect(0.012, 0.006), "LIGHT", up=inward))
 
+    instruments(P)
     main = geo.join(parts, NAME + "_LOD0")
     return main
+
+
+def facing(c):
+    """A frame at c looking at the pilot: local x right, y up, z away from the eye."""
+    c = Vector(c)
+    return geo.look_matrix(c, c - EYE)
+
+
+def frame_path(m, outline, inset=0.0):
+    return [tuple(m @ Vector((x * (1 - inset), y * (1 - inset), 0.0))) for x, y in outline]
+
+
+def hex_frame(P, name, c, w, h, depth=0.03, glow="L_BLUE"):
+    """An angular six-sided frame (flat top and bottom, pointed sides) around a display, with a thin lit edge."""
+    m = facing(c)
+    f = (Vector(c) - EYE).normalized()
+    hw, hh, tip = w / 2 + 0.012, h / 2 + 0.014, 0.02
+    outline = [(-hw, hh), (hw, hh), (hw + tip, 0.0), (hw, -hh), (-hw, -hh), (-hw - tip, 0.0)]
+    P(geo.bevel(geo.sweep(name, frame_path(m @ geo.at((0, 0, -0.012)), outline), geo.rect(0.026, depth), "FRAME", up=tuple(f), closed_path=True),
+                width=0.004, segments=1, angle=30))
+    P(geo.sweep(name + "Glow", frame_path(m @ geo.at((0, 0, -0.03)), outline, inset=0.03), geo.rect(0.004, 0.004), glow, up=tuple(f), closed_path=True))
+
+
+def instruments(P):
+    """
+    Instruments in the style of the owner's references (a TIE cockpit and a modern space-sim cockpit): angular
+    display frames with lit edges, a scope pod with a button row, a bar graph panel, a button grid, lamps,
+    toggle switches and corrugated hoses. The game draws the live parts (radar blips, bars) at SOCKET_Radar
+    and SOCKET_Gauges.
+    """
+    # angular frames with blue lit edges around the five displays
+    for name, c, size in (("FrameC", (0.0, -0.2, 0.52), (0.24, 0.15)), ("FrameL", (-0.27, -0.21, 0.47), (0.2, 0.14)),
+                          ("FrameR", (0.27, -0.21, 0.47), (0.2, 0.14)), ("FrameSL", (-0.56, -0.18, 0.12), (0.18, 0.13)),
+                          ("FrameSR", (0.56, -0.18, 0.12), (0.18, 0.13))):
+        hex_frame(P, name, c, *size, glow="L_BLUE" if name in ("FrameL", "FrameR", "FrameC") else "L_RED")
+
+    # the scope pod on the console top: a housing, a round scope with range rings, a button row, lamps and knobs
+    f = (RADAR - EYE).normalized()
+    m = facing(RADAR)
+    P(geo.bevel(_box_m("ScopePod", (0.2, 0.12, 0.12), "TRIM", m @ geo.at((0, 0, 0.06))), width=0.01, segments=2))
+    P(geo.tube("ScopeBezel", tuple(RADAR - f * 0.012), tuple(RADAR + f * 0.004), 0.06, 0.05, "FRAME", sides=32))
+    P(geo.disc("ScopeGlass", tuple(RADAR + f * 0.002), tuple(-f), 0.051, "SCOPE", sides=32))
+    for r in (0.017, 0.034, 0.049):
+        ring = [tuple(m @ Vector((math.cos(math.radians(a)) * r, math.sin(math.radians(a)) * r, -0.001))) for a in range(0, 360, 10)]
+        P(geo.sweep("ScopeRing", ring, geo.rect(0.0015, 0.001), "L_GREEN", up=tuple(f), closed_path=True))
+    for a in (0, 90):
+        d = (math.cos(math.radians(a)), math.sin(math.radians(a)))
+        P(geo.sweep("ScopeCross", [tuple(m @ Vector((-d[0] * 0.049, -d[1] * 0.049, -0.001))), tuple(m @ Vector((d[0] * 0.049, d[1] * 0.049, -0.001)))],
+                    geo.rect(0.0012, 0.001), "L_GREEN", up=tuple(f)))
+    P(_box_m("ScopeSelf", (0.006, 0.006, 0.002), "L_GREEN", m @ geo.at((0, 0, -0.002))))
+    for k, slot in enumerate(("L_GREEN", "L_RED", "L_BLUE", "DARK", "L_YELLOW", "DARK")):
+        P(geo.bevel(_box_m("PodButton", (0.018, 0.014, 0.012), slot, m @ geo.at((-0.05 + k * 0.02, 0.075, -0.005))), width=0.002, segments=1))
+    for k in range(2):
+        P(geo.disc("PodLamp", tuple(m @ Vector((-0.078, 0.022 - k * 0.04, -0.004))), tuple(-f), 0.006, "L_RED", sides=10))
+        P(geo.bevel(geo.cylinder("PodKnob", tuple(m @ Vector((0.078, 0.022 - k * 0.04, 0.0))), tuple(m @ Vector((0.078, 0.022 - k * 0.04, -0.016))),
+                                 0.011, 0.009, "METAL", sides=12), width=0.002, segments=1))
+
+    # the bar graph panel below the left display: a recess with four slots (the game fills them), lit labels below
+    m = facing(GAUGES)
+    f = (GAUGES - EYE).normalized()
+    P(geo.bevel(_box_m("GaugePanel", (0.2, 0.085, 0.02), "DARK", m @ geo.at((0, 0, 0.004))), width=0.004, segments=1))
+    P(geo.bevel(geo.sweep("GaugeFrame", frame_path(m @ geo.at((0, 0, -0.006)), [(-0.1, 0.0425), (0.1, 0.0425), (0.1, -0.0425), (-0.1, -0.0425)]),
+                          geo.rect(0.01, 0.012), "FRAME", up=tuple(f), closed_path=True), width=0.002, segments=1))
+    for k, slot in enumerate(("L_BLUE", "L_YELLOW", "L_BLUE", "L_GREEN")):
+        x = -0.066 + k * 0.044
+        P(_box_m("GaugeSlot", (0.018, 0.06, 0.003), "SCOPE", m @ geo.at((x, 0.004, -0.007))))
+        P(_box_m("GaugeLabel", (0.016, 0.004, 0.002), slot, m @ geo.at((x, -0.033, -0.008))))
+
+    # the button grid below the right display: square lamps, two big red buttons, toggle switches
+    m = facing((0.27, -0.355, 0.455))
+    P(geo.bevel(_box_m("ButtonPanel", (0.2, 0.085, 0.02), "DARK", m @ geo.at((0, 0, 0.004))), width=0.004, segments=1))
+    for row in range(3):
+        for col in range(4):
+            slot = ("LIGHT", "METAL", "L_RED", "METAL")[(row + col * 2) % 4]
+            P(geo.bevel(_box_m("GridButton", (0.016, 0.014, 0.008), slot, m @ geo.at((-0.075 + col * 0.022, 0.024 - row * 0.022, -0.006))), width=0.002, segments=1))
+    for k in range(2):
+        P(geo.bevel(geo.cylinder("RedButton", tuple(m @ Vector((0.03 + k * 0.034, 0.012, 0.0))), tuple(m @ Vector((0.03 + k * 0.034, 0.012, -0.012))),
+                                 0.012, 0.011, "L_RED", sides=12), width=0.002, segments=1))
+    for k in range(3):
+        P(geo.bevel(_box_m("ToggleBase", (0.012, 0.012, 0.006), "METAL", m @ geo.at((0.024 + k * 0.025, -0.022, -0.004))), width=0.001, segments=1))
+        P(_box_m("Toggle", (0.004, 0.004, 0.02), "METAL", m @ geo.at((0.024 + k * 0.025, -0.017, -0.012)) @ geo.rot(x=30)))
+
+    # vertical bar graphs on the left side console (red and white segments) and round lamps under them
+    # (on the console's inner face, the one turned to the pilot: local -z points at the cockpit's middle)
+    for side in (-1,):
+        base = Vector((0.512 * side, -0.31, 0.06))
+        m = geo.at(base, geo.rot(z=-25 * side) @ geo.rot(y=90 * side))
+        for col in range(3):
+            for seg in range(8):
+                slot = "L_RED" if (seg + col) % 3 else "LIGHT"
+                P(_box_m("BarSeg", (0.008, 0.006, 0.004), slot, m @ geo.at((-0.06 + col * 0.03, 0.03 + seg * 0.012, 0.0))))
+            P(geo.disc("BarLamp", tuple(m @ Vector((-0.06 + col * 0.03, 0.012, -0.003))), tuple(geo.xd(m, (0, 0, -1))), 0.007,
+                       "L_RED" if col < 2 else "LIGHT", sides=10))
+    # lit square buttons on the right side console
+    m = geo.at((0.512, -0.31, 0.08), geo.rot(z=-25) @ geo.rot(y=90))
+    for row in range(2):
+        for col in range(3):
+            P(geo.bevel(_box_m("SideButton", (0.014, 0.014, 0.008), "LIGHT" if (row + col) % 2 else "METAL", m @ geo.at((-0.03 + col * 0.022, 0.03 + row * 0.022, 0))),
+                        width=0.002, segments=1))
+
+    # two corrugated hoses from under the console to the seat sides
+    for side in (1, -1):
+        a, b, c = Vector((0.2 * side, -0.46, 0.42)), Vector((0.3 * side, -0.62, 0.2)), Vector((0.24 * side, -0.5, -0.12))
+        path = [tuple((1 - t) ** 2 * a + 2 * (1 - t) * t * b + t ** 2 * c) for t in (i / 16 for i in range(17))]
+        P(geo.sweep("Hose", path, geo.circle(0.018, 10), "DARK"))
+        for i in range(1, 16):
+            p, q = Vector(path[i]), Vector(path[i + 1])
+            mid = (p + q) / 2
+            d = (q - p).normalized()
+            P(geo.cylinder("HoseRib", tuple(mid - d * 0.006), tuple(mid + d * 0.006), 0.023, 0.023, "DARK", sides=10, cap0=False, cap1=False))
+
+    geo.socket("Radar", tuple(RADAR - (RADAR - EYE).normalized() * 0.004))
+    geo.socket("Gauges", tuple(GAUGES - (GAUGES - EYE).normalized() * 0.009))
 
 
 def build_controls():
@@ -222,7 +345,8 @@ def build_controls():
     ], "TRIM", matrix=geo.at((0, 0.19, 0), geo.rot(x=-90)))
     P(geo.bevel(grip, width=0.006, segments=2))
     P(geo.bevel(geo.box("Trigger", (0, 0.24, 0.032), (0.016, 0.03, 0.012), "DARK"), width=0.003, segments=1))
-    P(geo.cylinder("Hat", (0, 0.29, 0.008), (0, 0.3, 0.01), 0.008, 0.007, "LIGHT", sides=8))
+    P(geo.cylinder("Hat", (0, 0.29, 0.008), (0, 0.3, 0.012), 0.011, 0.01, "L_RED", sides=12))
+    P(geo.cylinder("FrontButton", (0, 0.255, 0.028), (0, 0.255, 0.036), 0.009, 0.008, "L_RED", sides=12))
     P(geo.bevel(geo.box("Thumb", (0.018, 0.275, 0.0), (0.012, 0.012, 0.02), "METAL"), width=0.002, segments=1))
     stick = geo.join(parts, "CockpitControls_Stick")
 
@@ -266,7 +390,7 @@ def main(preview=True):
     main_ob = build_cockpit()
     bake.unwrap(main_ob, margin=0.002)
     paths = bake.bake(main_ob, NAME, TEX, export.TEXTURES, ao_distance=0.3, margin=6)
-    export.fbx([main_ob], NAME)
+    export.fbx([main_ob] + [o for o in bpy.data.objects if o.name.startswith("SOCKET_")], NAME)
     tris = geo.triangles(main_ob)
     if preview:
         cockpit_preview(main_ob, paths, tris)
