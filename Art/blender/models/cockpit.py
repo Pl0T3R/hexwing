@@ -47,7 +47,7 @@ PALETTE = {
 }
 
 RADAR = Vector((0.0, -0.02, 0.6))       # the scope's face on the pod above the centre display (the game draws the blips)
-GAUGES = Vector((-0.27, -0.355, 0.455))  # the bar graph panel below the left display (the game draws the bars)
+GAUGES = Vector((-0.27, -0.366, 0.455))  # the bar graph panel below the left display (the game draws the bars)
 
 
 def sphere(r, theta, phi):
@@ -109,13 +109,46 @@ def arc(theta0, theta1, phi, r, n=16):
     return [sphere(r, theta0 + (theta1 - theta0) * i / n, phi) for i in range(n + 1)]
 
 
-def bezel(name, center, size, depth, slot, eye=EYE, border=0.022):
-    """A frame around a display glass (the glass itself is made in code at the same place)."""
+def bezel(name, center, size, depth, slot, eye=EYE, border=0.022, matrix=None):
+    """
+    A frame around a display glass (the glass itself is made in code at the same place), its front face just
+    behind the glass. It faces the eye, or follows matrix (the display's frame: z away from the pilot).
+    """
     c = Vector(center)
-    f = (c - eye).normalized()
-    m = geo.look_matrix(c + f * (depth * 0.5 + 0.004), f)
+    if matrix is None:
+        f = (c - eye).normalized()
+        m = geo.look_matrix(c + f * (depth * 0.5 + 0.004), f)
+    else:
+        m = matrix @ geo.at((0, 0, depth * 0.5 + 0.004))
     w, h = size[0] + 2 * border, size[1] + 2 * border
     return _box_m(name, (w, h, depth), slot, m)
+
+
+SIDE_SIZE = (0.18, 0.13)   # the side display glasses (CockpitFactory: Display Side Left / Right)
+
+
+def side_console(side):
+    """The angled console block beside the seat (size 0.16 x 0.26 x 0.42)."""
+    return geo.at((0.6 * side, -0.27, 0.12), geo.rot(z=-25 * side))
+
+
+def side_face(side):
+    """The side console's inner face, the one turned to the pilot: its centre, outward normal, up and nose directions."""
+    m = side_console(side)
+    r = m.to_3x3()
+    return (m @ Vector((-0.08 * side, 0.0, 0.0)), (r @ Vector((-side, 0.0, 0.0))).normalized(),
+            (r @ Vector((0.0, 1.0, 0.0))).normalized(), (r @ Vector((0.0, 0.0, 1.0))).normalized())
+
+
+def side_display(side):
+    """
+    The side display: flat on the upper front of the console's inner face, its glass 12 mm proud of it (so
+    nothing of it can cut into the console). Returns the glass centre and its frame (z into the console).
+    CockpitFactory places the glass and its text with the same numbers.
+    """
+    c, n, up, nose = side_face(side)
+    centre = c + up * 0.03 + nose * 0.085 + n * 0.012
+    return centre, geo.look_matrix(centre, -n, up)
 
 
 def build_cockpit():
@@ -162,10 +195,9 @@ def build_cockpit():
 
     # side consoles: angled blocks with a display bezel and rows of switches
     for side in (1, -1):
-        c = Vector((0.6 * side, -0.27, 0.12))
-        m = geo.at(c, geo.rot(z=-25 * side))
-        P(geo.bevel(_box_m("SideConsole", (0.16, 0.26, 0.42), "TRIM", m), width=0.012, segments=2))
-        P(geo.bevel(bezel("BezelSide", (0.56 * side, -0.18, 0.12), (0.18, 0.13), 0.06, "DARK"), width=0.005, segments=1))
+        P(geo.bevel(_box_m("SideConsole", (0.16, 0.26, 0.42), "TRIM", side_console(side)), width=0.012, segments=2))
+        sc, sm = side_display(side)
+        P(geo.bevel(bezel("BezelSide", sc, SIDE_SIZE, 0.03, "DARK", matrix=sm), width=0.005, segments=1))
         for row in range(3):
             for k in range(5):
                 p = Vector((0.66 * side - 0.03 * side * row, -0.15 + 0.012 * row, -0.03 + 0.05 * k + 0.25 * (row == 2)))
@@ -228,15 +260,38 @@ def frame_path(m, outline, inset=0.0):
     return [tuple(m @ Vector((x * (1 - inset), y * (1 - inset), 0.0))) for x, y in outline]
 
 
-def hex_frame(P, name, c, w, h, depth=0.03, glow="L_BLUE"):
-    """An angular six-sided frame (flat top and bottom, pointed sides) around a display, with a thin lit edge."""
-    m = facing(c)
-    f = (Vector(c) - EYE).normalized()
-    hw, hh, tip = w / 2 + 0.012, h / 2 + 0.014, 0.02
-    outline = [(-hw, hh), (hw, hh), (hw + tip, 0.0), (hw, -hh), (-hw, -hh), (-hw - tip, 0.0)]
-    P(geo.bevel(geo.sweep(name, frame_path(m @ geo.at((0, 0, -0.012)), outline), geo.rect(0.026, depth), "FRAME", up=tuple(f), closed_path=True),
-                width=0.004, segments=1, angle=30))
-    P(geo.sweep(name + "Glow", frame_path(m @ geo.at((0, 0, -0.03)), outline, inset=0.03), geo.rect(0.004, 0.004), glow, up=tuple(f), closed_path=True))
+def frame_outline(hw, hh, tips, chamfer, tip):
+    """
+    A display frame's outline (x right, y up, clockwise from the top left): flat top and bottom, a point on
+    each side named in tips (left, right), chamfered corners on the sides without one.
+    """
+    left, right = tips
+    pts = [(-hw, hh)] if left else [(-hw, hh - chamfer), (-hw + chamfer, hh)]
+    pts += [(hw, hh)] if right else [(hw - chamfer, hh), (hw, hh - chamfer)]
+    if right:
+        pts += [(hw + tip, 0.0)]
+    pts += [(hw, -hh)] if right else [(hw, -hh + chamfer), (hw - chamfer, -hh)]
+    pts += [(-hw, -hh)] if left else [(-hw + chamfer, -hh), (-hw, -hh + chamfer)]
+    if left:
+        pts += [(-hw - tip, 0.0)]
+    return pts
+
+
+def hex_frame(P, name, m, w, h, tips, glow="L_BLUE", tip=0.006, chamfer=0.012):
+    """
+    An angular frame around a display glass of w x h, with a thin lit line along it. It lies on the face of
+    the display's bezel (along the middle of its 22 mm border, 12 mm wide), so it never reaches past the
+    bezel and frames of neighbouring displays can't overlap. m: the glass's frame (z away from the pilot).
+    """
+    hw, hh = w / 2 + 0.011, h / 2 + 0.011
+    f = geo.xd(m, (0, 0, 1))
+    outline = frame_outline(hw, hh, tips, chamfer, tip)
+    frame = geo.bevel(geo.sweep(name, frame_path(m, outline), geo.rect(0.012, 0.008), "FRAME", up=f, closed_path=True),
+                      width=0.002, segments=1, angle=30)
+    line = geo.sweep(name + "Glow", frame_path(m @ geo.at((0, 0, -0.0048)), outline), geo.rect(0.003, 0.0016), glow, up=f, closed_path=True)
+    P(frame)
+    P(line)
+    return [frame, line]
 
 
 def instruments(P):
@@ -246,16 +301,23 @@ def instruments(P):
     toggle switches and corrugated hoses. The game draws the live parts (radar blips, bars) at SOCKET_Radar
     and SOCKET_Gauges.
     """
-    # angular frames with blue lit edges around the five displays
-    for name, c, size in (("FrameC", (0.0, -0.2, 0.52), (0.24, 0.15)), ("FrameL", (-0.27, -0.21, 0.47), (0.2, 0.14)),
-                          ("FrameR", (0.27, -0.21, 0.47), (0.2, 0.14)), ("FrameSL", (-0.56, -0.18, 0.12), (0.18, 0.13)),
-                          ("FrameSR", (0.56, -0.18, 0.12), (0.18, 0.13))):
-        hex_frame(P, name, c, *size, glow="L_BLUE" if name in ("FrameL", "FrameR", "FrameC") else "L_RED")
+    # angular frames with lit lines around the five displays: blue on the front three (the centre one with cut
+    # corners, the outer two pointed on their outer side only), red on the side consoles (pointed toward the nose)
+    check = {}
+    for name, c, size, tips in (("FrameC", (0.0, -0.2, 0.52), (0.24, 0.15), (False, False)),
+                                ("FrameL", (-0.27, -0.21, 0.47), (0.2, 0.14), (True, False)),
+                                ("FrameR", (0.27, -0.21, 0.47), (0.2, 0.14), (False, True))):
+        check[name] = hex_frame(P, name, facing(c), *size, tips)
+    for side, name in ((-1, "FrameSL"), (1, "FrameSR")):
+        sc, sm = side_display(side)
+        nose_x = Vector(geo.xd(sm, (1, 0, 0))).dot(side_face(side)[3])
+        check[name] = hex_frame(P, name, sm, *SIDE_SIZE, (nose_x < 0, nose_x > 0), glow="L_RED")
 
     # the scope pod on the console top: a housing, a round scope with range rings, a button row, lamps and knobs
     f = (RADAR - EYE).normalized()
     m = facing(RADAR)
-    P(geo.bevel(_box_m("ScopePod", (0.2, 0.12, 0.12), "TRIM", m @ geo.at((0, 0, 0.06))), width=0.01, segments=2))
+    check["ScopePod"] = [geo.bevel(_box_m("ScopePod", (0.2, 0.12, 0.12), "TRIM", m @ geo.at((0, 0, 0.06))), width=0.01, segments=2)]
+    P(check["ScopePod"][0])
     P(geo.tube("ScopeBezel", tuple(RADAR - f * 0.012), tuple(RADAR + f * 0.004), 0.06, 0.05, "FRAME", sides=32))
     P(geo.disc("ScopeGlass", tuple(RADAR + f * 0.002), tuple(-f), 0.051, "SCOPE", sides=32))
     for r in (0.017, 0.034, 0.049):
@@ -276,7 +338,8 @@ def instruments(P):
     # the bar graph panel below the left display: a recess with four slots (the game fills them), lit labels below
     m = facing(GAUGES)
     f = (GAUGES - EYE).normalized()
-    P(geo.bevel(_box_m("GaugePanel", (0.2, 0.085, 0.02), "DARK", m @ geo.at((0, 0, 0.004))), width=0.004, segments=1))
+    check["GaugePanel"] = [geo.bevel(_box_m("GaugePanel", (0.2, 0.085, 0.02), "DARK", m @ geo.at((0, 0, 0.004))), width=0.004, segments=1)]
+    P(check["GaugePanel"][0])
     P(geo.bevel(geo.sweep("GaugeFrame", frame_path(m @ geo.at((0, 0, -0.006)), [(-0.1, 0.0425), (0.1, 0.0425), (0.1, -0.0425), (-0.1, -0.0425)]),
                           geo.rect(0.01, 0.012), "FRAME", up=tuple(f), closed_path=True), width=0.002, segments=1))
     for k, slot in enumerate(("L_BLUE", "L_YELLOW", "L_BLUE", "L_GREEN")):
@@ -285,8 +348,9 @@ def instruments(P):
         P(_box_m("GaugeLabel", (0.016, 0.004, 0.002), slot, m @ geo.at((x, -0.033, -0.008))))
 
     # the button grid below the right display: square lamps, two big red buttons, toggle switches
-    m = facing((0.27, -0.355, 0.455))
-    P(geo.bevel(_box_m("ButtonPanel", (0.2, 0.085, 0.02), "DARK", m @ geo.at((0, 0, 0.004))), width=0.004, segments=1))
+    m = facing((0.27, -0.366, 0.455))
+    check["ButtonPanel"] = [geo.bevel(_box_m("ButtonPanel", (0.2, 0.085, 0.02), "DARK", m @ geo.at((0, 0, 0.004))), width=0.004, segments=1)]
+    P(check["ButtonPanel"][0])
     for row in range(3):
         for col in range(4):
             slot = ("LIGHT", "METAL", "L_RED", "METAL")[(row + col * 2) % 4]
@@ -298,23 +362,28 @@ def instruments(P):
         P(geo.bevel(_box_m("ToggleBase", (0.012, 0.012, 0.006), "METAL", m @ geo.at((0.024 + k * 0.025, -0.022, -0.004))), width=0.001, segments=1))
         P(_box_m("Toggle", (0.004, 0.004, 0.02), "METAL", m @ geo.at((0.024 + k * 0.025, -0.017, -0.012)) @ geo.rot(x=30)))
 
-    # vertical bar graphs on the left side console (red and white segments) and round lamps under them
-    # (on the console's inner face, the one turned to the pilot: local -z points at the cockpit's middle)
-    for side in (-1,):
-        base = Vector((0.512 * side, -0.31, 0.06))
-        m = geo.at(base, geo.rot(z=-25 * side) @ geo.rot(y=90 * side))
-        for col in range(3):
-            for seg in range(8):
-                slot = "L_RED" if (seg + col) % 3 else "LIGHT"
-                P(_box_m("BarSeg", (0.008, 0.006, 0.004), slot, m @ geo.at((-0.06 + col * 0.03, 0.03 + seg * 0.012, 0.0))))
-            P(geo.disc("BarLamp", tuple(m @ Vector((-0.06 + col * 0.03, 0.012, -0.003))), tuple(geo.xd(m, (0, 0, -1))), 0.007,
-                       "L_RED" if col < 2 else "LIGHT", sides=10))
-    # lit square buttons on the right side console
-    m = geo.at((0.512, -0.31, 0.08), geo.rot(z=-25) @ geo.rot(y=90))
-    for row in range(2):
-        for col in range(3):
-            P(geo.bevel(_box_m("SideButton", (0.014, 0.014, 0.008), "LIGHT" if (row + col) % 2 else "METAL", m @ geo.at((-0.03 + col * 0.022, 0.03 + row * 0.022, 0))),
-                        width=0.002, segments=1))
+    # on the rear part of each side console's inner face (behind its display): vertical bar graphs (red and
+    # white segments) with round lamps under them on the left, lit square buttons and two lamps on the right
+    for side in (-1, 1):
+        c, n, up, nose = side_face(side)
+        m = geo.look_matrix(c - nose * 0.12 + n * 0.002, -n, up)   # z into the face, flush with it
+        items = check["Side" + ("L" if side < 0 else "R")] = []
+        if side < 0:
+            for col in range(3):
+                for seg in range(8):
+                    slot = "L_RED" if (seg + col) % 3 else "LIGHT"
+                    items.append(_box_m("BarSeg", (0.008, 0.006, 0.004), slot, m @ geo.at((-0.03 + col * 0.03, -0.03 + seg * 0.012, 0.0))))
+                items.append(geo.disc("BarLamp", tuple(m @ Vector((-0.03 + col * 0.03, -0.05, -0.003))), geo.xd(m, (0, 0, -1)), 0.007,
+                                      "L_RED" if col < 2 else "LIGHT", sides=10))
+        else:
+            for row in range(2):
+                for col in range(3):
+                    items.append(geo.bevel(_box_m("SideButton", (0.014, 0.014, 0.008), "LIGHT" if (row + col) % 2 else "METAL",
+                                                  m @ geo.at((-0.022 + col * 0.022, 0.0 + row * 0.025, -0.002))), width=0.002, segments=1))
+            for k in range(2):
+                items.append(geo.disc("SideLamp", tuple(m @ Vector((-0.011 + k * 0.022, -0.04, -0.002))), geo.xd(m, (0, 0, -1)), 0.006, "L_RED", sides=10))
+        for ob in items:
+            P(ob)
 
     # two corrugated hoses from under the console to the seat sides
     for side in (1, -1):
@@ -327,8 +396,89 @@ def instruments(P):
             d = (q - p).normalized()
             P(geo.cylinder("HoseRib", tuple(mid - d * 0.006), tuple(mid + d * 0.006), 0.023, 0.023, "DARK", sides=10, cap0=False, cap1=False))
 
+    layout_check(check)
     geo.socket("Radar", tuple(RADAR - (RADAR - EYE).normalized() * 0.004))
     geo.socket("Gauges", tuple(GAUGES - (GAUGES - EYE).normalized() * 0.009))
+
+
+def _unity_points(objects):
+    back = geo.TO_BLENDER.inverted()
+    return [(back @ (ob.matrix_world @ v.co).to_4d()).to_3d() for ob in objects for v in ob.data.vertices]
+
+
+def _hull(points):
+    pts = sorted(set(points))
+    if len(pts) < 3:
+        return pts
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lower, upper = [], []
+    for p in pts:
+        while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+            lower.pop()
+        lower.append(p)
+    for p in reversed(pts):
+        while len(upper) >= 2 and cross(upper[-2], upper[-1], p) <= 0:
+            upper.pop()
+        upper.append(p)
+    return lower[:-1] + upper[:-1]
+
+
+def _overlap(a, b):
+    """How far two convex outlines overlap (degrees; 0 or less = apart), by separating axes."""
+    depth = 1e9
+    for poly in (a, b):
+        for i in range(len(poly)):
+            p, q = poly[i], poly[(i + 1) % len(poly)]
+            ax = (-(q[1] - p[1]), q[0] - p[0])
+            length = math.hypot(*ax) or 1.0
+            ax = (ax[0] / length, ax[1] / length)
+            pa = [x * ax[0] + y * ax[1] for x, y in a]
+            pb = [x * ax[0] + y * ax[1] for x, y in b]
+            depth = min(depth, min(max(pa), max(pb)) - max(min(pa), min(pb)))
+    return depth
+
+
+def layout_check(items):
+    """
+    Prints 'Cockpit check: ...' for instrument parts that overlap as the pilot sees them (outlines in
+    degrees from the eye) and for side console parts that cut into the console block or the armrest.
+    """
+    problems = 0
+    outlines = {}
+    for name, objects in items.items():
+        pts = []
+        for p in _unity_points(objects):
+            d = p - EYE
+            pts.append((round(math.degrees(math.atan2(d.x, d.z)), 3), round(math.degrees(math.atan2(d.y, math.hypot(d.x, d.z))), 3)))
+        outlines[name] = _hull(pts)
+    names = sorted(outlines)
+    for i, a in enumerate(names):
+        for b in names[i + 1:]:
+            depth = _overlap(outlines[a], outlines[b])
+            if depth > 0.05:
+                print(f"Cockpit check: {a} and {b} overlap by {depth:.2f} degrees as seen from the eye")
+                problems += 1
+    for side, keys in ((-1, ("FrameSL", "SideL")), (1, ("FrameSR", "SideR"))):
+        blocks = ((side_console(side).inverted(), Vector((0.08, 0.13, 0.21))),
+                  (geo.at((0.52 * side, -0.37, -0.02), geo.rot(z=-12 * side)).inverted(), Vector((0.055, 0.025, 0.17))))
+        for key in keys:
+            for p in _unity_points(items[key]):
+                for inv, half in blocks:
+                    q = inv @ p
+                    if abs(q.x) < half.x - 0.002 and abs(q.y) < half.y - 0.002 and abs(q.z) < half.z - 0.002:
+                        print(f"Cockpit check: {key} cuts into the {'console' if half.x > 0.06 else 'armrest'} at {tuple(round(v, 3) for v in p)}")
+                        problems += 1
+                        break
+                else:
+                    continue
+                break
+    print(f"Cockpit check: {problems} problem(s)")
+    sc = [side_display(s) for s in (-1, 1)]
+    for s, (centre, m) in zip((-1, 1), sc):
+        fwd, up = geo.xd(m, (0, 0, 1)), geo.xd(m, (0, 1, 0))
+        print(f"Side display {s:+d}: centre ({centre.x:.4f}, {centre.y:.4f}, {centre.z:.4f}), "
+              f"forward ({fwd[0]:.4f}, {fwd[1]:.4f}, {fwd[2]:.4f}), up ({up[0]:.4f}, {up[1]:.4f}, {up[2]:.4f})")
 
 
 def build_controls():

@@ -56,8 +56,11 @@ namespace HexWing
                 Center = Screen(root, "Display Center", new Vector3(0f, -0.2f, 0.52f), new Vector2(0.24f, 0.15f), eye),
                 Left = Screen(root, "Display Left", new Vector3(-0.27f, -0.21f, 0.47f), new Vector2(0.2f, 0.14f), eye),
                 Right = Screen(root, "Display Right", new Vector3(0.27f, -0.21f, 0.47f), new Vector2(0.2f, 0.14f), eye),
-                SideLeft = Screen(root, "Display Side Left", new Vector3(-0.56f, -0.18f, 0.12f), new Vector2(0.18f, 0.13f), eye),
-                SideRight = Screen(root, "Display Side Right", new Vector3(0.56f, -0.18f, 0.12f), new Vector2(0.18f, 0.13f), eye),
+                // the side displays lie flat on the side consoles' inner faces (Art/blender/models/cockpit.py, side_display)
+                SideLeft = Screen(root, "Display Side Left", new Vector3(-0.5293f, -0.2039f, 0.205f), new Vector2(0.18f, 0.13f),
+                                  Quaternion.LookRotation(new Vector3(-0.9063f, -0.4226f, 0f), new Vector3(-0.4226f, 0.9063f, 0f))),
+                SideRight = Screen(root, "Display Side Right", new Vector3(0.5293f, -0.2039f, 0.205f), new Vector2(0.18f, 0.13f),
+                                   Quaternion.LookRotation(new Vector3(0.9063f, -0.4226f, 0f), new Vector3(0.4226f, 0.9063f, 0f))),
             };
             d.Stick = Control(root, "Stick", new Vector3(0.24f, -0.52f, 0.22f), 0.22f, 0.024f);
             d.Throttle = Control(root, "Throttle", new Vector3(-0.3f, -0.48f, 0.12f), 0.16f, 0.02f);
@@ -155,9 +158,9 @@ namespace HexWing
             var b = new MeshKit.Builder();
             // front console: a slanted block under the window, the displays sit on its face
             b.Box(new Vector3(0f, -0.3f, 0.6f), new Vector3(0.95f, 0.22f, 0.26f), Quaternion.Euler(-35f, 0f, 0f), 0.85f);
-            // side panels, turned toward the pilot
-            b.Box(new Vector3(-0.6f, -0.26f, 0.12f), new Vector3(0.14f, 0.24f, 0.36f), Quaternion.Euler(0f, 0f, -25f));
-            b.Box(new Vector3(0.6f, -0.26f, 0.12f), new Vector3(0.14f, 0.24f, 0.36f), Quaternion.Euler(0f, 0f, 25f));
+            // side consoles, their inner faces turned up toward the pilot (the side displays lie on them; as in the model)
+            b.Box(new Vector3(-0.6f, -0.27f, 0.12f), new Vector3(0.16f, 0.26f, 0.42f), Quaternion.Euler(0f, 0f, 25f));
+            b.Box(new Vector3(0.6f, -0.27f, 0.12f), new Vector3(0.16f, 0.26f, 0.42f), Quaternion.Euler(0f, 0f, -25f));
             // seat: pan, back and headrest behind the eye point
             b.Box(new Vector3(0f, -0.6f, -0.12f), new Vector3(0.5f, 0.1f, 0.5f), Quaternion.identity);
             b.Box(new Vector3(0f, -0.15f, -0.42f), new Vector3(0.52f, 0.8f, 0.1f), Quaternion.Euler(-8f, 0f, 0f), 0.85f);
@@ -168,12 +171,16 @@ namespace HexWing
         }
 
         /// <summary>A dark display surface facing the eye, with an anchor for its text in front of it.</summary>
-        static Transform Screen(Transform root, string name, Vector3 center, Vector2 size, Vector3 eye)
+        static Transform Screen(Transform root, string name, Vector3 center, Vector2 size, Vector3 eye) =>
+            Screen(root, name, center, size, Quaternion.LookRotation(center - eye, Vector3.up));   // +Z away from the eye
+
+        /// <summary>A dark display surface turned by rotation (+Z away from the pilot), with an anchor for its text.</summary>
+        static Transform Screen(Transform root, string name, Vector3 center, Vector2 size, Quaternion rotation)
         {
             var anchor = new GameObject(name).transform;
             anchor.SetParent(root, false);
             anchor.localPosition = center;
-            anchor.localRotation = Quaternion.LookRotation(center - eye, Vector3.up);   // +Z away from the eye
+            anchor.localRotation = rotation;
 
             var b = new MeshKit.Builder();
             b.Box(Vector3.zero, new Vector3(size.x, size.y, 0.01f), Quaternion.identity);
