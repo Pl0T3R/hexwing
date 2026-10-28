@@ -1,7 +1,11 @@
 Asteroids    LOD0   1228  LOD1    368  LOD2     98  tex 1024  (212 s)
 Cockpit      LOD0  14328  LOD1      0  LOD2      0  tex 2048  (stick 568, throttle 280)
+Drone        LOD0   1140  LOD1    342  LOD2     90  tex 512
 Hornet       LOD0   4488  LOD1   1346  LOD2    349  tex 1024
-Kolos        LOD0  11956  LOD1   4184  LOD2   1194  tex 2048  (663 s)
+Jastrzab     LOD0   1980  LOD1    594  LOD2    158  tex 1024
+Kolos        LOD0  16800  LOD1   5880  LOD2   1680  tex 2048
+KolosTurret  LOD0   1104  LOD1    330  LOD2     88  tex 512
+Missile      LOD0    508  LOD1    202  LOD2      0  tex 256
 Sky          LOD0      0  LOD1      0  LOD2      0  tex 4096  (115 s)
 Sokol        LOD0   3298  LOD1    988  LOD2    262  tex 1024  (320 s)
 Station      LOD0   8680  LOD1   3038  LOD2    868  tex 2048  (511 s)
@@ -9,3 +13,4 @@ Swallow      LOD0   2876  LOD1    862  LOD2    229  tex 1024  (293 s)
 Transport    LOD0   2196  LOD1    658  LOD2    194  tex 1024  (298 s)
 Trident      LOD0   3226  LOD1    966  LOD2    258  tex 1024  (313 s)
 Wrecks       LOD0   2648  LOD1    925  LOD2    317  tex 2048  (575 s)
+Zubr         LOD0   2556  LOD1    766  LOD2    204  tex 1024
