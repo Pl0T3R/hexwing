@@ -213,7 +213,7 @@ Everything visible was redone with real models, textures and effects (approved p
 | Falcon, Hawk, Bison | the player's classes, Interceptor variants: Falcon exactly Photo 2 (default), Hawk longer blades + green trim, Bison armour, bomb pods + amber trim | ~7.4k each | 1024 |
 | Transport | escort hauler | 2.2k | 1024 |
 | Drone, Missile, ColossusTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
-| Cockpit + CockpitControls | the cockpit, stick and throttle | 14.3k + 0.8k | 2048 + 512 |
+| Cockpit + CockpitControls | the Interceptor cockpit (round window, eight spokes), stick and throttle | 15.1k + 0.8k | 2048 + 512 |
 | Colossus | capital ship | 16.8k | 2048 |
 | Station | landmark on Orbit | 8.7k | 2048 |
 | Wrecks | four cruiser sections | 2.3–2.6k each | 2048 |
