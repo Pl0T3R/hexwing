@@ -152,7 +152,7 @@ Updated after every step, so any session can pick up the work.
 - Menu: the textured glass panel (`Panel.shader`), a glowing highlight bar, and the selected ship turning on a pad in the hangar (`UI/HangarShowcase.cs`).
 - Every model has a fallback to the old code-built mesh (`visuals.useArtModels` off switches them all off).
 - C#: 0 errors, 0 warnings against the Unity DLLs with stubs. The shaders have only been checked by structure: the first Unity run is the real test.
-- Blender builds use at most 80% of the cores at low priority (`HEXWING_CPU_SHARE`, owner's request). Triangle counts per model in `Art/previews/report.txt`.
+- Blender builds use at most 80% of the cores at low priority (`HEXWING_CPU_SHARE`, 1.0 lifts it), so the machine stays usable. Triangle counts per model in `Art/previews/report.txt`.
 
 **Replica fighters** (cloud session, 2026-10-28, owner's request with two reference images)
 - The enemy team flies X-wing replicas (Hornet; Trident is the dark elite variant), the player's team TIE Interceptor replicas (Swallow wingmen; the player's classes Falcon = Photo 2 exactly and the default, Hawk with longer blades and green trim, Bison with armour, bomb pods and amber trim).
