@@ -1,5 +1,5 @@
 """
-Station "Brzask": a large orbital station at the edge of the Orbit map, about 700 m across. A central
+Station "Dawn": a large orbital station at the edge of the Orbit map, about 700 m across. A central
 hub tower with a command crown, a wide habitat ring on four spokes, two long docking arms with berths,
 two wings of solar panels, radiators, antenna masts and a lot of lit windows and beacons. Scenery
 (with a collision mesh), not a target. Original design. Unity frame: z forward, y up, x right.

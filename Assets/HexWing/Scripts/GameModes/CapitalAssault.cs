@@ -3,7 +3,7 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// Capital Ship Assault (PvE, map Orbit): destroy the capital ship "Kolos" within 15 minutes:
+    /// Capital Ship Assault (PvE, map Orbit): destroy the capital ship "Colossus" within 15 minutes:
     /// shield generators, then turrets, then the reactor in the stern trench. Enemy fighters keep coming
     /// out of the capital ship (more once its turrets are down); three AI wingmen fly with you and are
     /// replaced over time. Your team has a pool of ships: each time you are shot down you come back at the
@@ -18,7 +18,7 @@ namespace HexWing
 
         public enum State { Briefing, Fighting, Won, Lost }
 
-        public string Title => "SZTURM";
+        public string Title => "ASSAULT";
         public Pose StartPose => new(new Vector3(0f, 120f, -1600f), Quaternion.LookRotation(new Vector3(0f, -0.06f, 1f)));
 
         public State Phase { get; private set; }
@@ -108,7 +108,7 @@ namespace HexWing
                     break;
                 case State.Fighting:
                     TimeLeft -= Time.deltaTime;
-                    if (TimeLeft <= 0f) { Lose("CZAS MINĄŁ"); break; }
+                    if (TimeLeft <= 0f) { Lose("TIME IS UP"); break; }
                     int wanted = cfg.enemyFighters + (Ship.Current >= CapitalShip.Phase.Reactor ? 2 : 0);
                     if (Time.time >= _nextEnemy && _fleet.Alive(Team.Enemy) < wanted)
                     {
@@ -123,7 +123,7 @@ namespace HexWing
                     break;
                 case State.Won:
                 case State.Lost:
-                    if (PhaseTime >= ResultSeconds) ModeDirector.Instance?.Restart(Phase == State.Won ? "zwycięstwo" : "porażka");
+                    if (PhaseTime >= ResultSeconds) ModeDirector.Instance?.Restart(Phase == State.Won ? "victory" : "defeat");
                     break;
             }
         }
@@ -203,7 +203,7 @@ namespace HexWing
         public void OnPlayerDestroyed(Damageable by)
         {
             if (Phase == State.Won || Phase == State.Lost) return;
-            if (LivesLeft <= 0) { Lose("BRAK STATKÓW"); return; }
+            if (LivesLeft <= 0) { Lose("NO SHIPS LEFT"); return; }
             LivesLeft--;
             ModeDirector.Instance?.RespawnPlayer(StartPose, GameConfig.Instance.assault.respawnDelay);
         }

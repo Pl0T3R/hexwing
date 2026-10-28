@@ -41,7 +41,7 @@ namespace HexWing
             health.Team = Team.Enemy;
             health.MaxHull = cfg.hull;
             health.MaxShields = cfg.shields;
-            health.DisplayName = "DRON";
+            health.DisplayName = "DRONE";
             health.Restore();
             health.Destroyed += drone.OnDestroyed;
             drone.Health = health;

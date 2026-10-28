@@ -18,7 +18,7 @@ namespace HexWing
 
         public enum State { Ready, Running, Finished }
 
-        public string Title => "TOR PIERŚCIENI";
+        public string Title => "RING COURSE";
         public Pose StartPose { get { EnsureCourse(); return _start; } }
 
         public State Phase { get; private set; }

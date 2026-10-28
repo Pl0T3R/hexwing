@@ -81,9 +81,9 @@ namespace HexWing
             Health.Team = team;
             Health.DisplayName = Kind switch
             {
-                ShipMeshes.Kind.Trident => "GROT",
-                ShipMeshes.Kind.Swallow => "SKRZYDŁOWY",
-                _ => "SZERSZEŃ",
+                ShipMeshes.Kind.Trident => "ELITE",
+                ShipMeshes.Kind.Swallow => "WINGMAN",
+                _ => "HORNET",
             };
             Health.MaxHull = hull;
             Health.MaxShields = shields;

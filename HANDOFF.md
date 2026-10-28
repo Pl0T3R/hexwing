@@ -65,7 +65,7 @@ Updated after every step, so any session can pick up the work.
 - Compile check: 0 errors, 0 warnings.
 
 **M6: objective modes and the second map** (cloud session; compiled, not run on a headset)
-- `Combat/CapitalShip.cs` and `CapitalTurret.cs`: the capital ship "Kolos". Its hull absorbs hits and has box colliders. Phases: generators → turrets → reactor (invulnerable until then). Only the current phase's parts can be targeted, and destruction is a chain of explosions.
+- `Combat/CapitalShip.cs` and `CapitalTurret.cs`: the capital ship "Colossus". Its hull absorbs hits and has box colliders. Phases: generators → turrets → reactor (invulnerable until then). Only the current phase's parts can be targeted, and destruction is a chain of explosions.
 - `GameModes/CapitalAssault.cs`: 15 min, a pool of 5 ships with respawn at the start, enemy fighters out of the flanks, 3 wingmen that are replaced over time, score and best.
 - `World/AsteroidField.cs` (with `Route`): seeded rocks around a cleared corridor, 3 instanced shapes, sphere colliders.
 - `Combat/Transport.cs` and `GameModes/Escort.cs`: 3 transports along the route, 3 ambushes, a ship pool, respawn behind the convoy.
@@ -84,7 +84,7 @@ Updated after every step, so any session can pick up the work.
 **Review pass after M8** (cloud session; static review of all scripts, compiled)
 - Closing a menu with the trigger or A no longer fires the guns or uses an ability (`PlayerInput.SuppressUntilReleased`).
 - The scheme/ship shortcut is the other hand's upper button (Y, or B with hands swapped), so it no longer collides with ability B.
-- The hangar opened from pause has `< WRÓĆ DO GRY`, and the menu button goes back to the pause page. TRYB and STATEK labels refresh after their fade, and a second click during the fade is ignored.
+- The hangar opened from pause has `< BACK TO GAME`, and the menu button goes back to the pause page. MODE and SHIP labels refresh after their fade, and a second click during the fade is ignored.
 - A new page starts at its first line, and row colours are set only when the selection moves.
 - The bolt flyby has its own audio source (it no longer moves explosions). AI engine hums pause with the game.
 - The Editor restores only the menu-owned GameConfig fields after play, so Inspector tuning is kept.
@@ -121,9 +121,9 @@ Updated after every step, so any session can pick up the work.
 - `ShipFlight`:
   - coordinated bank: yaw banks the ship up to 22° and it levels out after (`flight.coordinatedBank`; `comfort.bankIntoTurns`, off in the most comfortable preset),
   - drift in hard turns at speed (`flight.driftLag`),
-  - an afterburner for the player at full throttle (`flight.afterburner*`), shown as `DOPALACZ [||||....]` on the left display, with a louder boost sound and a stronger rumble.
+  - an afterburner for the player at full throttle (`flight.afterburner*`), shown as `AFTERBURNER [||||....]` on the left display, with a louder boost sound and a stronger rumble.
 - Space dust streaks grow more with speed.
-- Menu STEROWANIE: invert left/right and roll, stick sideways (SKRĘT / BECZKA), throttle stick (ZOSTAJE / WRACA). KOMFORT: bank into turns. The menu panel fits 12 rows.
+- Menu CONTROLS: invert left/right and roll, stick sideways (TURN / ROLL), throttle stick (HOLDS / SPRINGS BACK). COMFORT: bank into turns. The menu panel fits 12 rows.
 - The side right display names the buttons for the flying hand, also with swapped hands.
 
 **Art redesign, step 1** (cloud session, 2026-10-28)
@@ -141,9 +141,9 @@ Updated after every step, so any session can pick up the work.
 **Art redesign, step 2: everything else** (cloud session, 2026-10-28)
 - Models (Blender scripts in `Art/blender/models`, previews in `Art/previews`, triangle counts in `Art/previews/report.txt`):
   - the cockpit (14.3k triangles, 2048²) with a separate stick and throttle (`CockpitControls`),
-  - fighters: Trident (elite), Swallow (wingman), the three player classes Sokół, Jastrząb and Żubr (hangar showcase),
-  - the transport, the target drone, the missile, the Kolos turret,
-  - the capital ship Kolos, the ring station "Brzask", four wreck sections, five asteroid shapes.
+  - fighters: Trident (elite), Swallow (wingman), the three player classes Falcon, Hawk and Bison (hangar showcase),
+  - the transport, the target drone, the missile, the Colossus turret,
+  - the capital ship Colossus, the ring station "Dawn", four wreck sections, five asteroid shapes.
 - Sky: a nebula panorama (4096×2048) and a planet map per map; `SpaceSky.shader` samples them and draws Belt's planet rings (with the planet's shadow on them).
 - Map content (`World/MapSet.cs`): on Orbit the station outside the arena and two wreck fields with tumbling debris, all with colliders. Belt's asteroids use the new rock shapes with three LODs.
 - Effects (`Art/fx/make_fx.py`): an 8×8 explosion flipbook (fire into smoke), soft glows, drawn instanced by the new `Sprite.shader` (`Effects.cs`). Laser bolts get a glow (`Beam.shader`), engines soft plumes (`Plume.shader`).
@@ -155,11 +155,16 @@ Updated after every step, so any session can pick up the work.
 - Blender builds use at most 80% of the cores at low priority (`HEXWING_CPU_SHARE`, owner's request). Triangle counts per model in `Art/previews/report.txt`.
 
 **Replica fighters** (cloud session, 2026-10-28, owner's request with two reference images)
-- The enemy team flies X-wing replicas (Hornet; Trident is the dark elite variant), the player's team TIE Interceptor replicas (Swallow wingmen; the player's classes Sokół = Photo 2 exactly and the default, Jastrząb with longer blades and green trim, Żubr with armour, bomb pods and amber trim).
+- The enemy team flies X-wing replicas (Hornet; Trident is the dark elite variant), the player's team TIE Interceptor replicas (Swallow wingmen; the player's classes Falcon = Photo 2 exactly and the default, Hawk with longer blades and green trim, Bison with armour, bomb pods and amber trim).
 - Built from blueprints found online (the-blueprints.com, reference only, not in the repo; see `Art/SOURCES.md`), checked with the silhouette tool `Art/blender/compare.py` against the top, side and front views.
 - The cockpit window is now the Interceptor's: round, eight spokes, a hub ring (model and code fallback).
 - Ships fire from their wingtip cannon sockets in turn; the player's team bolts are green, the enemy's red. Collision radii: X-wing 6.2 m, Interceptor 4.6 m.
 - CLAUDE.md now says the project is private and must not be published (Lucasfilm/Disney designs).
+
+**The game in English** (cloud session, 2026-10-28, owner's request)
+- Every in-game text is English: HUD, menus, training, mode names (TRAINING, RING COURSE, DRONE RANGE, SURVIVAL, ASSAULT, ESCORT, TEAM DOGFIGHT), results, labels.
+- Names: the player's classes are Falcon, Hawk and Bison (were Sokół, Jastrząb, Żubr), the capital ship Colossus (was Kolos), the station Dawn (was Brzask). Files, models, textures and ship assets are renamed the same way; Build Game removes the old Polish-named ship assets and art materials from the Unity project.
+- The docs and the checklists quote the English texts.
 
 ## Next
 

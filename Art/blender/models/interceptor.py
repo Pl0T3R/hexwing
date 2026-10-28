@@ -12,8 +12,8 @@ Measurements (blueprint px -> metres; side view 0.01886 m/px for a 9.6 m length,
 - side outline of a blade: dagger tip at z 6.51 on the bend line, top edge from z -0.09 to -1.55,
   rear corner at z -2.72 on the bend line; the vertical spine between the bends runs z -2.72..1.6,
 - wing cannons on the bend lines, muzzles at z 6.8; the pylons meet the spine at 4.15 m.
-Variants (classes of the same ship, small differences): sokol (exactly Photo 2), jastrzab (longer,
-narrower blades, green trim), zubr (armour plates, heavier pylons, bomb pods, amber trim),
+Variants (classes of the same ship, small differences): falcon (exactly Photo 2), hawk (longer,
+narrower blades, green trim), bison (armour plates, heavier pylons, bomb pods, amber trim),
 swallow (the wingmen: plain).
 """
 import math
@@ -40,10 +40,10 @@ PYLON_END = 4.15
 MUZZLE_Z = 6.8
 
 VARIANTS = {
-    "sokol": dict(top_x=2.32, z_tip=6.51, trim=None, armor=False, bombs=False, pylon=1.0),
+    "falcon": dict(top_x=2.32, z_tip=6.51, trim=None, armor=False, bombs=False, pylon=1.0),
     "swallow": dict(top_x=2.32, z_tip=6.51, trim=None, armor=False, bombs=False, pylon=1.0),
-    "jastrzab": dict(top_x=2.62, z_tip=7.25, trim=(0.08, 0.38, 0.12), armor=False, bombs=False, pylon=0.9),
-    "zubr": dict(top_x=2.32, z_tip=6.3, trim=(0.55, 0.32, 0.04), armor=True, bombs=True, pylon=1.3),
+    "hawk": dict(top_x=2.62, z_tip=7.25, trim=(0.08, 0.38, 0.12), armor=False, bombs=False, pylon=0.9),
+    "bison": dict(top_x=2.32, z_tip=6.3, trim=(0.55, 0.32, 0.04), armor=True, bombs=True, pylon=1.3),
 }
 
 
@@ -197,7 +197,7 @@ def pylon(side, v, parts):
         P(geo.box("PylonArmorTrim", (2.5 * side, 0.36 * k + 0.05, 0.0), (1.4, 0.02, 0.9), "TRIM"))
 
 
-def build(variant="sokol"):
+def build(variant="falcon"):
     v = VARIANTS[variant]
     geo.reset()
     surface.make_all(palette(v["trim"]))

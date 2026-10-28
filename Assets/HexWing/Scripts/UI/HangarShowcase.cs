@@ -4,7 +4,7 @@ namespace HexWing
 {
     /// <summary>
     /// In the hangar, the selected ship class turns slowly on a lit pad to the right of the menu panel
-    /// (the Blender-made Sokol, Jastrzab and Zubr models, about 1 m long there). Hidden in the pause menu
+    /// (the Blender-made Falcon, Hawk and Bison models, about 1 m long there). Hidden in the pause menu
     /// and in flight; nothing is shown when the models are missing. Runs on real time (the game is paused
     /// in the menu).
     /// </summary>
@@ -25,7 +25,7 @@ namespace HexWing
             _root.localRotation = Quaternion.Euler(0f, -28f, 0f);   // turned toward the pilot
             _turntable = new GameObject("Turntable").transform;
             _turntable.SetParent(_root, false);
-            string[] names = { "Sokol", "Jastrzab", "Zubr" };
+            string[] names = { "Falcon", "Hawk", "Bison" };
             for (int i = 0; i < names.Length; i++)
             {
                 var art = ArtLibrary.Get(names[i]);

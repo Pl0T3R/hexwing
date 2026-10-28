@@ -34,7 +34,7 @@ namespace HexWing
             if (Health == null) Health = gameObject.AddComponent<Damageable>();
             Health.Team = Team.Player;
             Health.Targetable = true;
-            Health.DisplayName = "GRACZ";
+            Health.DisplayName = "PLAYER";
             Health.MaxHull = cfg.hull;
             Health.MaxShields = cfg.shields;
             Health.ShieldDelay = cfg.shieldDelay;

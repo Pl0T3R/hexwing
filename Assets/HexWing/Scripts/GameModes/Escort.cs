@@ -17,7 +17,7 @@ namespace HexWing
 
         public enum State { Briefing, Underway, Won, Lost }
 
-        public string Title => "ESKORTA";
+        public string Title => "ESCORT";
         public Map Map => Map.Belt;
         public Pose StartPose => new(_route.PointAt(0f) + _route.DirectionAt(0f) * -150f + Vector3.up * 40f, Quaternion.LookRotation(_route.DirectionAt(0f)));
 
@@ -126,7 +126,7 @@ namespace HexWing
                     break;
                 case State.Won:
                 case State.Lost:
-                    if (PhaseTime >= ResultSeconds) ModeDirector.Instance?.Restart(Phase == State.Won ? "zwycięstwo" : "porażka");
+                    if (PhaseTime >= ResultSeconds) ModeDirector.Instance?.Restart(Phase == State.Won ? "victory" : "defeat");
                     break;
             }
         }
@@ -180,7 +180,7 @@ namespace HexWing
             TransportsAlive = 0;
             foreach (var x in _transports) if (x.gameObject.activeSelf && x.Health.Alive) TransportsAlive++;
             Debug.Log($"[HexWing] Transport lost, {TransportsAlive} left.");
-            if (TransportsAlive == 0 && Phase != State.Won && Phase != State.Lost) Lose("KONWÓJ ZNISZCZONY");
+            if (TransportsAlive == 0 && Phase != State.Won && Phase != State.Lost) Lose("CONVOY DESTROYED");
         }
 
         void Win()
@@ -214,7 +214,7 @@ namespace HexWing
         public void OnPlayerDestroyed(Damageable by)
         {
             if (Phase == State.Won || Phase == State.Lost) return;
-            if (LivesLeft <= 0) { Lose("BRAK STATKÓW"); return; }
+            if (LivesLeft <= 0) { Lose("NO SHIPS LEFT"); return; }
             LivesLeft--;
             // back behind the convoy's lead ship, facing along the route
             var lead = Lead;

@@ -49,7 +49,7 @@ namespace HexWing
         {
             Source.OVRInput => "OVR",
             Source.UnityXR => "XR",
-            _ => "BRAK",
+            _ => "NONE",
         };
     }
 }

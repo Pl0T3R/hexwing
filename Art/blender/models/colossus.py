@@ -1,5 +1,5 @@
 """
-"Kolos": the enemy capital ship, 560 m long. The layout matches Combat/CapitalShip.cs, whose
+"Colossus": the enemy capital ship, 560 m long. The layout matches Combat/CapitalShip.cs, whose
 destructible parts (two shield-generator domes, six turrets, the reactor core) are still placed by code
 on top of this hull:
 - a flat-topped hexagonal hull from the stern block (z -290) to a tapered bow (z +282),
@@ -19,7 +19,7 @@ import bpy  # noqa: E402,F401
 
 from lib import geo, pipeline, surface  # noqa: E402
 
-NAME = "Kolos"
+NAME = "Colossus"
 TEX = 2048
 
 PALETTE = {

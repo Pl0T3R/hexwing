@@ -5,7 +5,7 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// The enemy capital ship "Kolos" (original design): a 560 m hexagonal hull with a tapered bow, a
+    /// The enemy capital ship "Colossus" (original design): a 560 m hexagonal hull with a tapered bow, a
     /// bridge tower, two glowing shield-generator domes on its back, six gun turrets on its flanks and a
     /// reactor in a trench at the stern. The objectives go in order:
     /// 1. shield generators (the reactor is protected while any stands),
@@ -38,7 +38,7 @@ namespace HexWing
         public static CapitalShip Create(Transform parent)
         {
             EnsureMeshes();
-            var go = new GameObject("Capital Ship Kolos");
+            var go = new GameObject("Capital Ship Colossus");
             go.transform.SetParent(parent, false);
             var ship = go.AddComponent<CapitalShip>();
             ship.Build();
@@ -49,8 +49,8 @@ namespace HexWing
         {
             _body = new GameObject("Body");
             _body.transform.SetParent(transform, false);
-            // the Blender-made hull (Art/blender/models/kolos.py, same layout) if it is in the build
-            var art = ArtLibrary.Get("Kolos");
+            // the Blender-made hull (Art/blender/models/colossus.py, same layout) if it is in the build
+            var art = ArtLibrary.Get("Colossus");
             if (art != null) ArtLibrary.Attach(art, _body.transform, Mats.Get(Mats.PlumeRed));
             else
             {
@@ -79,10 +79,10 @@ namespace HexWing
             };
             for (int i = 0; i < turretSpots.Length; i++)
             {
-                var turretArt = ArtLibrary.Get("KolosTurret");
+                var turretArt = ArtLibrary.Get("ColossusTurret");
                 var health = turretArt != null && turretArt.Lods.Length > 0
-                    ? Part($"Turret {i + 1}", turretSpots[i], turretArt.Lods[0], turretArt.Material, 8f, 120f, "DZIAŁO")
-                    : Part($"Turret {i + 1}", turretSpots[i], _turret, Mats.Get(Mats.EnemyHull), 8f, 120f, "DZIAŁO");
+                    ? Part($"Turret {i + 1}", turretSpots[i], turretArt.Lods[0], turretArt.Material, 8f, 120f, "TURRET")
+                    : Part($"Turret {i + 1}", turretSpots[i], _turret, Mats.Get(Mats.EnemyHull), 8f, 120f, "TURRET");
                 var turret = health.gameObject.AddComponent<CapitalTurret>();
                 turret.Init(this, health, turretSpots[i].x > 0f ? Vector3.right : Vector3.left);
                 Turrets.Add(turret);

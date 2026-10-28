@@ -17,7 +17,7 @@ namespace HexWing
 
         public enum State { Briefing, Fighting, Over }
 
-        public string Title => "WALKA DRUŻYN";
+        public string Title => "TEAM DOGFIGHT";
         public Pose StartPose => BasePose(Team.Player, 0);
         /// <summary>No special pointer: the arrow shows the target or the nearest enemy.</summary>
         public Transform Pointer => null;

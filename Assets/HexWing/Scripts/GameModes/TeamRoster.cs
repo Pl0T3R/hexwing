@@ -29,11 +29,11 @@ namespace HexWing
         public void FillOffline(int teamSize)
         {
             Slots.Clear();
-            Slots.Add(new Slot { Team = Team.Player, Seat = Seat.LocalPlayer, Name = "TY" });
+            Slots.Add(new Slot { Team = Team.Player, Seat = Seat.LocalPlayer, Name = "YOU" });
             for (int i = 1; i < teamSize; i++)
-                Slots.Add(new Slot { Team = Team.Player, Seat = Seat.Bot, Name = "SKRZYDŁOWY " + i, WingSlot = true, WingIndex = i - 1 });
+                Slots.Add(new Slot { Team = Team.Player, Seat = Seat.Bot, Name = "WINGMAN " + i, WingSlot = true, WingIndex = i - 1 });
             for (int i = 0; i < teamSize; i++)
-                Slots.Add(new Slot { Team = Team.Enemy, Seat = Seat.Bot, Name = "WRÓG " + (i + 1) });
+                Slots.Add(new Slot { Team = Team.Enemy, Seat = Seat.Bot, Name = "ENEMY " + (i + 1) });
         }
 
         public Slot LocalPlayer

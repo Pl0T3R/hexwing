@@ -21,7 +21,7 @@ namespace HexWing
         public float ShieldDelay = 4f;
         public float ShieldRegen = 20f;
         [Tooltip("Shown on the target display.")]
-        public string DisplayName = "CEL";
+        public string DisplayName = "TARGET";
         [Tooltip("Can be locked and gets HUD brackets.")]
         public bool Targetable = true;
         [Tooltip("Incoming damage multiplier (heavy plating < 1).")]

@@ -16,7 +16,7 @@ namespace HexWing
 
         public enum Step { Welcome, Throttle, Turn, Rings, Guns, Missile, Evasive, Abilities, Done }
 
-        public string Title => "TRENING";
+        public string Title => "TRAINING";
         public Pose StartPose => new(new Vector3(0f, 0f, -GameConfig.Instance.arena.radius * 0.3f), Quaternion.identity);
 
         public Step Current { get; private set; }
@@ -228,22 +228,22 @@ namespace HexWing
             string b = _abilities != null ? ShipDefinition.AbilityLabel(_abilities.B.Kind) : "B";
             return Current switch
             {
-                Step.Welcome => "TRENING\nWITAJ, PILOCIE.\nSTATEK LECI SAM,\nTY NIM STERUJESZ.",
-                Step.Throttle => "1. ZMIEŃ CIĄG\n" + (scheme == ControlScheme.VirtualStick
-                    ? "TRZYMAJ LEWY CHWYT,\nPCHNIJ RĘKĘ DO PRZODU"
-                    : "LEWA GAŁKA\nW GÓRĘ LUB W DÓŁ"),
-                Step.Turn => "2. SKRĘĆ W LEWO\nI W PRAWO  " + Progress + "/2\n" + (scheme switch
+                Step.Welcome => "TRAINING\nWELCOME, PILOT.\nTHE SHIP FLIES ON ITS OWN,\nYOU STEER IT.",
+                Step.Throttle => "1. CHANGE THROTTLE\n" + (scheme == ControlScheme.VirtualStick
+                    ? "HOLD THE LEFT GRIP,\nPUSH YOUR HAND FORWARD"
+                    : "LEFT STICK\nUP OR DOWN"),
+                Step.Turn => "2. TURN LEFT\nAND RIGHT  " + Progress + "/2\n" + (scheme switch
                 {
-                    ControlScheme.VirtualStick => "TRZYMAJ PRAWY CHWYT,\nRUCH RĘKI W BOK",
-                    ControlScheme.ControllerDirect => "OBRÓĆ PRAWY PAD\nW LEWO I W PRAWO",
-                    _ => "PRAWA GAŁKA W BOK",
+                    ControlScheme.VirtualStick => "HOLD THE RIGHT GRIP,\nMOVE YOUR HAND SIDEWAYS",
+                    ControlScheme.ControllerDirect => "TURN THE RIGHT CONTROLLER\nLEFT AND RIGHT",
+                    _ => "RIGHT STICK SIDEWAYS",
                 }),
-                Step.Rings => "3. PRZELEĆ PRZEZ\nPIERŚCIENIE  " + Progress + "/3\nSTRZAŁKA WSKAZUJE\nKIERUNEK",
-                Step.Guns => "4. ZESTRZEL DRONA\nPRAWY SPUST: DZIAŁA\nCELUJ W KROPKĘ\nPRZED CELEM",
-                Step.Missile => "5. RAKIETA\nTRZYMAJ LEWY SPUST\nAŻ NAMIERZYSZ,\nPUŚĆ: STRZAŁ",
-                Step.Evasive => "6. UNIK\nWCIŚNIJ X",
-                Step.Abilities => "7. ZDOLNOŚCI  " + Progress + "/2\nA: " + a + "\nB: " + b,
-                _ => "TRENING UKOŃCZONY!\nMENU > HANGAR:\nINNE TRYBY\nI STATKI",
+                Step.Rings => "3. FLY THROUGH\nTHE RINGS  " + Progress + "/3\nTHE ARROW SHOWS\nTHE WAY",
+                Step.Guns => "4. SHOOT THE DRONE\nRIGHT TRIGGER: GUNS\nAIM AT THE DOT\nAHEAD OF THE TARGET",
+                Step.Missile => "5. MISSILE\nHOLD THE LEFT TRIGGER\nUNTIL LOCKED,\nRELEASE: FIRE",
+                Step.Evasive => "6. EVADE\nPRESS X",
+                Step.Abilities => "7. ABILITIES  " + Progress + "/2\nA: " + a + "\nB: " + b,
+                _ => "TRAINING COMPLETE!\nMENU > HANGAR:\nOTHER MODES\nAND SHIPS",
             };
         }
     }

@@ -13,14 +13,14 @@ namespace HexWing
     /// A ship class as data: flight numbers, hull and shields, guns, two abilities and a passive. The
     /// builder makes one asset per class in Resources/Ships (edit them in the Inspector); without the
     /// assets, <see cref="Defaults"/> gives the same values from code.
-    /// - Sokół (fighter): all-rounder; pursuit missile + repair; shield booster.
-    /// - Jastrząb (interceptor): fast, agile, fragile hunter; targeting computer + homing missiles; cooling.
-    /// - Żubr (bomber): slow and tough, for big targets; bomb run + turret drone; heavy plating.
+    /// - Falcon (fighter): all-rounder; pursuit missile + repair; shield booster.
+    /// - Hawk (interceptor): fast, agile, fragile hunter; targeting computer + homing missiles; cooling.
+    /// - Bison (bomber): slow and tough, for big targets; bomb run + turret drone; heavy plating.
     /// </summary>
     [CreateAssetMenu(fileName = "Ship", menuName = "HexWing/Ship Definition")]
     public class ShipDefinition : ScriptableObject
     {
-        public string displayName = "SOKÓŁ";
+        public string displayName = "FALCON";
         public ShipClass shipClass = ShipClass.Fighter;
         [TextArea] public string description = "";
         [Tooltip("Cockpit accent light colour for this class.")]
@@ -68,20 +68,20 @@ namespace HexWing
         public static ShipDefinition[] Defaults()
         {
             var fighter = CreateInstance<ShipDefinition>();
-            fighter.name = "Sokol";
-            fighter.displayName = "SOKÓŁ";
+            fighter.name = "Falcon";
+            fighter.displayName = "FALCON";
             fighter.shipClass = ShipClass.Fighter;
-            fighter.description = "Myśliwiec: wszechstronny.\nA: rakieta pościgowa\nB: naprawa\nPasywna: wzmocnione osłony";
+            fighter.description = "Fighter: all-round.\nA: pursuit missile\nB: repair\nPassive: boosted shields";
             fighter.accent = new Color(0.37f, 0.83f, 1f);
             fighter.ability1 = AbilityKind.PursuitMissile;
             fighter.ability2 = AbilityKind.Repair;
             fighter.passive = PassiveKind.ShieldBooster;
 
             var interceptor = CreateInstance<ShipDefinition>();
-            interceptor.name = "Jastrzab";
-            interceptor.displayName = "JASTRZĄB";
+            interceptor.name = "Hawk";
+            interceptor.displayName = "HAWK";
             interceptor.shipClass = ShipClass.Interceptor;
-            interceptor.description = "Przechwytujący: szybki, zwrotny, kruchy.\nA: komputer celowniczy\nB: rakiety samonaprowadzające\nPasywna: chłodzenie";
+            interceptor.description = "Interceptor: fast, agile, fragile.\nA: targeting computer\nB: homing missiles\nPassive: cooling";
             interceptor.accent = new Color(0.55f, 1f, 0.6f);
             interceptor.flight.maxSpeed = 175f;
             interceptor.flight.minSpeed = 40f;
@@ -98,10 +98,10 @@ namespace HexWing
             interceptor.passive = PassiveKind.Cooling;
 
             var bomber = CreateInstance<ShipDefinition>();
-            bomber.name = "Zubr";
-            bomber.displayName = "ŻUBR";
+            bomber.name = "Bison";
+            bomber.displayName = "BISON";
             bomber.shipClass = ShipClass.Bomber;
-            bomber.description = "Bombowiec: wolny, wytrzymały.\nA: nalot bombowy\nB: dron z działkiem\nPasywna: ciężki pancerz";
+            bomber.description = "Bomber: slow, tough.\nA: bomb run\nB: turret drone\nPassive: heavy plating";
             bomber.accent = new Color(1f, 0.7f, 0.28f);
             bomber.flight.maxSpeed = 125f;
             bomber.flight.minSpeed = 30f;
@@ -122,20 +122,20 @@ namespace HexWing
 
         public static string AbilityLabel(AbilityKind k) => k switch
         {
-            AbilityKind.TargetingComputer => "KOMPUTER",
-            AbilityKind.PursuitMissile => "RAKIETA POŚC.",
-            AbilityKind.HomingMissiles => "SALWA",
-            AbilityKind.Repair => "NAPRAWA",
-            AbilityKind.BombRun => "NALOT",
-            AbilityKind.TurretDrone => "DRON",
+            AbilityKind.TargetingComputer => "TARGETING",
+            AbilityKind.PursuitMissile => "PURSUIT",
+            AbilityKind.HomingMissiles => "SALVO",
+            AbilityKind.Repair => "REPAIR",
+            AbilityKind.BombRun => "BOMB RUN",
+            AbilityKind.TurretDrone => "TURRET",
             _ => "-",
         };
 
         public static string PassiveLabel(PassiveKind k) => k switch
         {
-            PassiveKind.ShieldBooster => "OSŁONY+",
-            PassiveKind.Cooling => "CHŁODZENIE",
-            PassiveKind.HeavyPlating => "PANCERZ",
+            PassiveKind.ShieldBooster => "SHIELDS+",
+            PassiveKind.Cooling => "COOLING",
+            PassiveKind.HeavyPlating => "PLATING",
             _ => "-",
         };
     }

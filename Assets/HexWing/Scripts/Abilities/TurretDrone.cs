@@ -40,7 +40,7 @@ namespace HexWing
             turret._health = go.AddComponent<Damageable>();
             turret._health.Team = owner != null ? owner.Team : Team.Player;
             turret._health.MaxHull = 60f;
-            turret._health.DisplayName = "DRON";
+            turret._health.DisplayName = "TURRET DRONE";
             turret._health.Restore();
             turret._health.Destroyed += _ =>
             {

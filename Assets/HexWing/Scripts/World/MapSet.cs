@@ -6,7 +6,7 @@ namespace HexWing
     /// <summary>
     /// The set pieces of each map, so a map is more than its sky (Blender-made models; nothing is built
     /// when they are missing):
-    /// - Orbit: the station "Brzask" just outside the arena as a landmark (3.3 km away, 700 m across), and
+    /// - Orbit: the station "Dawn" just outside the arena as a landmark (3.3 km away, 700 m across), and
     ///   two wreck fields inside it (four torn cruiser sections each, with mesh colliders, and slowly
     ///   tumbling smaller debris with sphere colliders), above and below the middle where the modes play.
     /// - Belt: its asteroid field belongs to the Escort mode (AsteroidField); nothing extra yet.

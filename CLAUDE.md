@@ -2,7 +2,7 @@
 
 Hex Wing (working title) is a VR starfighter combat game for Meta Quest 3, built with Unity. It plays from the cockpit, with arcade flight and readable dogfights, in the style of Battlefront II Starfighter Assault.
 
-**Private project, not for publishing.** At the owner's request (2026-10-28) the fighters are replicas of the two reference ships they sent: the enemy team flies the X-wing (Photo 1), the player's team the TIE Interceptor (Photo 2), and the player flies the Interceptor by default. These designs belong to Lucasfilm/Disney, so the game must not go to the Meta Store or be shared publicly; publishing would need original ship designs again. In-game names stay Polish and our own (Sokół, Jastrząb, Żubr, Hornet/WRÓG...). Everything else (maps, capital ship, sounds, UI) stays original.
+**Private project, not for publishing.** At the owner's request (2026-10-28) the fighters are replicas of the two reference ships they sent: the enemy team flies the X-wing (Photo 1), the player's team the TIE Interceptor (Photo 2), and the player flies the Interceptor by default. These designs belong to Lucasfilm/Disney, so the game must not go to the Meta Store or be shared publicly; publishing would need original ship designs again. In-game names are English and our own (Falcon, Hawk, Bison, Hornet...). Everything else (maps, capital ship, sounds, UI) stays original.
 
 The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and commit messages stay in English.
 
@@ -13,8 +13,8 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 - M1 is written: the project builder, an empty space scene with a procedural skybox, the original ball cockpit, seated recenter, fades and the performance readout.
 - M7, offline part: the Team Dogfight mode (4 v 4 with bots, first to 30 kills or 10 minutes) built on a `TeamRoster` of slots, so the online version only fills slots with players. Online play still waits for the owner's Photon account.
 - M8 is written (M7, online play, waits for the owner's Photon account): the hangar and pause menus on a holographic panel with a laser pointer, the player's settings saved over GameConfig, unlockable cockpit colours, AI engine sounds in 3D with Doppler, enemy bolt flyby hisses, a music pad, shader warm-up, and draw-call/triangle/garbage counters in the readout.
-- M6 is written: the Capital Ship Assault mode (the capital ship "Kolos": shield generators, then 6 turrets, then the reactor; 15 minutes; a pool of 5 ships; wingmen), the Escort mode on the second map (3 transports through an asteroid belt, 3 ambushes), map theming (Orbit / Belt) and AI obstacle avoidance.
-- M5 is written: three ship classes as data (`ShipDefinition` assets: Sokół fighter, Jastrząb interceptor, Żubr bomber), six abilities with cooldowns (pursuit missile, repair, targeting computer, homing missiles, bomb run, turret drone), three passives, ship select (hold Y) and the Training mode.
+- M6 is written: the Capital Ship Assault mode (the capital ship "Colossus": shield generators, then 6 turrets, then the reactor; 15 minutes; a pool of 5 ships; wingmen), the Escort mode on the second map (3 transports through an asteroid belt, 3 ambushes), map theming (Orbit / Belt) and AI obstacle avoidance.
+- M5 is written: three ship classes as data (`ShipDefinition` assets: Falcon fighter, Hawk interceptor, Bison bomber), six abilities with cooldowns (pursuit missile, repair, targeting computer, homing missiles, bomb run, turret drone), three passives, ship select (hold Y) and the Training mode.
 - M4 is written: AI pilots (attack with lead and aim error, bursts, break-off, evasion, wingmen escort), three fighter models (Hornet, Trident elite, Swallow wingman; since 2026-10-28 the X-wing and Interceptor replicas, see "Art"), the Survival mode with waves, an elite every 5th wave, 2 wingmen, score and best score, and missile/lock warnings.
 - M3 is written: lasers (pooled, swept, instanced), gun heat and overheat, targeting with the holographic HUD and a lead marker, lock-on and homing missiles, hull and shields, the evasive maneuver (jink or roll), target drones in a new drone range mode, hit feedback (haptics, sounds, cockpit lights) and a mode switch.
 - M2 is written: the flight model with throttle bands and arena bounds, the input layer with control schemes A/B/C, comfort options (vignette, auto-level, turn limit), the rings course, cockpit texts, the moving stick and throttle, space dust and synthesized ship sounds.
@@ -60,7 +60,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 - [ ] The cockpit: the Interceptor's ball around you with its round front window, eight spokes and a small hub ring, cyan accent lights, a console with five screens, side panels, the seat, the floor plate, and the stick and throttle in front of your hands.
   - Nothing is closer than about 30 cm to your eyes when you sit straight. Nothing clips when you lean forward.
   - The window is wide enough to look out of at the sides and upward.
-- [ ] Screens: the left one shows `KADŁUB 100% / OSŁONY --` with Polish letters, the right one `RADAR (M3)`, the centre one `HEX WING M1` and the readout (fps, avg, worst, slow frames), updated twice a second.
+- [ ] Screens: the side and centre displays show flight, combat and mode texts (`HULL` / `SHIELDS`, `SPEED`, the mode panel) and the readout (fps, avg, worst, slow frames), updated twice a second.
 - [ ] Holding the left thumbstick click for 0.4 s: a short fade to black, the view snaps back to the seat, a fade in. The log says `Recentered to the cockpit eye point.`
 - [ ] Stable 90 fps in `metavr perf` / OVR Metrics, 60 s seated looking around. p95 frame time under 11.1 ms.
 - [ ] No pink materials: all four shaders in `Shaders/` compile for Android/Vulkan with multiview.
@@ -69,26 +69,26 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 
 Control schemes (Y cycles them; the side-left display explains the current one, or shows the raw input while `debug.inputReadout` is on):
 - **A, controller tilt:** the right controller is the stick. Tip it up/down = pitch, point it left/right = yaw, twist the wrist = roll. The neutral pose is taken when the scheme starts; click the right thumbstick to take it again. Left stick up/down = throttle, left/right = roll.
-- **B, virtual stick (default):** hold the right grip anywhere to take the stick; move the hand forward/back (pitch) and sideways (yaw, or roll with STEROWANIE → DRĄŻEK W BOK: BECZKA), twist the wrist (the other one). Hold the left grip to take the throttle lever: push forward = faster. Letting go of the stick centres it; the throttle stays. Left stick X also rolls.
+- **B, virtual stick (default):** hold the right grip anywhere to take the stick; move the hand forward/back (pitch) and sideways (yaw, or roll with CONTROLS → STICK SIDEWAYS: ROLL), twist the wrist (the other one). Hold the left grip to take the throttle lever: push forward = faster. Letting go of the stick centres it; the throttle stays. Left stick X also rolls.
 - **C, thumbsticks:** right stick = pitch/yaw (forward = nose down), left stick Y = throttle, X = roll.
-- Throttle in every scheme: letting go never changes it. The thumbstick throttle holds where you leave it (GAŁKA CIĄGU: ZOSTAJE; WRACA is the old spring to cruise). It clicks into notches at cruise and at the boost line. Full throttle burns the afterburner (`DOPALACZ` bar on the left display).
-- **Input readout (`debug.inputReadout`, on for now):** the left side display shows the scheme, where the controller poses come from (OVR = OVRInput, XR = Unity's XR devices, BRAK = none), both grips (`*` = held), both poses (cm, degrees, `!` = not tracked), the sticks and the resulting pitch, yaw, roll and throttle. `debug.inputLog` writes the same once per second as `[HexWing] Input: ...`.
+- Throttle in every scheme: letting go never changes it. The thumbstick throttle holds where you leave it (THROTTLE STICK: HOLDS; SPRINGS BACK is the old spring to cruise). It clicks into notches at cruise and at the boost line. Full throttle burns the afterburner (`DOPALACZ` bar on the left display).
+- **Input readout (`debug.inputReadout`, on for now):** the left side display shows the scheme, where the controller poses come from (OVR = OVRInput, XR = Unity's XR devices, NONE = none), both grips (`*` = held), both poses (cm, degrees, `!` = not tracked), the sticks and the resulting pitch, yaw, roll and throttle. `debug.inputLog` writes the same once per second as `[HexWing] Input: ...`.
 
 Check:
 - [ ] The log shows `Rings course: 16 rings, seed 7, farthest N m from the centre (arena 3000 m)`, then `M2 flight scene running.`
-- [ ] The ship always flies forward and never stops. The left display shows speed, throttle and band (`WOLNO` / `OPTYMALNIE` in amber / `PRZELOT` / `DOPALACZ`) and `SKRĘT x1.4` in the sweet spot (20–50% throttle), `x0.6` when boosting (above 85%). Turns at about a third of throttle are clearly tighter than at full speed.
+- [ ] The ship always flies forward and never stops. The left display shows speed, throttle and band (`SLOW` / `SWEET SPOT` in amber / `CRUISE` / `BOOST`) and `TURN x1.4` in the sweet spot (20–50% throttle), `x0.6` when boosting (above 85%). Turns at about a third of throttle are clearly tighter than at full speed.
 - [ ] Boost: a quiet airy rush and a light rumble in both controllers.
 - [ ] The stick in the cockpit tilts and twists with your input in every scheme; the throttle lever swings with the throttle.
 - [ ] Each scheme flies the whole course. Note which one feels best, and the times (best time per scheme on the right display).
-- [ ] The next ring glows amber; the small cyan arrow above the centre display points at it. Flying through gives a chime and a haptic pulse; the last ring a double chime. Flying past outside the ring shows `MINIĘTY! ZAWRÓĆ`.
+- [ ] The next ring glows amber; the small cyan arrow above the centre display points at it. Flying through gives a chime and a haptic pulse; the last ring a double chime. Flying past outside the ring shows `MISSED! TURN AROUND`.
 - [ ] Scraping a ring frame: a thud, a strong haptic, the ship slides off and slows down. No getting stuck.
-- [ ] After the last ring: `META` or `NOWY REKORD!`, the time and collisions. About 5 s later a fade and the course starts again. The left menu button restarts at any time.
-- [ ] Flying more than 3 km from the centre: `POZA STREFĄ! WRACAJ 5…1` in red, a haptic tick each second, the arrow points home; at 0 the course restarts with a fade.
+- [ ] After the last ring: `FINISH` or `NEW RECORD!`, the time and collisions. About 5 s later a fade and the course starts again. The left menu button restarts at any time.
+- [ ] Flying more than 3 km from the centre: `OUT OF BOUNDS! TURN BACK 5…1` in red, a haptic tick each second, the arrow points home; at 0 the course restarts with a fade.
 - [ ] Vignette (default medium): the edges darken during fast turns and clear when flying straight; no hard edge visible. Try Off / Low / High in GameConfig `comfort.vignette`.
-- [ ] Auto-level: after letting go of roll, the ship rolls gently back to level (`POZIOM` on the left display). Off with `comfort.autoLevel`.
-- [ ] Yaw alone banks the ship into the turn (up to about 22°) and it levels out when the yaw stops. Off with KOMFORT → PRZECHYŁ W ZAKRĘCIE (and in the most comfortable preset).
+- [ ] Auto-level: after letting go of roll, the ship rolls gently back to level (`LEVELING` on the left display). Off with `comfort.autoLevel`.
+- [ ] Yaw alone banks the ship into the turn (up to about 22°) and it levels out when the yaw stops. Off with COMFORT → BANK INTO TURNS (and in the most comfortable preset).
 - [ ] Letting go of the throttle lever (B) or the left stick (A, C) never changes the speed. The throttle clicks (haptic) at cruise and at the boost line.
-- [ ] Full throttle: `DOPALACZ ... PALI`, more speed, longer dust streaks, a stronger rumble; after about 4 s it runs dry and refills after you come off full throttle.
+- [ ] Full throttle: `AFTERBURNER ... ON`, more speed, longer dust streaks, a stronger rumble; after about 4 s it runs dry and refills after you come off full throttle.
 - [ ] Moving the right hand in A and B steers: the readout shows the pose source `OVR` (or `XR`) and the positions change as the hands move.
 - [ ] Turn limit: `comfort.turnRateLimit` 45 makes turns slower; 0 is off.
 - [ ] Space dust specks stream past and show speed; they never pop up inside the cockpit.
@@ -100,60 +100,60 @@ Check:
 
 Buttons (every scheme): flying hand's trigger = guns; the other trigger = lock-on (hold with a target near the nose, release when locked to fire a missile); X = evasive; left menu button = restart, hold 1 s = next mode (rings course ↔ drone range).
 
-- [ ] Hold the menu button for 1 s: a fade, then the drone range (log `Mode: STRZELNICA`). 8 light-grey drones with a red glowing band fly loops 350–1100 m ahead.
+- [ ] Hold the menu button for 1 s: a fade, then the drone range (log `Mode: DRONE RANGE`). 8 light-grey drones with a red glowing band fly loops 350–1100 m ahead.
 - [ ] Guns: green bolts from the four wingtip cannons in turn (upper right, upper left, lower right, lower left), a green muzzle flash and a short zap panned to that side, a light haptic tick per shot. Bolts cross about 400 m ahead.
-- [ ] Heat: the centre display shows `DZIAŁA [|||.......]` filling while firing and draining after. At full heat: `PRZEGRZANE 3.0 s` in red, an alarm, a long buzz; the guns stop for 3 s.
+- [ ] Heat: the centre display shows `GUNS [|||.......]` filling while firing and draining after. At full heat: `OVERHEATED 3.0 s` in red, an alarm, a long buzz; the guns stop for 3 s.
 - [ ] HUD through the canopy: a cyan hexagon crosshair, small cyan diamonds on drones ahead, white brackets on the target nearest the nose, and a small cyan dot (lead marker) ahead of a moving target. Aiming the crosshair at the dot hits the drone. The cockpit frame hides the markers behind it.
-- [ ] Hits: an orange impact flash on the drone, a high tick sound, a light haptic, the crosshair pulses. Kill: an explosion with debris, a 3D boom from the drone's direction, a two-note chime, a stronger haptic, `ZESTRZELONY!` on the right display. The drone comes back elsewhere 3 s later.
-- [ ] Right display: target and distance, lock progress, kills and accuracy (`CELNOŚĆ 35% (21/60)`).
-- [ ] Lock-on: hold the left trigger with the target within 12° of the nose: rising ticks, brackets close in, after 1.2 s `NAMIERZONY`, amber turning brackets and a steady tone. Release: a missile launches (whoosh, haptic), turns after the drone and blows it up. `RAKIETA 6.0 s` counts down.
-- [ ] Evasive (X): jink, a quick 15 m hop to the side the stick points (right if centred), with a whoosh and haptic; the view doesn't roll. `UNIK 8 s` counts down. `combat.evasiveStyle` Roll does a full barrel roll instead (the vignette closes during it).
-- [ ] Damage: flying into a drone or a ring frame hurts (`KADŁUB` / `OSŁONY` on the centre display). Shield hits flash the cockpit lights blue-white, hull hits red, with a crackle and a haptic on both hands. Shields come back 4 s after the last hit. Under 30% hull the lights pulse red.
+- [ ] Hits: an orange impact flash on the drone, a high tick sound, a light haptic, the crosshair pulses. Kill: an explosion with debris, a 3D boom from the drone's direction, a two-note chime, a stronger haptic, `SPLASH ONE!` on the right display. The drone comes back elsewhere 3 s later.
+- [ ] Right display: target and distance, lock progress, kills and accuracy (`ACCURACY 35% (21/60)`).
+- [ ] Lock-on: hold the left trigger with the target within 12° of the nose: rising ticks, brackets close in, after 1.2 s `LOCKED`, amber turning brackets and a steady tone. Release: a missile launches (whoosh, haptic), turns after the drone and blows it up. `MISSILE 6.0 s` counts down.
+- [ ] Evasive (X): jink, a quick 15 m hop to the side the stick points (right if centred), with a whoosh and haptic; the view doesn't roll. `EVADE 8 s` counts down. `combat.evasiveStyle` Roll does a full barrel roll instead (the vignette closes during it).
+- [ ] Damage: flying into a drone or a ring frame hurts (`HULL` / `SHIELDS` on the centre display). Shield hits flash the cockpit lights blue-white, hull hits red, with a crackle and a haptic on both hands. Shields come back 4 s after the last hit. Under 30% hull the lights pulse red.
 - [ ] Death (hull 0, or 5 s outside the arena): an explosion ahead, the ship stops, a fade, the mode restarts (log `Player ship destroyed`, `Restart (zniszczony)`).
 - [ ] Rings course still works as in M2 (hold the menu button to go back).
 - [ ] Performance in the drone range while firing continuously with 2 missiles in the air: 90 fps, at most 150 draw calls (expect about 50).
 
 ## M4 checklist
 
-Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`).
+Hold the menu button to cycle modes until `SURVIVAL` (log `Mode: SURVIVAL`).
 
-- [ ] `FALA 1` and `WROGOWIE 3` on the right display for 4 s, two Interceptor wingmen fly in beside you (small white triangles on the HUD). Then enemies appear far ahead: X-wings with four red-orange engines and red bolts from their wingtip cannons (cyan diamonds).
+- [ ] `WAVE 1` and `ENEMIES 3` on the right display for 4 s, two Interceptor wingmen fly in beside you (small white triangles on the HUD). Then enemies appear far ahead: X-wings with four red-orange engines and red bolts from their wingtip cannons (cyan diamonds).
 - [ ] Enemies come at you, bank into turns, fire red bolts in bursts when lined up, break away instead of ramming, and turn back in. Early waves miss a lot, later ones less (`skill` in the log line of each wave).
-- [ ] Shooting an enemy that's on fire (below 50% hull) leaves dark smoke behind it. Kills: explosion and debris, score +100. Wingmen also shoot enemies and can be shot down (`SKRZ.` count); they come back at the next wave.
-- [ ] Clearing a wave: +250, the next wave is bigger. Wave 5: `UWAGA: GROT!`, a dark X-wing with gold markings and armoured engines (the Trident elite); it locks on (`NAMIERZA CIĘ!`, low beeps) and fires missiles (`RAKIETA! UNIK (X)` in red, fast beeps, a light buzz). An evasive breaks the missile's lock.
-- [ ] Getting shot down: the view stops, `KONIEC GRY` or `NOWY REKORD!` with wave, kills and score for 6 s, then a fade and a new game. The best score and wave survive an app restart.
+- [ ] Shooting an enemy that's on fire (below 50% hull) leaves dark smoke behind it. Kills: explosion and debris, score +100. Wingmen also shoot enemies and can be shot down (`WINGMEN` count); they come back at the next wave.
+- [ ] Clearing a wave: +250, the next wave is bigger. Wave 5: `WARNING: ELITE!`, a dark X-wing with gold markings and armoured engines (the Trident elite); it locks on (`LOCKED ON YOU!`, low beeps) and fires missiles (`MISSILE! EVADE (X)` in red, fast beeps, a light buzz). An evasive breaks the missile's lock.
+- [ ] Getting shot down: the view stops, `GAME OVER` or `NEW RECORD!` with wave, kills and score for 6 s, then a fade and a new game. The best score and wave survive an app restart.
 - [ ] Performance with 12 enemies, 2 wingmen and a full dogfight: 90 fps. Expect about 80 draw calls; watch CPU time (AI and raycasts) in `metavr perf`.
 - [ ] 20 minutes of Survival: comfort report (vignette level, any moment that felt bad).
 
 ## M5 checklist
 
-- [ ] First start: the game opens in `TRENING` (log `Mode: TRENING`). Each step shows on the right display with a hint for your scheme, the arrow points at rings and drones, a finished step chimes. Steps: throttle, left and right, 3 rings, a drone with guns, a drone with a missile, X, A and B. The end says `TRENING UKOŃCZONY!` (log `Training completed.`).
-- [ ] Hold Y (B with swapped hands) for 1 s: a fade, the next ship (log `Ship: ...`). The cockpit lights change colour (Sokół cyan, Jastrząb green, Żubr amber); the side-right display shows the ship and its passive. A short Y press still changes the control scheme.
-- [ ] Jastrząb is clearly faster and turns quicker but dies sooner; Żubr is slow, takes many hits and hits harder.
-- [ ] The centre display shows both abilities (`A:NAPRAWA OK  B:...`), their cooldown in seconds, `AKTYWNA` while running, the aiming percentage for the salvo.
-- [ ] Sokół: A = pursuit missile (needs a target: a sharply turning missile, 14 s), B = repair (hull back up by 40 over 3 s, 25 s). Passive: shields come back sooner and faster.
-- [ ] Jastrząb: A = targeting computer (5 s without gun heat and +30% damage, 20 s), B = homing missiles (keep the target near the nose for 1.5 s, then 3 missiles, 12 s; losing the target cancels with a 2 s wait). Passive: guns heat 30% slower.
-- [ ] Żubr: A = bomb run (6 bombs along the flight path, each with a 45 m blast, 18 s), B = turret drone (left behind, shoots the nearest enemy for 15 s, can be shot down, 22 s). Passive: 15% less damage, half collision damage.
+- [ ] First start: the game opens in `TRAINING` (log `Mode: TRAINING`). Each step shows on the right display with a hint for your scheme, the arrow points at rings and drones, a finished step chimes. Steps: throttle, left and right, 3 rings, a drone with guns, a drone with a missile, X, A and B. The end says `TRENING UKOŃCZONY!` (log `Training completed.`).
+- [ ] Hold Y (B with swapped hands) for 1 s: a fade, the next ship (log `Ship: ...`). The cockpit lights change colour (Falcon cyan, Hawk green, Bison amber); the side-right display shows the ship and its passive. A short Y press still changes the control scheme.
+- [ ] Hawk is clearly faster and turns quicker but dies sooner; Bison is slow, takes many hits and hits harder.
+- [ ] The centre display shows both abilities (`A:REPAIR OK  B:...`), their cooldown in seconds, `ACTIVE` while running, the aiming percentage for the salvo.
+- [ ] Falcon: A = pursuit missile (needs a target: a sharply turning missile, 14 s), B = repair (hull back up by 40 over 3 s, 25 s). Passive: shields come back sooner and faster.
+- [ ] Hawk: A = targeting computer (5 s without gun heat and +30% damage, 20 s), B = homing missiles (keep the target near the nose for 1.5 s, then 3 missiles, 12 s; losing the target cancels with a 2 s wait). Passive: guns heat 30% slower.
+- [ ] Bison: A = bomb run (6 bombs along the flight path, each with a 45 m blast, 18 s), B = turret drone (left behind, shoots the nearest enemy for 15 s, can be shot down, 22 s). Passive: 15% less damage, half collision damage.
 - [ ] Pressing an ability that isn't ready (or a missile ability with no target) gives a low buzz sound and nothing else.
 - [ ] Survival with each ship: all abilities help, nothing breaks between waves or after a restart (abilities reset, the turret disappears).
 
 ## M6 checklist
 
-Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA → PRZETRWANIE → SZTURM → ESKORTA → WALKA DRUŻYN.
+Modes are chosen in the hangar (M8): TRAINING → RING COURSE → DRONE RANGE → SURVIVAL → ASSAULT → ESCORT → TEAM DOGFIGHT.
 
-**SZTURM** (map Orbit):
-- [ ] A 560 m dark capital ship lies broadside 2.3 km ahead, with two glowing blue domes on its back, six turrets on the flanks, a bridge tower and red engines at the stern. Three wingmen fly with you. The right display shows the briefing, then `CEL: GENERATORY 2`, the clock (`CZAS 14:59`), `STATKI 5` and the score.
+**ASSAULT** (map Orbit):
+- [ ] A 560 m dark capital ship lies broadside 2.3 km ahead, with two glowing blue domes on its back, six turrets on the flanks, a bridge tower and red engines at the stern. Three wingmen fly with you. The right display shows the briefing, then `TARGET: GENERATORS 2`, the clock (`TIME 14:59`), `SHIPS 5` and the score.
 - [ ] Only the current objective gets brackets and can be locked; the guide arrow points at the nearest one. The reactor can't be damaged while the generators stand (log `Capital ship phase: Generators`).
-- [ ] Generators down → `CEL: DZIAŁA 6`, then turrets down → `CEL: REAKTOR 800`. Turrets fire red twin bolts at you and the wingmen when you're on their side. Enemy fighters come out of the flanks; an elite after the turrets.
-- [ ] The reactor sits in a trench at the stern: bombs (Żubr) and missiles work on it. Destroyed: a chain of explosions along the hull, then the ship is gone, `ZWYCIĘSTWO!`, then a restart after 9 s.
-- [ ] Shot down: you come back at the start after a fade (`STATKI` goes down); at 0, `PORAŻKA / BRAK STATKÓW`. The clock running out: `PORAŻKA / CZAS MINĄŁ`.
+- [ ] Generators down → `TARGET: TURRETS 6`, then turrets down → `TARGET: REACTOR 800`. Turrets fire red twin bolts at you and the wingmen when you're on their side. Enemy fighters come out of the flanks; an elite after the turrets.
+- [ ] The reactor sits in a trench at the stern: bombs (Bison) and missiles work on it. Destroyed: a chain of explosions along the hull, then the ship is gone, `VICTORY!`, then a restart after 9 s.
+- [ ] Shot down: you come back at the start after a fade (`SHIPS` goes down); at 0, `DEFEAT / NO SHIPS LEFT`. The clock running out: `DEFEAT / TIME IS UP`.
 - [ ] Ships (yours and AI) bounce off the hull; AI fighters veer off before hitting it.
 
-**ESKORTA** (map Belt):
-- [ ] The sky changes: an amber gas giant to the side, a red-brown nebula, a warmer sun from the left (log `Mode: ESKORTA`, `Asteroid field: 260 rocks`). Brown asteroids of many sizes tumble slowly around a clear route.
-- [ ] Three light-grey transports with cyan engines fly in a column along the route (log `Escort: route 5xxx m`). The arrow points at the lead one; `KONWÓJ 3/3  TRASA n%`.
-- [ ] At about 15%, 42% and 70% of the route: `ZASADZKA! WROGOWIE n` in red; enemies come out from both sides ahead and go for the transports. The last ambush has an elite.
-- [ ] Transports can be destroyed (big explosion, `KONWÓJ 2/3`). One reaching the end: `KONWÓJ DOTARŁ!` and +1000 per transport. All lost: `PORAŻKA / KONWÓJ ZNISZCZONY`.
+**ESCORT** (map Belt):
+- [ ] The sky changes: an amber gas giant to the side, a red-brown nebula, a warmer sun from the left (log `Mode: ESCORT`, `Asteroid field: 260 rocks`). Brown asteroids of many sizes tumble slowly around a clear route.
+- [ ] Three light-grey transports with cyan engines fly in a column along the route (log `Escort: route 5xxx m`). The arrow points at the lead one; `CONVOY 3/3  ROUTE n%`.
+- [ ] At about 15%, 42% and 70% of the route: `AMBUSH! ENEMIES n` in red; enemies come out from both sides ahead and go for the transports. The last ambush has an elite.
+- [ ] Transports can be destroyed (big explosion, `CONVOY 2/3`). One reaching the end: `CONVOY ARRIVED!` and +1000 per transport. All lost: `DEFEAT / CONVOY DESTROYED`.
 - [ ] Shot down: you come back 300 m behind the lead transport.
 - [ ] Flying into rocks: bounce and damage; AI fighters swerve around them.
 - [ ] Going back to another mode restores the Orbit sky.
@@ -161,19 +161,19 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 
 ## M7 (offline) checklist
 
-- [ ] In the hangar choose TRYB until `WALKA DRUŻYN` (log `Mode: WALKA DRUŻYN`, `Team dogfight: 4 v 4, first to 30 or 10 min`). You start on your team's side with three Interceptor wingmen; four X-wings start 2.6 km away on the other side.
-- [ ] Right display: `NASI n : m ONI`, the clock, your kills and losses, score. Every ship shot down scores for the other team, yours included.
-- [ ] Shot down: you come back at your base after 3 s (fade); bots come back after 5 s. Enemy names show as `WRÓG n` on the target display, wingmen as `SKRZYDŁOWY n`.
-- [ ] First to 30, or the leader at 10:00: `WYGRANA!` / `PRZEGRANA` / `REMIS` with the score for 9 s, then a new match. A win unlocks the silver cockpit colour; the best score shows in STATYSTYKI.
+- [ ] In the hangar choose MODE until `TEAM DOGFIGHT` (log `Mode: TEAM DOGFIGHT`, `Team dogfight: 4 v 4, first to 30 or 10 min`). You start on your team's side with three Interceptor wingmen; four X-wings start 2.6 km away on the other side.
+- [ ] Right display: `US n : m THEM`, the clock, your kills and losses, score. Every ship shot down scores for the other team, yours included.
+- [ ] Shot down: you come back at your base after 3 s (fade); bots come back after 5 s. Enemy names show as `ENEMY n` on the target display, wingmen as `WINGMAN n`.
+- [ ] First to 30, or the leader at 10:00: `WIN!` / `LOSS` / `DRAW` with the score for 9 s, then a new match. A win unlocks the silver cockpit colour; the best score shows in STATS.
 
 ## M8 checklist
 
 - [ ] Start: the cockpit fades in with the **HANGAR** panel 1.5 m ahead (dark glass, amber title, white lines) and soft music. A cyan laser comes from the flying hand; the line under it lights up (with a light tick), the trigger (or A) chooses it. The thumbstick moves the highlight too. Game time is stopped (enemies frozen).
-- [ ] `> START: <mode>` closes the menu and starts the mode behind a fade. `TRYB` and `STATEK` switch behind a fade. `KOLOR` cycles the unlocked cockpit colours (the lights change at once). `WYJDŹ Z GRY` quits.
-- [ ] While flying, the menu button opens **PAUZA** (everything stops, the music gets louder, AI engines go quiet): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page). HANGAR from the pause menu has `< WRÓĆ DO GRY` at the top; the menu button there goes back to the pause page.
-- [ ] Choosing WZNÓW or START with the trigger or A and keeping it held: the guns don't fire and no ability triggers until the button is released.
-- [ ] **STEROWANIE**: scheme, flying hand (left/right swaps the hands at once), invert pitch, sensitivity 0.6–1.6, vibration 100/50/0%, volume 100/75/50/25/0%. **KOMFORT**: three presets (most comfortable: strong vignette, auto-level, 60°/s limit, jink; balanced; no aids: no vignette, roll), then each setting on its own. Everything survives an app restart (and in the Editor the GameConfig asset is unchanged after play).
-- [ ] **STATYSTYKI**: total kills, the best of each mode, training, colours unlocked and what unlocks the next (white: training, green: 25 kills, violet: 100, blue: wave 10, red: escort won, silver: team dogfight won, gold: assault won).
+- [ ] `> START: <mode>` closes the menu and starts the mode behind a fade. `MODE` and `SHIP` switch behind a fade. `COLOUR` cycles the unlocked cockpit colours (the lights change at once). `QUIT GAME` quits.
+- [ ] While flying, the menu button opens **PAUSED** (everything stops, the music gets louder, AI engines go quiet): resume, restart, hangar, controls, comfort, recenter. The menu button again resumes (or goes back from a sub-page). HANGAR from the pause menu has `< BACK TO GAME` at the top; the menu button there goes back to the pause page.
+- [ ] Choosing RESUME or START with the trigger or A and keeping it held: the guns don't fire and no ability triggers until the button is released.
+- [ ] **CONTROLS**: scheme, flying hand (left/right swaps the hands at once), invert pitch, sensitivity 0.6–1.6, vibration 100/50/0%, volume 100/75/50/25/0%. **COMFORT**: three presets (most comfortable: strong vignette, auto-level, 60°/s limit, jink; balanced; no aids: no vignette, roll), then each setting on its own. Everything survives an app restart (and in the Editor the GameConfig asset is unchanged after play).
+- [ ] **STATS**: total kills, the best of each mode, training, colours unlocked and what unlocks the next (white: training, green: 25 kills, violet: 100, blue: wave 10, red: escort won, silver: team dogfight won, gold: assault won).
 - [ ] Sound: AI fighters hum as they pass (Doppler), enemy bolts that just miss hiss by, the music pad is quiet in flight and louder in menus. Pausing quiets the engine.
 - [ ] Log at start: `Warm-up: N materials drawn plain and instanced.` No hitch at the first shot, explosion or menu (Perfetto: no long frame there).
 - [ ] Development build: the centre display adds `DC n  tri nk  GC n B`. In the biggest fights DC stays at most 150, and GC is 0 B in most frames.
@@ -210,11 +210,11 @@ Everything visible was redone with real models, textures and effects (approved p
 | Hornet | enemy fighter: X-wing replica (Photo 1) | 7.8k | 1024 |
 | Trident | enemy elite: the X-wing, dark with gold markings | 7.8k | 1024 |
 | Swallow | wingmen: Interceptor replica (Photo 2) | 7.4k | 1024 |
-| Sokol, Jastrzab, Zubr | the player's classes, Interceptor variants: Sokół exactly Photo 2 (default), Jastrząb longer blades + green trim, Żubr armour, bomb pods + amber trim | ~7.4k each | 1024 |
+| Falcon, Hawk, Bison | the player's classes, Interceptor variants: Falcon exactly Photo 2 (default), Hawk longer blades + green trim, Bison armour, bomb pods + amber trim | ~7.4k each | 1024 |
 | Transport | escort hauler | 2.2k | 1024 |
-| Drone, Missile, KolosTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
+| Drone, Missile, ColossusTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
 | Cockpit + CockpitControls | the cockpit, stick and throttle | 14.3k + 0.8k | 2048 + 512 |
-| Kolos | capital ship | 16.8k | 2048 |
+| Colossus | capital ship | 16.8k | 2048 |
 | Station | landmark on Orbit | 8.7k | 2048 |
 | Wrecks | four cruiser sections | 2.3–2.6k each | 2048 |
 | Asteroids | five rock shapes | 1.2k each | 1024 |
@@ -251,7 +251,7 @@ Everything visible was redone with real models, textures and effects (approved p
 - [ ] No pink or black objects. Ships look like their previews, lit by the map's sun: Orbit white-warm from the upper right, Belt warm and low from the left.
 - [ ] Cockpit:
   - the window, struts, console bezels around the five displays, side consoles with switches, seat with harness, cables, light strips,
-  - the light strips take the ship class colour (Sokół cyan, Jastrząb green, Żubr amber) and flash blue-white or red on hits,
+  - the light strips take the ship class colour (Falcon cyan, Hawk green, Bison amber) and flash blue-white or red on hits,
   - the stick and throttle are the new models and move.
 - [ ] Sky:
   - Orbit: violet-teal nebulae and a galactic band with dark lanes, the stars still sharp, the blue ocean planet with clouds,
@@ -289,7 +289,7 @@ Everything visible was redone with real models, textures and effects (approved p
   - `drones`: count, hull, shields, loop speed and radius, distance from the start, respawn time, hit radius,
   - `haptics`: master strength and every pulse (ring, collision, bounds tick, stick grab, fire, overheat, hit taken, hit dealt, kill, lock tick, locked, missile, evasive), boost rumble.
 - `Scripts/Core/UserSettings.cs`: which values the menus offer (turn limits, haptic levels, presets). `Scripts/Core/Progression.cs`: the colours and what unlocks them. `Scripts/UI/MenuPanel.cs`: panel size and distance (1.5 m), row height. `Scripts/Audio/ShipAudio.cs`: all synthesized sounds and the music pad.
-- `Resources/Ships/Sokol.asset`, `Jastrzab.asset`, `Zubr.asset` (made by Build Game, kept when it runs again): each class's flight numbers, hull, shields, gun multipliers, the two abilities, the passive and the cockpit colour. `ShipDefinition.Defaults()` has the same starting values in code.
+- `Resources/Ships/Falcon.asset`, `Hawk.asset`, `Bison.asset` (made by Build Game, kept when it runs again; the old Polish-named ones are removed): each class's flight numbers, hull, shields, gun multipliers, the two abilities, the passive and the cockpit colour. `ShipDefinition.Defaults()` has the same starting values in code.
 - `Scripts/Combat/CapitalShip.cs`: the capital ship's shape, part positions, hit points of generators (400), turrets (120) and reactor (800); `CapitalTurret.cs`: turret range, fire rate, damage and aim error. `Scripts/World/MapTheme.cs`: the Belt map's sky and sun. `Scripts/GameModes/Escort.cs`: the convoy route's waypoints.
 - `Scripts/Cockpit/CockpitFactory.cs`: the cockpit shape (shell rings and sectors, frame beams, console, screens, stick and throttle positions).
 - `Editor/HexWingBuilder.cs` → `CreateMaterials`: every color as a hex value. Run Build Game again after changing them.
@@ -310,7 +310,7 @@ Everything visible was redone with real models, textures and effects (approved p
 - **Recenter:** `OVRManager.display.RecenterPose()` with EyeLevel tracking. If the view doesn't return to the seat, check that the tracking origin really is EyeLevel on the rig's `OVRManager`.
 - **Virtual stick (B):** positions come from `OVRInput.GetLocalControllerPosition` in tracking space, which is fixed to the cockpit. If the stick reacts to turning the ship, check that the rig has no rotation relative to the ship. If it's too twitchy or too lazy, tune `controls.stickRange` first, then `deadzone` and `curve`.
 - **Twist roll and axes:** the sign conventions (push forward = nose down, twist clockwise = roll right) were derived on paper. If any axis is reversed for everyone on the headset, fix it in `PlayerInput`; the invert options (pitch, yaw, roll) are for personal taste.
-- **Motion controls didn't respond in the first headset test** (only the sticks did). `ControllerPose` falls back to Unity's XR devices when OVRInput gives no pose. The input readout and log show which source works; if both show `BRAK`, check that the OpenXR Meta XR Feature and the Touch controller profiles are on and that `OVRManager` is on the rig.
+- **Motion controls didn't respond in the first headset test** (only the sticks did). `ControllerPose` falls back to Unity's XR devices when OVRInput gives no pose. The input readout and log show which source works; if both show `NONE`, check that the OpenXR Meta XR Feature and the Touch controller profiles are on and that `OVRManager` is on the rig.
 - **Lock-on button:** the plan had lock-on on the right grip, but scheme B uses that grip for the stick, so lock-on is the other hand's trigger in every scheme.
 - **Holographic HUD:** markers are drawn 30 m from the eye in the true direction of what they mark (`combat.hudDistance`). If they are uncomfortable to focus on, try 15–60 m. They are depth-tested, so the canopy frame hides them.
 - **AI** (`AI/AIPilot.cs`) was tuned on paper. If enemies are too hard, lower `ai.damageScale` and raise `ai.aimError` first; if they circle without fighting, raise `ai.fireCone`; if they ram, raise `ai.breakOffDistance`. Its axis signs follow `ShipFlight` (pitch + = nose up, yaw + = right, roll + = right).

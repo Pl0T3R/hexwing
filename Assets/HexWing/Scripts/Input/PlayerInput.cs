@@ -82,9 +82,9 @@ namespace HexWing
 
         public static string SchemeLabel(ControlScheme s) => s switch
         {
-            ControlScheme.ControllerDirect => "A: PRZECHYŁ PADA",
-            ControlScheme.VirtualStick => "B: WIRTUALNY DRĄŻEK",
-            _ => "C: GAŁKI",
+            ControlScheme.ControllerDirect => "A: CONTROLLER TILT",
+            ControlScheme.VirtualStick => "B: VIRTUAL STICK",
+            _ => "C: THUMBSTICKS",
         };
 
         float _yHeld;
@@ -294,17 +294,17 @@ namespace HexWing
 
             Vector2 flyStick = OVRInput.Get(OVRInput.Axis2D.PrimaryThumbstick, FlyHand);
             _sb.Clear();
-            _sb.Append("WEJŚCIE ").Append(SchemeLabel(Scheme).Substring(0, 1))
-               .Append("  ŹRÓDŁO P:").Append(ControllerPose.Label(ControllerPose.LastSource(FlyHand)))
+            _sb.Append("INPUT ").Append(SchemeLabel(Scheme).Substring(0, 1))
+               .Append("  SOURCE:").Append(ControllerPose.Label(ControllerPose.LastSource(FlyHand)))
                .Append(" L:").Append(ControllerPose.Label(ControllerPose.LastSource(ThrottleHand))).Append('\n');
             _sb.Append("GRIP ").Append(OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger, FlyHand).ToString("0.00")).Append(StickHeld ? "*" : " ")
                .Append(" / ").Append(OVRInput.Get(OVRInput.Axis1D.PrimaryHandTrigger, ThrottleHand).ToString("0.00")).Append(ThrottleHeld ? "*" : " ").Append('\n');
             Pose(_flyTracked ? "P " : "P! ", _flyPos, _flyRot);
             Pose(_otherTracked ? "L " : "L! ", _otherPos, _otherRot);
-            _sb.Append("GAŁKI ").Append(flyStick.x.ToString("0.0")).Append(',').Append(flyStick.y.ToString("0.0"))
+            _sb.Append("STICKS ").Append(flyStick.x.ToString("0.0")).Append(',').Append(flyStick.y.ToString("0.0"))
                .Append(" / ").Append(otherStick.x.ToString("0.0")).Append(',').Append(otherStick.y.ToString("0.0")).Append('\n');
-            _sb.Append("WYNIK p").Append(c.Pitch.ToString("0.00")).Append(" y").Append(c.Yaw.ToString("0.00"))
-               .Append(" r").Append(c.Roll.ToString("0.00")).Append(" ciąg ").Append(Mathf.RoundToInt(c.Throttle * 100f)).Append('%');
+            _sb.Append("OUT p").Append(c.Pitch.ToString("0.00")).Append(" y").Append(c.Yaw.ToString("0.00"))
+               .Append(" r").Append(c.Roll.ToString("0.00")).Append(" thr ").Append(Mathf.RoundToInt(c.Throttle * 100f)).Append('%');
 
             if (readout)
             {

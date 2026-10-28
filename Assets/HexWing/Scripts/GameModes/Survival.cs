@@ -27,7 +27,7 @@ namespace HexWing
 
         public enum State { Intro, Fighting, GameOver }
 
-        public string Title => "PRZETRWANIE";
+        public string Title => "SURVIVAL";
         public Pose StartPose => new(new Vector3(0f, 0f, -GameConfig.Instance.arena.radius * 0.3f), Quaternion.identity);
 
         public State Phase { get; private set; }

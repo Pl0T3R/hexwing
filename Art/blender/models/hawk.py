@@ -1,5 +1,5 @@
 """
-Sokol: the player's default ship, exactly the reference (Photo 2). A variant of the team's Interceptor replica (models/interceptor.py).
+Hawk: the fast class, longer and narrower blades, green trim. A variant of the team's Interceptor replica (models/interceptor.py).
 """
 import os
 import sys
@@ -7,16 +7,16 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import interceptor  # noqa: E402
 
-NAME = "Sokol"
+NAME = "Hawk"
 TEX = interceptor.TEX
 
 
-def build(variant="sokol"):
+def build(variant="hawk"):
     return interceptor.build(variant)
 
 
 def main(preview=True):
-    return interceptor.make(NAME, "sokol", preview)
+    return interceptor.make(NAME, "hawk", preview)
 
 
 if __name__ == "__main__":

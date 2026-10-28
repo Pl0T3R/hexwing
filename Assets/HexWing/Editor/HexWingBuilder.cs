@@ -397,6 +397,9 @@ namespace HexWing.EditorTools
         [MenuItem("HexWing/2b. Create Art Materials", priority = 21)]
         public static void CreateArtMaterials()
         {
+            // materials of models renamed when the game went English (2026-10-28)
+            foreach (var old in new[] { "Sokol", "Jastrzab", "Zubr", "Kolos", "KolosTurret" })
+                if (AssetDatabase.DeleteAsset($"{MaterialDir}/Art_{old}.mat")) Debug.Log($"[HexWing] Removed the old material Art_{old}.");
             var guids = AssetDatabase.FindAssets("t:Model", new[] { Root + "/Resources/Models" });
             int made = 0;
             foreach (var guid in guids)
@@ -556,6 +559,9 @@ namespace HexWing.EditorTools
         {
             const string dir = Root + "/Resources/Ships";
             Directory.CreateDirectory(dir);
+            // the classes before the game went English (2026-10-28): replaced by Falcon, Hawk and Bison
+            foreach (var old in new[] { "Sokol", "Jastrzab", "Zubr" })
+                if (AssetDatabase.DeleteAsset($"{dir}/{old}.asset")) Debug.Log($"[HexWing] Removed the old ship class {old}.");
             foreach (var def in ShipDefinition.Defaults())
             {
                 var path = $"{dir}/{def.name}.asset";

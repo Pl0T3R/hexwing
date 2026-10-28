@@ -1,5 +1,5 @@
 """
-KolosTurret: a gun turret of the capital ship (six on its flanks, destructible, placed by code). A low
+ColossusTurret: a gun turret of the capital ship (six on its flanks, destructible, placed by code). A low
 armoured dome on a ring with two long barrels, a sensor slit and red trim. About 16 m across; the
 barrels point along +z (the code turns the turret toward its side). Original design.
 """
@@ -9,7 +9,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from lib import geo, pipeline, surface  # noqa: E402
 
-NAME = "KolosTurret"
+NAME = "ColossusTurret"
 TEX = 512
 
 PALETTE = {

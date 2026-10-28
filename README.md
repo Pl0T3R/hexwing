@@ -1,6 +1,6 @@
 # Hex Wing
 
-A VR starfighter combat game for Meta Quest 3 (Unity 6, OpenXR, standalone). You fly from the cockpit: arcade flight, readable dogfights, built for 20+ minute sessions. Original ships and names only.
+A VR starfighter combat game for Meta Quest 3 (Unity 6, OpenXR, standalone). You fly from the cockpit: arcade flight, readable dogfights, built for 20+ minute sessions. Private project: the fighters are replicas of the X-wing (enemies) and TIE Interceptor (your team) from the owner's reference images, so it must not be published. Everything in the game is in English.
 
 - `PLAN.md`: the approved plan (research, controls, budgets, milestones M1–M8).
 - `CLAUDE.md`: how to set up, build and test the project on the developer's PC.

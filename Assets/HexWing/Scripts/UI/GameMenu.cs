@@ -70,10 +70,10 @@ namespace HexWing
             switch (page)
             {
                 case Page.Hangar: _panel.Show("HANGAR", HangarItems()); break;
-                case Page.Pause: _panel.Show("PAUZA", PauseItems()); break;
-                case Page.Controls: _panel.Show("STEROWANIE", ControlItems()); break;
-                case Page.Comfort: _panel.Show("KOMFORT", ComfortItems()); break;
-                default: _panel.Show("STATYSTYKI", StatItems()); break;
+                case Page.Pause: _panel.Show("PAUSED", PauseItems()); break;
+                case Page.Controls: _panel.Show("CONTROLS", ControlItems()); break;
+                case Page.Comfort: _panel.Show("COMFORT", ComfortItems()); break;
+                default: _panel.Show("STATS", StatItems()); break;
             }
         }
 
@@ -107,28 +107,28 @@ namespace HexWing
             var d = ModeDirector.Instance;
             var player = PlayerShip.Instance;
             var items = new List<MenuEntry>();
-            if (_runInProgress) items.Add(new MenuEntry("< WRÓĆ DO GRY", Close));
+            if (_runInProgress) items.Add(new MenuEntry("< BACK TO GAME", Close));
             items.AddRange(new List<MenuEntry>
             {
                 new(() => "> START: " + (d != null ? d.Current.Title : "?"), () => { if (!Busy) StartRun("start"); }),
-                new(() => "TRYB: " + (d != null ? d.Current.Title : "?") + "  >", () =>
+                new(() => "MODE: " + (d != null ? d.Current.Title : "?") + "  >", () =>
                 {
                     if (Busy) return;
                     _runInProgress = false;   // switching resets the mode
                     d?.SelectNextMode();
                 }),
-                new(() => "STATEK: " + (player != null && player.Definition != null ? player.Definition.displayName : "?") + "  >", () =>
+                new(() => "SHIP: " + (player != null && player.Definition != null ? player.Definition.displayName : "?") + "  >", () =>
                 {
                     if (Busy) return;
                     _runInProgress = false;
                     player?.SelectNextShip();
                 }),
-                new(() => "KOLOR: " + Progression.Paints[Progression.SelectedPaint].Name + "  (" + Progression.UnlockedCount + "/" + Progression.Paints.Length + ")  >",
+                new(() => "COLOUR: " + Progression.Paints[Progression.SelectedPaint].Name + "  (" + Progression.UnlockedCount + "/" + Progression.Paints.Length + ")  >",
                     () => { Progression.NextPaint(); player?.RefreshColor(); }),
-                new("STEROWANIE ...", () => SubPage(Page.Controls)),
-                new("KOMFORT ...", () => SubPage(Page.Comfort)),
-                new("STATYSTYKI ...", () => SubPage(Page.Stats)),
-                new("WYJDŹ Z GRY", Application.Quit),
+                new("CONTROLS ...", () => SubPage(Page.Controls)),
+                new("COMFORT ...", () => SubPage(Page.Comfort)),
+                new("STATS ...", () => SubPage(Page.Stats)),
+                new("QUIT GAME", Application.Quit),
             });
             return items;
         }
@@ -137,12 +137,12 @@ namespace HexWing
         {
             return new List<MenuEntry>
             {
-                new("WZNÓW", Close),
-                new("RESTART", () => { if (!Busy) StartRun("restart z menu"); }),
+                new("RESUME", Close),
+                new("RESTART", () => { if (!Busy) StartRun("restart from the menu"); }),
                 new("HANGAR", ShowHangar),
-                new("STEROWANIE ...", () => SubPage(Page.Controls)),
-                new("KOMFORT ...", () => SubPage(Page.Comfort)),
-                new("CENTRUJ WIDOK", () => SeatedRecenter.Instance?.Recenter(withFade: false)),
+                new("CONTROLS ...", () => SubPage(Page.Controls)),
+                new("COMFORT ...", () => SubPage(Page.Comfort)),
+                new("RECENTER VIEW", () => SeatedRecenter.Instance?.Recenter(withFade: false)),
             };
         }
 
@@ -151,18 +151,18 @@ namespace HexWing
             var c = GameConfig.Instance.controls;
             return new List<MenuEntry>
             {
-                new(() => "STER: " + (_input != null ? PlayerInput.SchemeLabel(_input.Scheme) : "?"),
+                new(() => "SCHEME: " + (_input != null ? PlayerInput.SchemeLabel(_input.Scheme) : "?"),
                     () => _input?.SetScheme((ControlScheme)(((int)_input.Scheme + 1) % 3))),
-                new(() => "LATAJĄCA RĘKA: " + (c.swapHands ? "LEWA" : "PRAWA"), UserSettings.ToggleSwapHands),
-                new(() => "ODWRÓĆ GÓRA/DÓŁ: " + (c.invertPitch ? "TAK" : "NIE"), UserSettings.ToggleInvertPitch),
-                new(() => "ODWRÓĆ LEWO/PRAWO: " + (c.invertYaw ? "TAK" : "NIE"), UserSettings.ToggleInvertYaw),
-                new(() => "ODWRÓĆ BECZKĘ: " + (c.invertRoll ? "TAK" : "NIE"), UserSettings.ToggleInvertRoll),
-                new(() => "DRĄŻEK W BOK: " + (c.sideways == StickSideways.Yaw ? "SKRĘT" : "BECZKA"), UserSettings.ToggleSideways),
-                new(() => "GAŁKA CIĄGU: " + (c.throttleStick == ThrottleStickMode.Hold ? "ZOSTAJE" : "WRACA"), UserSettings.ToggleThrottleStick),
-                new(() => "CZUŁOŚĆ: " + c.sensitivity.ToString("0.0"), UserSettings.CycleSensitivity),
-                new(() => "WIBRACJE: " + Percent(GameConfig.Instance.haptics.master), UserSettings.CycleHaptics),
-                new(() => "GŁOŚNOŚĆ: " + Percent(UserSettings.Volume), UserSettings.CycleVolume),
-                new("< WSTECZ", () => Show(_back)),
+                new(() => "FLYING HAND: " + (c.swapHands ? "LEFT" : "RIGHT"), UserSettings.ToggleSwapHands),
+                new(() => "INVERT UP/DOWN: " + (c.invertPitch ? "ON" : "OFF"), UserSettings.ToggleInvertPitch),
+                new(() => "INVERT LEFT/RIGHT: " + (c.invertYaw ? "ON" : "OFF"), UserSettings.ToggleInvertYaw),
+                new(() => "INVERT ROLL: " + (c.invertRoll ? "ON" : "OFF"), UserSettings.ToggleInvertRoll),
+                new(() => "STICK SIDEWAYS: " + (c.sideways == StickSideways.Yaw ? "TURN" : "ROLL"), UserSettings.ToggleSideways),
+                new(() => "THROTTLE STICK: " + (c.throttleStick == ThrottleStickMode.Hold ? "HOLDS" : "SPRINGS BACK"), UserSettings.ToggleThrottleStick),
+                new(() => "SENSITIVITY: " + c.sensitivity.ToString("0.0"), UserSettings.CycleSensitivity),
+                new(() => "VIBRATION: " + Percent(GameConfig.Instance.haptics.master), UserSettings.CycleHaptics),
+                new(() => "VOLUME: " + Percent(UserSettings.Volume), UserSettings.CycleVolume),
+                new("< BACK", () => Show(_back)),
             };
         }
 
@@ -171,15 +171,15 @@ namespace HexWing
             var c = GameConfig.Instance.comfort;
             return new List<MenuEntry>
             {
-                new("NAJWIĘKSZY KOMFORT", () => UserSettings.ApplyComfortPreset(0)),
-                new("ZRÓWNOWAŻONY", () => UserSettings.ApplyComfortPreset(1)),
-                new("BEZ POMOCY", () => UserSettings.ApplyComfortPreset(2)),
-                new(() => "WINIETA: " + Vignette(c.vignette), UserSettings.CycleVignette),
-                new(() => "POZIOMOWANIE: " + (c.autoLevel ? "TAK" : "NIE"), UserSettings.ToggleAutoLevel),
-                new(() => "PRZECHYŁ W ZAKRĘCIE: " + (c.bankIntoTurns ? "TAK" : "NIE"), UserSettings.ToggleBankIntoTurns),
-                new(() => "LIMIT SKRĘTU: " + (c.turnRateLimit > 0f ? Mathf.RoundToInt(c.turnRateLimit) + " °/s" : "BRAK"), UserSettings.CycleTurnLimit),
-                new(() => "UNIK: " + (GameConfig.Instance.combat.evasiveStyle == EvasiveStyle.Jink ? "SKOK W BOK" : "BECZKA (OBRÓT)"), UserSettings.CycleEvasive),
-                new("< WSTECZ", () => Show(_back)),
+                new("MOST COMFORTABLE", () => UserSettings.ApplyComfortPreset(0)),
+                new("BALANCED", () => UserSettings.ApplyComfortPreset(1)),
+                new("NO AIDS", () => UserSettings.ApplyComfortPreset(2)),
+                new(() => "VIGNETTE: " + Vignette(c.vignette), UserSettings.CycleVignette),
+                new(() => "AUTO-LEVEL: " + (c.autoLevel ? "ON" : "OFF"), UserSettings.ToggleAutoLevel),
+                new(() => "BANK INTO TURNS: " + (c.bankIntoTurns ? "ON" : "OFF"), UserSettings.ToggleBankIntoTurns),
+                new(() => "TURN LIMIT: " + (c.turnRateLimit > 0f ? Mathf.RoundToInt(c.turnRateLimit) + " °/s" : "NONE"), UserSettings.CycleTurnLimit),
+                new(() => "EVADE: " + (GameConfig.Instance.combat.evasiveStyle == EvasiveStyle.Jink ? "SIDE JINK" : "BARREL ROLL"), UserSettings.CycleEvasive),
+                new("< BACK", () => Show(_back)),
             };
         }
 
@@ -187,20 +187,20 @@ namespace HexWing
         {
             return new List<MenuEntry>
             {
-                new(() => "ZESTRZELENIA: " + Progression.TotalKills, null),
-                new(() => "PRZETRWANIE: " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestScore, 0) + " (FALA " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) + ")", null),
-                new(() => "SZTURM: " + PlayerPrefs.GetInt(SaveKeys.AssaultBestScore, 0), null),
-                new(() => "ESKORTA: " + PlayerPrefs.GetInt(SaveKeys.EscortBestScore, 0), null),
-                new(() => "WALKA DRUŻYN: " + PlayerPrefs.GetInt(SaveKeys.DogfightBestScore, 0), null),
-                new(() => "TRENING: " + (PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 ? "UKOŃCZONY" : "NIE"), null),
-                new(() => "KOLORY: " + Progression.UnlockedCount + "/" + Progression.Paints.Length + NextUnlock(), null),
-                new("< WSTECZ", () => Show(_back)),
+                new(() => "KILLS: " + Progression.TotalKills, null),
+                new(() => "SURVIVAL: " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestScore, 0) + " (WAVE " + PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) + ")", null),
+                new(() => "ASSAULT: " + PlayerPrefs.GetInt(SaveKeys.AssaultBestScore, 0), null),
+                new(() => "ESCORT: " + PlayerPrefs.GetInt(SaveKeys.EscortBestScore, 0), null),
+                new(() => "TEAM DOGFIGHT: " + PlayerPrefs.GetInt(SaveKeys.DogfightBestScore, 0), null),
+                new(() => "TRAINING: " + (PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 ? "DONE" : "NOT YET"), null),
+                new(() => "COLOURS: " + Progression.UnlockedCount + "/" + Progression.Paints.Length + NextUnlock(), null),
+                new("< BACK", () => Show(_back)),
             };
         }
 
         static string NextUnlock()
         {
-            foreach (var p in Progression.Paints) if (!p.Unlocked()) return "  NASTĘPNY: " + p.Unlock;
+            foreach (var p in Progression.Paints) if (!p.Unlocked()) return "  NEXT: " + p.Unlock;
             return "";
         }
 
@@ -208,10 +208,10 @@ namespace HexWing
 
         static string Vignette(VignetteLevel v) => v switch
         {
-            VignetteLevel.Off => "WYŁ.",
-            VignetteLevel.Low => "SŁABA",
-            VignetteLevel.High => "MOCNA",
-            _ => "ŚREDNIA",
+            VignetteLevel.Off => "OFF",
+            VignetteLevel.Low => "LOW",
+            VignetteLevel.High => "HIGH",
+            _ => "MEDIUM",
         };
     }
 }

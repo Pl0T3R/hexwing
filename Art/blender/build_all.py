@@ -18,7 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "models"))
 
-MODELS = ["hornet", "trident", "swallow", "sokol", "jastrzab", "zubr", "transport", "drone", "missile", "kolos_turret", "asteroids", "wrecks", "cockpit", "sky", "kolos", "station"]
+MODELS = ["hornet", "trident", "swallow", "falcon", "hawk", "bison", "transport", "drone", "missile", "colossus_turret", "asteroids", "wrecks", "cockpit", "sky", "colossus", "station"]
 
 
 def main(names):

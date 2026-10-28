@@ -12,7 +12,7 @@ namespace HexWing
     {
         public static DroneRange Instance { get; private set; }
 
-        public string Title => "STRZELNICA";
+        public string Title => "DRONE RANGE";
         public Pose StartPose => new(new Vector3(0f, 0f, -GameConfig.Instance.arena.radius * 0.3f), Quaternion.identity);
 
         public int Kills { get; private set; }

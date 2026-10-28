@@ -25,14 +25,14 @@ namespace HexWing
         /// <summary>0 = the ship class's own colour.</summary>
         public static readonly Paint[] Paints =
         {
-            new() { Name = "KLASY", Color = Color.clear, Unlock = "", Unlocked = () => true },
-            new() { Name = "BIEL", Color = new Color(0.9f, 0.94f, 1f), Unlock = "TRENING", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 },
-            new() { Name = "ZIELEŃ", Color = new Color(0.33f, 1f, 0.6f), Unlock = "25 ZESTRZELEŃ", Unlocked = () => TotalKills >= 25 },
-            new() { Name = "FIOLET", Color = new Color(0.7f, 0.55f, 1f), Unlock = "100 ZESTRZELEŃ", Unlocked = () => TotalKills >= 100 },
-            new() { Name = "BŁĘKIT", Color = new Color(0.3f, 0.66f, 1f), Unlock = "FALA 10", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) >= 10 },
-            new() { Name = "CZERWIEŃ", Color = new Color(1f, 0.35f, 0.29f), Unlock = "ESKORTA", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.EscortWon, 0) == 1 },
-            new() { Name = "SREBRO", Color = new Color(0.82f, 0.86f, 0.92f), Unlock = "WALKA DRUŻYN", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.DogfightWon, 0) == 1 },
-            new() { Name = "ZŁOTO", Color = new Color(1f, 0.82f, 0.29f), Unlock = "SZTURM", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.AssaultWon, 0) == 1 },
+            new() { Name = "CLASS", Color = Color.clear, Unlock = "", Unlocked = () => true },
+            new() { Name = "WHITE", Color = new Color(0.9f, 0.94f, 1f), Unlock = "TRAINING", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 },
+            new() { Name = "GREEN", Color = new Color(0.33f, 1f, 0.6f), Unlock = "25 KILLS", Unlocked = () => TotalKills >= 25 },
+            new() { Name = "VIOLET", Color = new Color(0.7f, 0.55f, 1f), Unlock = "100 KILLS", Unlocked = () => TotalKills >= 100 },
+            new() { Name = "BLUE", Color = new Color(0.3f, 0.66f, 1f), Unlock = "WAVE 10", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.SurvivalBestWave, 0) >= 10 },
+            new() { Name = "RED", Color = new Color(1f, 0.35f, 0.29f), Unlock = "ESCORT", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.EscortWon, 0) == 1 },
+            new() { Name = "SILVER", Color = new Color(0.82f, 0.86f, 0.92f), Unlock = "TEAM DOGFIGHT", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.DogfightWon, 0) == 1 },
+            new() { Name = "GOLD", Color = new Color(1f, 0.82f, 0.29f), Unlock = "ASSAULT", Unlocked = () => PlayerPrefs.GetInt(SaveKeys.AssaultWon, 0) == 1 },
         };
 
         public static int SelectedPaint
