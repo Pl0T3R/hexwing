@@ -96,6 +96,8 @@ def preview(ob, name, material, radius, extra=(), size=(640, 480), samples=48, n
 
     cam_data = bpy.data.cameras.new("Cam")
     cam_data.lens = 50
+    cam_data.clip_start = radius * 0.01
+    cam_data.clip_end = radius * 20.0
     cam = bpy.data.objects.new("Cam", cam_data)
     scene.collection.objects.link(cam)
     scene.camera = cam

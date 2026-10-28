@@ -23,10 +23,12 @@ NAME = "Kolos"
 TEX = 2048
 
 PALETTE = {
-    "HULL": dict(base=(0.085, 0.09, 0.1), metal=0.55, rough=0.45, panel_scale=0.075, mortar=0.022, panel_dark=0.55,
+    "HULL": dict(base=(0.085, 0.09, 0.1), metal=0.55, rough=0.45, panel_scale=0.035, mortar=0.022, panel_dark=0.55,
                  tone=0.1, wear=0.3, grime=0.55, ao_dist=12.0, bevel=0.4, bump=0.6),
-    "DECK": dict(base=(0.06, 0.063, 0.07), metal=0.5, rough=0.5, panel_scale=0.12, mortar=0.025, tone=0.12, wear=0.25,
+    "DECK": dict(base=(0.06, 0.063, 0.07), metal=0.5, rough=0.5, panel_scale=0.06, mortar=0.025, tone=0.12, wear=0.25,
                  grime=0.6, ao_dist=8.0, bevel=0.25),
+    "PLATE": dict(base=(0.11, 0.115, 0.125), metal=0.6, rough=0.42, panel_scale=0.05, mortar=0.02, panel_dark=0.45,
+                  tone=0.14, wear=0.35, grime=0.5, ao_dist=6.0, bevel=0.3, bump=0.5),
     "TRIM": dict(base=(0.3, 0.035, 0.03), metal=0.4, rough=0.42, panel_scale=0.1, mortar=0.02, wear=0.4, ao_dist=8.0, bevel=0.3),
     "METAL": dict(base=(0.2, 0.2, 0.21), metal=0.9, rough=0.35, panel=0.3, panel_scale=0.2, mortar=0.03, wear=0.3, ao_dist=6.0, bevel=0.2),
     "DARK": dict(base=(0.018, 0.019, 0.022), metal=0.6, rough=0.6, panel=0.0, wear=0.1, ao_dist=6.0, bevel=0.2),
@@ -41,6 +43,21 @@ TURRETS = ((48, 34, 140), (-48, 34, 140), (54, 30, 0), (-54, 30, 0), (48, 34, -1
 
 SECTIONS = ((-262.0, 120, 92, 0), (-240.0, 132, 100, 0), (0.0, 114, 100, 0), (160.0, 100, 88, -2),
             (232.0, 64, 54, -6), (282.0, 14, 12, -10))
+
+
+def section(z):
+    """The hull's width, height and centre height offset at length z."""
+    for (z0, w0, h0, d0), (z1, w1, h1, d1) in zip(SECTIONS, SECTIONS[1:]):
+        if z0 <= z <= z1:
+            t = (z - z0) / (z1 - z0)
+            return w0 + (w1 - w0) * t, h0 + (h1 - h0) * t, d0 + (d1 - d0) * t
+    return SECTIONS[0][1:] if z < SECTIONS[0][0] else SECTIONS[-1][1:]
+
+
+def deck_y(z):
+    """The height of the flat deck at length z."""
+    w, h, dy = section(z)
+    return h / 2 + dy
 
 
 def hull_x(z, y):
@@ -80,9 +97,10 @@ def build():
 
     # deck: raised plates along the spine, with gaps for the generator pedestals
     for z0, z1 in ((150, 230), (-30, 60), (-120, -80)):
-        P(geo.bevel(geo.box("DeckPlate", (0, 51, (z0 + z1) / 2), (44, 4, z1 - z0), "DECK"), width=0.6, segments=1))
+        base = min(deck_y(z0), deck_y(z1))
+        P(geo.bevel(geo.box("DeckPlate", (0, base + 0.5, (z0 + z1) / 2), (44, 4, z1 - z0), "DECK"), width=0.6, segments=1))
     for z in GENERATORS:
-        P(geo.bevel(geo.cylinder("Pedestal", (0, 48, z), (0, 58, z), 24, 20, "METAL", sides=24), width=0.5, segments=1))
+        P(geo.bevel(geo.cylinder("Pedestal", (0, deck_y(z) - 1.0, z), (0, 58, z), 26, 20, "METAL", sides=24), width=0.5, segments=1))
         P(geo.bevel(geo.cylinder("PedestalRing", (0, 57, z), (0, 60, z), 19, 18, "TRIM", sides=24), width=0.3, segments=1))
         for k in range(8):
             a = math.radians(k * 45 + 22.5)
@@ -134,15 +152,63 @@ def build():
             continue
         x = rng.uniform(-24, 24)
         w, d, h = rng.uniform(3, 9), rng.uniform(4, 16), rng.uniform(1.5, 5)
-        P(geo.bevel(geo.box("Greeble", (x, 51 + h / 2, z), (w, h, d), rng.choice(("METAL", "DECK", "DARK"))), width=0.2, segments=1))
+        base = min(deck_y(z - d / 2), deck_y(z + d / 2))
+        P(geo.bevel(geo.box("Greeble", (x, base + h / 2 - 0.5, z), (w, h, d), rng.choice(("METAL", "DECK", "DARK"))), width=0.2, segments=1))
     for side in (1, -1):
         for k in range(3):
-            path = [(side * (14 + k * 3), 51.5, z) for z in range(-110, 140, 10)]
+            path = [(side * (14 + k * 3), deck_y(z) + 1.2, z) for z in range(-110, 140, 10)]
             P(geo.sweep("Pipe", path, geo.circle(1.0, 8), "METAL"))
     # bow details: a red nose band and sensor dishes
     P(geo.bevel(geo.loft("BowBand", [(220.0, hexa(70, 60), (0, -5)), (226.0, hexa(66, 57), (0, -5.5))], "TRIM"), width=0.4, segments=1))
     for side in (1, -1):
-        P(geo.bevel(geo.cylinder("Dish", (12 * side, 44, 200), (12 * side, 47, 200), 6, 4, "METAL", sides=16), width=0.2, segments=1))
+        P(geo.bevel(geo.cylinder("Dish", (12 * side, deck_y(200) - 1.0, 200), (12 * side, deck_y(200) + 3.0, 200), 6, 4, "METAL", sides=16), width=0.2, segments=1))
+
+    # stepped superstructure between the generators: three terraces with window bands
+    for z0, z1 in ((116.0, 152.0), (-32.0, 62.0), (-122.0, -86.0)):
+        base = min(deck_y(z0), deck_y(z1)) - 1.0
+        top = base
+        for tier, (width, height, inset) in enumerate(((46, 6, 0), (32, 5, 8), (18, 4, 16))):
+            za, zb = z0 + inset, z1 - inset * 0.6
+            if zb - za < 8:
+                break
+            P(geo.bevel(geo.box("Terrace", (0, top + height / 2, (za + zb) / 2), (width, height, zb - za), "PLATE"), width=0.5, segments=1))
+            if tier < 2:
+                for side in (1, -1):
+                    P(geo.box("TerraceWindows", (side * (width / 2 + 0.1), top + height * 0.55, (za + zb) / 2), (0.4, 0.9, (zb - za) * 0.8), "WINDOW"))
+            top += height
+        P(geo.bevel(geo.box("TerraceVent", (0, top + 1.0, (z0 + z1) / 2), (8, 2, max(6.0, (z1 - z0) * 0.3)), "DARK"), width=0.2, segments=1))
+
+    # armour plates on the slanted flanks, in two bands, clear of windows, hangars and sponsons
+    def plate(side, upper, y0, y1, za, zb):
+        zc = (za + zb) / 2
+        w, h, dy = section(zc)
+        run, rise = w / 4, h / 2
+        slant = math.hypot(run, rise)
+        theta = math.degrees(math.atan2(run, rise)) * (1 if upper else -1)
+        yc = (y0 + y1) / 2
+        nx, ny = rise / slant, (run / slant) * (1 if upper else -1)
+        x = hull_x(zc, yc) + nx * 0.6
+        center = (side * x, yc + ny * 0.6, zc)
+        length = abs(y1 - y0) / (rise / slant)
+        rotation = geo.rot(z=theta * side)
+        return geo.bevel(geo.box("Plate", center, (1.2, length, zb - za), "PLATE", rotation=rotation), width=0.35, segments=1)
+
+    for side in (1, -1):
+        for upper, (y0, y1) in ((True, (20.0, 31.0)), (True, (33.0, 43.0)), (False, (-32.0, -40.0)), (False, (-42.0, -48.0))):
+            z = -244.0
+            while z < 150:
+                length = rng.uniform(14, 34)
+                za, zb = z, min(z + length, 150.0)
+                clear = True
+                if upper and y1 > 19:
+                    clear = not any(abs((za + zb) / 2 - tz) < 22 + (zb - za) / 2 for _, _, tz in TURRETS)
+                if clear and zb - za > 6 and rng.random() < 0.85:
+                    P(plate(side, upper, y0, y1, za, zb))
+                z = zb + rng.uniform(1.5, 4.0)
+
+    # radiator fins under the keel
+    for z in range(-210, 110, 9):
+        P(geo.box("Fin", (0, -56.5, z), (18, 5, 1.2), "METAL"))
 
     hull = geo.join(parts, NAME + "_LOD0")
     plumes = [geo.cylinder("Plume", (x, y, -305), (x, y, -360), 12, 2, "GLOW", sides=16, cap0=False, cap1=False)

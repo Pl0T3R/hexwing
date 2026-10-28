@@ -28,9 +28,18 @@ def main(names):
         module = importlib.import_module(name)
         tris = module.main()
         report.append(f"{module.NAME:12s} LOD0 {tris[0]:6d}  LOD1 {tris[1]:6d}  LOD2 {tris[2]:6d}  tex {module.TEX}  ({time.time() - t:.0f} s)")
+    # merge with the lines of models not rebuilt this time (keyed by the name in the first column)
     path = os.path.join(HERE, "..", "previews", "report.txt")
+    lines = {}
+    if os.path.exists(path):
+        with open(path) as f:
+            for line in f:
+                if line.strip():
+                    lines[line.split()[0]] = line.rstrip("\n")
+    for line in report:
+        lines[line.split()[0]] = line
     with open(path, "w") as f:
-        f.write("\n".join(report) + "\n")
+        f.write("\n".join(lines[k] for k in sorted(lines)) + "\n")
     print("\n".join(report))
 
 
