@@ -65,11 +65,39 @@ def build():
     P(geo.sweep("RingWindowsOut", [(x * 1.067, 4, z * 1.067) for x, _, z in ring], geo.rect(0.8, 2.2), "WINDOW", up=(0, 1, 0), closed_path=True))
     P(geo.sweep("RingWindowsIn", [(x * 0.932, -3, z * 0.932) for x, _, z in ring], geo.rect(0.8, 1.6), "WINDOW", up=(0, 1, 0), closed_path=True))
     P(geo.bevel(geo.sweep("RingTrim", [(x, 13.5, z) for x, _, z in ring], geo.rect(36, 2), "TRIM", up=(0, 1, 0), closed_path=True), width=0.2, segments=1))
+    # the ring in modules: raised bulkheads every 15 degrees, deck greebles, red beacons on top
+    for k in range(24):
+        a0 = k * 15.0
+        arc = [(math.cos(math.radians(a)) * ring_r, 0.0, math.sin(math.radians(a)) * ring_r) for a in (a0 - 1.0, a0, a0 + 1.0)]
+        P(geo.bevel(geo.sweep("Bulkhead", arc, geo.rect(38, 30), "DARK", up=(0, 1, 0)), width=0.3, segments=1))
+        if k % 2 == 0:
+            p = (math.cos(math.radians(a0)) * ring_r, 15.4, math.sin(math.radians(a0)) * ring_r)
+            P(geo.disc("RingBeacon", p, (0, 1, 0), 1.2, "RED", sides=8))
+    for i in range(40):
+        a = rng.uniform(0, 2 * math.pi)
+        r = ring_r + rng.uniform(-10, 10)
+        P(geo.bevel(geo.box("RingPod", (math.cos(a) * r, 14.5 + rng.uniform(0.5, 2.5), math.sin(a) * r),
+                            (rng.uniform(5, 12), rng.uniform(2, 5), rng.uniform(5, 12)), rng.choice(("METAL", "DARK", "HULL")), geo.rot(y=-math.degrees(a))),
+                    width=0.2, segments=1))
+    # four hangar bays on the ring's outer face, lit inside
+    for k in range(4):
+        a = math.radians(k * 90)
+        o = (math.cos(a), 0, math.sin(a))
+        rot = geo.rot(y=-math.degrees(a) + 90)
+        P(geo.bevel(geo.box("HangarFrame", (o[0] * (ring_r + 17.5), 0, o[2] * (ring_r + 17.5)), (34, 22, 3), "TRIM", rot), width=0.3, segments=1))
+        P(geo.box("HangarMouth", (o[0] * (ring_r + 18.2), 0, o[2] * (ring_r + 18.2)), (28, 16, 2), "DARK", rot))
+        P(geo.box("HangarGlow", (o[0] * (ring_r + 18.0), 0, o[2] * (ring_r + 18.0)), (24, 12, 0.5), "BEACON", rot))
+    # spokes as trusses: two rails with cross braces
     for k in range(4):
         a = math.radians(45 + k * 90)
         d = (math.cos(a), 0, math.sin(a))
-        P(geo.bevel(geo.cylinder("Spoke", (d[0] * 28, 0, d[2] * 28), (d[0] * 245, 0, d[2] * 245), 7, 7, "METAL", sides=10), width=0.3, segments=1))
-        P(geo.disc("SpokeLight", (d[0] * 150, 7.2, d[2] * 150), (0, 1, 0), 1.0, "BEACON", sides=8))
+        for y in (-5.0, 5.0):
+            P(geo.bevel(geo.cylinder("SpokeRail", (d[0] * 28, y, d[2] * 28), (d[0] * 245, y, d[2] * 245), 2.4, 2.4, "METAL", sides=8), width=0.15, segments=1))
+        for t in range(9):
+            r0, r1 = 35 + t * 23, 35 + (t + 1) * 23
+            P(geo.cylinder("SpokeBrace", (d[0] * r0, -5, d[2] * r0), (d[0] * r1, 5, d[2] * r1), 1.0, 1.0, "METAL", sides=6))
+        P(geo.bevel(geo.box("SpokeTube", (d[0] * 136, 0, d[2] * 136), (7, 5, 7), "HULL", geo.rot(y=-math.degrees(a))), width=0.2, segments=1))
+        P(geo.disc("SpokeLight", (d[0] * 150, 6.6, d[2] * 150), (0, 1, 0), 1.0, "BEACON", sides=8))
 
     # docking arms with berths along +x / -x at the hub's middle
     for side in (1, -1):
