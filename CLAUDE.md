@@ -206,7 +206,7 @@ Everything visible was redone with real models, textures and effects (approved p
 | Hornet | enemy fighter | 4.5k | 1024 |
 | Trident | enemy elite | 3.2k | 1024 |
 | Swallow | wingman | 2.9k | 1024 |
-| Sokol, Jastrzab, Zubr | the player's ship classes (hangar showcase) | 2.8k / 2.0k / 2.6k | 1024 |
+| Sokol, Jastrzab, Zubr | the player's ship classes (hangar showcase) | 3.3k / 2.0k / 2.6k | 1024 |
 | Transport | escort hauler | 2.2k | 1024 |
 | Drone, Missile, KolosTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
 | Cockpit + CockpitControls | the cockpit, stick and throttle | 14.3k + 0.8k | 2048 + 512 |
