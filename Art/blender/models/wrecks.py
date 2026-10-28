@@ -49,19 +49,37 @@ def ragged(prof, steps):
 def piece(index, length, width, height, rng):
     parts = []
     P = parts.append
-    prof = ragged(hexa(width, height), 4)
+    prof = ragged(hexa(width, height), 10)
     n = len(prof)
     half = length / 2
     # the outer shell: two torn ends (each ring point pushed along z and inward at random)
     def torn_ring(z, sign, depth):
+        """Jagged teeth: alternating long and short tears, the metal curling a little inward."""
         ring = []
-        for x, y in prof:
-            dz = rng.uniform(0.0, depth) * sign
-            k = rng.uniform(0.82, 1.0)
+        for i, (x, y) in enumerate(prof):
+            tooth = rng.uniform(0.55, 1.0) if i % 2 == 0 else rng.uniform(0.0, 0.35)
+            dz = tooth * depth * sign
+            k = rng.uniform(0.8, 0.97)
             ring.append((x * k, y * k, z + dz))
         return ring
-    rings = [torn_ring(-half, 1, length * 0.18), [(x, y, -half * 0.4) for x, y in prof], [(x, y, half * 0.4) for x, y in prof],
-             torn_ring(half, -1, length * 0.18)]
+
+    def dented_ring(z):
+        """A section with a few dents pushed in (impacts), the rest straight."""
+        # never on the flat deck (profile points 10..20 are its top edge), where the plates lie
+        sides = [i for i in range(n) if not 6 <= i <= 24]
+        dents = [(rng.choice(sides), rng.randint(2, 4), rng.uniform(0.08, 0.18)) for _ in range(rng.randint(1, 3))]
+        ring = []
+        for i, (x, y) in enumerate(prof):
+            k = 1.0
+            for c, w, d in dents:
+                a = min(abs(i - c), n - abs(i - c))
+                if a < w:
+                    k -= d * (1 - a / w)
+            ring.append((x * k, y * k, z))
+        return ring
+    rings = [torn_ring(-half, 1, length * 0.18)]
+    rings += [dented_ring(-half + length * t) for t in (0.22, 0.38, 0.5, 0.62, 0.78)]
+    rings += [torn_ring(half, -1, length * 0.18)]
     bm = bmesh.new()
     vr = [[bm.verts.new(p) for p in r] for r in rings]
     for a, b in zip(vr, vr[1:]):
@@ -109,6 +127,28 @@ def piece(index, length, width, height, rng):
         P(geo.bevel(geo.box("Belt", (side * (width / 2 + 0.6), -1.5, 0), (1.6, 6, length * 0.6), "TRIM"), width=0.3, segments=1, angle=30))
         for row, y in enumerate((6.0, -9.0)):
             P(geo.box("DeadWindows", (side * (width / 2 - width / 4 * abs(y) / (height / 2) + 0.2), y, 0), (0.4, 1.0, length * 0.5), "BURNT"))
+    # exposed frame: hexagonal ribs near the tears, some broken (only part of the ring)
+    for sign in (1, -1):
+        for k in range(3):
+            z = sign * (half * 0.55 + k * length * 0.07)
+            ring = [(x * 0.78, y * 0.78, z) for x, y in hexa(width, height)]
+            if rng.random() < 0.5:
+                ring = ring[:rng.randint(3, 5)]
+                P(geo.sweep("RibBroken", ring, geo.rect(1.4, 1.8), "METAL", up=(0, 0, 1), closed_path=False))
+            else:
+                P(geo.sweep("Rib", ring, geo.rect(1.4, 1.8), "METAL", up=(0, 0, 1), closed_path=True, caps=False))
+    # armour plates on the flat deck, a few missing (burnt holes)
+    top = height / 2
+    z = -half * 0.35
+    while z < half * 0.35:
+        size = rng.uniform(6, 14)
+        for side in (-1, 1):
+            x = side * width * rng.uniform(0.04, 0.16)
+            if rng.random() < 0.2:
+                P(geo.box("Hole", (x, top - 0.1, z + size / 2), (width * 0.18, 0.4, size * 0.8), "BURNT"))
+            else:
+                P(geo.bevel(geo.box("DeckPlate", (x, top + 0.4, z + size / 2), (width * 0.2, 0.8, size - 0.8), "HULL"), width=0.2, segments=1))
+        z += size
     return geo.join(parts, f"{NAME}_{index}_LOD0")
 
 
