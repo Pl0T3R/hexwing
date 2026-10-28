@@ -107,27 +107,27 @@ namespace HexWing
             var d = ModeDirector.Instance;
             var player = PlayerShip.Instance;
             var items = new List<MenuEntry>();
-            if (_runInProgress) items.Add(new MenuEntry("< BACK TO GAME", Close));
+            items.Add(new MenuEntry(() => "START: " + (d != null ? d.Current.Title : "?"), () => { if (!Busy) StartRun("start"); }).AsPrimary());
+            if (_runInProgress) items.Add(new MenuEntry("BACK TO GAME", Close));
             items.AddRange(new List<MenuEntry>
             {
-                new(() => "> START: " + (d != null ? d.Current.Title : "?"), () => { if (!Busy) StartRun("start"); }),
-                new(() => "MODE: " + (d != null ? d.Current.Title : "?") + "  >", () =>
+                new(() => "MODE: " + (d != null ? d.Current.Title : "?"), () =>
                 {
                     if (Busy) return;
                     _runInProgress = false;   // switching resets the mode
                     d?.SelectNextMode();
                 }),
-                new(() => "SHIP: " + (player != null && player.Definition != null ? player.Definition.displayName : "?") + "  >", () =>
+                new(() => "SHIP: " + (player != null && player.Definition != null ? player.Definition.displayName : "?"), () =>
                 {
                     if (Busy) return;
                     _runInProgress = false;
                     player?.SelectNextShip();
                 }),
-                new(() => "COLOUR: " + Progression.Paints[Progression.SelectedPaint].Name + "  (" + Progression.UnlockedCount + "/" + Progression.Paints.Length + ")  >",
+                new(() => "COLOUR: " + Progression.Paints[Progression.SelectedPaint].Name + "  (" + Progression.UnlockedCount + "/" + Progression.Paints.Length + ")",
                     () => { Progression.NextPaint(); player?.RefreshColor(); }),
-                new("CONTROLS ...", () => SubPage(Page.Controls)),
-                new("COMFORT ...", () => SubPage(Page.Comfort)),
-                new("STATS ...", () => SubPage(Page.Stats)),
+                new("CONTROLS", () => SubPage(Page.Controls)),
+                new("COMFORT", () => SubPage(Page.Comfort)),
+                new("STATS", () => SubPage(Page.Stats)),
                 new("QUIT GAME", Application.Quit),
             });
             return items;
@@ -137,11 +137,11 @@ namespace HexWing
         {
             return new List<MenuEntry>
             {
-                new("RESUME", Close),
+                new MenuEntry("RESUME", Close).AsPrimary(),
                 new("RESTART", () => { if (!Busy) StartRun("restart from the menu"); }),
                 new("HANGAR", ShowHangar),
-                new("CONTROLS ...", () => SubPage(Page.Controls)),
-                new("COMFORT ...", () => SubPage(Page.Comfort)),
+                new("CONTROLS", () => SubPage(Page.Controls)),
+                new("COMFORT", () => SubPage(Page.Comfort)),
                 new("RECENTER VIEW", () => SeatedRecenter.Instance?.Recenter(withFade: false)),
             };
         }
@@ -162,7 +162,7 @@ namespace HexWing
                 new(() => "SENSITIVITY: " + c.sensitivity.ToString("0.0"), UserSettings.CycleSensitivity),
                 new(() => "VIBRATION: " + Percent(GameConfig.Instance.haptics.master), UserSettings.CycleHaptics),
                 new(() => "VOLUME: " + Percent(UserSettings.Volume), UserSettings.CycleVolume),
-                new("< BACK", () => Show(_back)),
+                new("BACK", () => Show(_back)),
             };
         }
 
@@ -179,7 +179,7 @@ namespace HexWing
                 new(() => "BANK INTO TURNS: " + (c.bankIntoTurns ? "ON" : "OFF"), UserSettings.ToggleBankIntoTurns),
                 new(() => "TURN LIMIT: " + (c.turnRateLimit > 0f ? Mathf.RoundToInt(c.turnRateLimit) + " °/s" : "NONE"), UserSettings.CycleTurnLimit),
                 new(() => "EVADE: " + (GameConfig.Instance.combat.evasiveStyle == EvasiveStyle.Jink ? "SIDE JINK" : "BARREL ROLL"), UserSettings.CycleEvasive),
-                new("< BACK", () => Show(_back)),
+                new("BACK", () => Show(_back)),
             };
         }
 
@@ -193,15 +193,16 @@ namespace HexWing
                 new(() => "ESCORT: " + PlayerPrefs.GetInt(SaveKeys.EscortBestScore, 0), null),
                 new(() => "TEAM DOGFIGHT: " + PlayerPrefs.GetInt(SaveKeys.DogfightBestScore, 0), null),
                 new(() => "TRAINING: " + (PlayerPrefs.GetInt(SaveKeys.TrainingDone, 0) == 1 ? "DONE" : "NOT YET"), null),
-                new(() => "COLOURS: " + Progression.UnlockedCount + "/" + Progression.Paints.Length + NextUnlock(), null),
-                new("< BACK", () => Show(_back)),
+                new(() => "COLOURS: " + Progression.UnlockedCount + "/" + Progression.Paints.Length, null),
+                new(() => "NEXT COLOUR: " + NextUnlock(), null),
+                new("BACK", () => Show(_back)),
             };
         }
 
         static string NextUnlock()
         {
-            foreach (var p in Progression.Paints) if (!p.Unlocked()) return "  NEXT: " + p.Unlock;
-            return "";
+            foreach (var p in Progression.Paints) if (!p.Unlocked()) return p.Unlock;
+            return "ALL UNLOCKED";
         }
 
         static string Percent(float v) => Mathf.RoundToInt(v * 100f) + "%";

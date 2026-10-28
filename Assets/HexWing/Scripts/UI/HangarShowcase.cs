@@ -4,14 +4,14 @@ namespace HexWing
 {
     /// <summary>
     /// In the hangar, the selected ship class turns slowly on a lit pad to the right of the menu panel
-    /// (the Blender-made Falcon, Hawk and Bison models, about 1 m long there). Hidden in the pause menu
+    /// (the Blender-made Falcon, Hawk and Bison models, about 30 cm long there, inside the cockpit like the panel). Hidden in the pause menu
     /// and in flight; nothing is shown when the models are missing. Runs on real time (the game is paused
     /// in the menu).
     /// </summary>
     public class HangarShowcase : MonoBehaviour
     {
-        const float Scale = 0.075f, TurnSpeed = 25f;
-        static readonly Vector3 Offset = new(0.86f, -0.2f, 1.45f);   // from the eye: right of the panel
+        const float Scale = 0.03f, TurnSpeed = 25f;
+        static readonly Vector3 Offset = new(0.5f, -0.02f, 0.5f);   // from the eye: right of the panel, about 45 degrees
 
         Transform _root, _turntable;
         readonly Transform[] _ships = new Transform[3];
@@ -22,7 +22,7 @@ namespace HexWing
             _root = new GameObject("Hangar Showcase").transform;
             _root.SetParent(transform, false);
             _root.localPosition = GameConfig.Instance.cockpit.eyePoint + Offset;
-            _root.localRotation = Quaternion.Euler(0f, -28f, 0f);   // turned toward the pilot
+            _root.localRotation = Quaternion.Euler(0f, -45f, 0f);   // turned toward the pilot
             _turntable = new GameObject("Turntable").transform;
             _turntable.SetParent(_root, false);
             string[] names = { "Falcon", "Hawk", "Bison" };
@@ -37,7 +37,7 @@ namespace HexWing
             }
             // the pad: a thin glowing ring under the ship
             var b = new MeshKit.Builder();
-            b.Prism(new Vector3(0f, -0.2f, 0f), new Vector3(0f, -0.195f, 0f), 0.42f, 0.42f, 24);
+            b.Prism(new Vector3(0f, -0.08f, 0f), new Vector3(0f, -0.077f, 0f), 0.17f, 0.17f, 24);
             MeshKit.Part("Pad", _root, b.ToMesh("Hangar Pad"), Mats.Get(Mats.Accent));
             _root.gameObject.SetActive(false);
         }

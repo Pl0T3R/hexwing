@@ -18,13 +18,17 @@ namespace HexWing
         static Material _material;
         static TMP_FontAsset _tmpFont;
         static bool _checked;
+        static readonly System.Collections.Generic.Dictionary<int, Material> Queued = new();
 
         TextMesh _text;
         TextMeshPro _tmp;
         string _current = "";
+        float _size;
 
         /// <summary>Puts a display text on the screen anchor (its +Z points away from the eye).</summary>
-        public static CockpitDisplay Create(Transform screen, Color color, float lineHeight = 0.014f)
+        /// <param name="renderQueue">0 = the font's own; else a shared copy of the font material in that queue
+        /// (the menu panel draws its layers in a fixed order: plate, tiles, edges, texts).</param>
+        public static CockpitDisplay Create(Transform screen, Color color, float lineHeight = 0.014f, int renderQueue = 0)
         {
             EnsureFont();
             var go = new GameObject("Text");
@@ -43,10 +47,12 @@ namespace HexWing
                 tmp.color = color;
                 tmp.text = "";
                 tmp.rectTransform.sizeDelta = new Vector2(0.5f, 0.3f);
+                if (renderQueue > 0) tmp.fontSharedMaterial = InQueue(_tmpFont.material, renderQueue);
                 var r = tmp.GetComponent<MeshRenderer>();
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 r.receiveShadows = false;
                 display._tmp = tmp;
+                display._size = tmp.fontSize;
                 return display;
             }
             // TextMesh: about 12 units per line at font size 120 and character size 1
@@ -61,7 +67,7 @@ namespace HexWing
             tm.color = color;
             tm.text = "";
             var mr = go.GetComponent<MeshRenderer>();
-            mr.sharedMaterial = _material;
+            mr.sharedMaterial = renderQueue > 0 ? InQueue(_material, renderQueue) : _material;
             mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             mr.receiveShadows = false;
             display._text = tm;
@@ -84,6 +90,26 @@ namespace HexWing
             Font.textureRebuilt += f => { if (f == _font && _material != null) _material.mainTexture = _font.material.mainTexture; };
         }
 
+        static Material InQueue(Material source, int queue)
+        {
+            if (Queued.TryGetValue(queue, out var m) && m != null) return m;
+            m = new Material(source) { name = source.name + " " + queue, renderQueue = queue };
+            Queued[queue] = m;
+            return m;
+        }
+
+        /// <summary>Keeps the text inside a box this wide (metres): TMP shrinks long texts down to 60%.</summary>
+        public void FitWidth(float width)
+        {
+            if (_tmp == null) return;
+            float size = _size;
+            _tmp.rectTransform.sizeDelta = new Vector2(width, _tmp.rectTransform.sizeDelta.y);
+            _tmp.overflowMode = TextOverflowModes.Ellipsis;
+            _tmp.enableAutoSizing = true;
+            _tmp.fontSizeMax = size;
+            _tmp.fontSizeMin = size * 0.6f;
+        }
+
         public void SetText(string text)
         {
             if (text == _current) return;
@@ -99,6 +125,6 @@ namespace HexWing
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { _font = null; _material = null; _tmpFont = null; _checked = false; }
+        static void ResetStatics() { _font = null; _material = null; _tmpFont = null; _checked = false; Queued.Clear(); }
     }
 }

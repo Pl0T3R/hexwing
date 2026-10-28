@@ -38,7 +38,13 @@ namespace HexWing
         public const string CapitalHull = "CapitalHull";       // the capital ship: dark steel
         public const string Generator = "ShieldGenerator";     // its shield generator domes: glowing blue
         public const string Asteroid = "Asteroid";             // rocks of the Belt map
-        public const string MenuBack = "MenuBack";             // the hangar/pause menu panel: dark translucent
+        public const string MenuBack = "MenuBack";             // the hangar/pause menu panel: dark glass, nearly opaque
+        public const string MenuTile = "MenuTile";             // a menu tile: dark steel blue glass
+        public const string MenuTileHot = "MenuTileHot";       // the tile under the pointer: lit teal
+        public const string MenuTilePrimary = "MenuTilePrimary"; // START / RESUME: dark amber
+        public const string MenuEdge = "MenuEdge";             // the panel frame: cyan
+        public const string MenuEdgeDim = "MenuEdgeDim";       // idle tile edges: faint cyan
+        public const string MenuEdgeHot = "MenuEdgeHot";       // the chosen tile's edge and the amber accents
         public const string HudCyan = "HudCyan";               // holographic crosshair, enemy diamonds, lead marker
         public const string HudWhite = "HudWhite";             // target brackets while locking
         public const string HudAmber = "HudAmber";             // target brackets when locked
@@ -71,6 +77,32 @@ namespace HexWing
             Cache[name] = m;
             return m;
         }
+
+        /// <summary>
+        /// The menu's layers draw in a fixed order (plate, tiles, edges; texts at 3004), not by distance: their
+        /// centres are at different distances from the eye, so distance sorting would put the plate over tiles.
+        /// </summary>
+        public static int MenuQueue(string name) => name switch
+        {
+            MenuBack => 3001,
+            MenuTile or MenuTileHot or MenuTilePrimary => 3002,
+            MenuEdge or MenuEdgeDim or MenuEdgeHot => 3003,
+            _ => -1,
+        };
+
+        public const int MenuTextQueue = 3004;
+
+        /// <summary>The menu's glass and edge colours (same as HexWingBuilder.CreateMaterials).</summary>
+        public static Color MenuColor(string name) => name switch
+        {
+            MenuBack => new Color(0.012f, 0.025f, 0.045f, 0.92f),
+            MenuTile => new Color(0.05f, 0.11f, 0.16f, 0.9f),
+            MenuTileHot => new Color(0.08f, 0.33f, 0.44f, 0.94f),
+            MenuTilePrimary => new Color(0.36f, 0.19f, 0.03f, 0.94f),
+            MenuEdge => new Color(0.37f, 0.83f, 1f, 0.95f),
+            MenuEdgeDim => new Color(0.37f, 0.83f, 1f, 0.35f),
+            _ => new Color(1f, 0.7f, 0.28f, 1f),
+        };
 
         static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out var c) ? c : Color.magenta;
 
@@ -111,6 +143,13 @@ namespace HexWing
         static Material CreateFallback(string name)
         {
             if (name is FxExplosion or FxGlowHot or FxGlowCyan) return CreateSpriteFallback(name);
+            if (MenuQueue(name) > 0)
+            {
+                var menu = new Material(Shader.Find("HexWing/Transparent") ?? Shader.Find("Universal Render Pipeline/Unlit")) { name = name, enableInstancing = true };
+                menu.SetColor("_BaseColor", MenuColor(name));
+                menu.renderQueue = MenuQueue(name);
+                return menu;
+            }
             if (name is PlumeRed or PlumeAmber or PlumeCyan or PlumeGreen)
             {
                 var plume = new Material(Shader.Find("HexWing/Plume") ?? Shader.Find("Universal Render Pipeline/Unlit")) { name = name, enableInstancing = true };
@@ -146,7 +185,7 @@ namespace HexWing
             }
             string shaderName = name switch
             {
-                Glass or Fade or Vignette or FlashShield or HudCyan or HudWhite or HudAmber or MenuBack => "HexWing/Transparent",
+                Glass or Fade or Vignette or FlashShield or HudCyan or HudWhite or HudAmber => "HexWing/Transparent",
                 Text => "HexWing/Text",
                 Sky => "HexWing/SpaceSky",
                 _ => "HexWing/Faceted",
@@ -183,7 +222,6 @@ namespace HexWing
                 CapitalHull => Hex("#4E535C"),
                 Generator => Hex("#7FC8FF"),
                 Asteroid => Hex("#6B5A4C"),
-                MenuBack => new Color(0.02f, 0.04f, 0.07f, 0.78f),
                 HudCyan => new Color(0.37f, 0.83f, 1f, 0.9f),
                 HudWhite => new Color(1f, 1f, 1f, 0.9f),
                 HudAmber => new Color(1f, 0.7f, 0.28f, 0.95f),

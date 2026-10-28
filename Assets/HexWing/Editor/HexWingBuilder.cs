@@ -343,7 +343,9 @@ namespace HexWing.EditorTools
             Faceted(Mats.Asteroid, Hex("#6B5A4C"), Hex("#1E1813"), Hex("#C89A6A"), 0.25f, 0.1f, 12f, 0f);
             Translucent(Mats.FlashShield, new Color(0.5f, 0.78f, 1f, 0.45f), CompareFunction.LessEqual);
             // holographic HUD markers: depth-tested, so the cockpit frame hides them
-            Translucent(Mats.MenuBack, new Color(0.02f, 0.04f, 0.07f, 0.78f), CompareFunction.LessEqual);
+            // the menu: glass and edges in a fixed draw order (Mats.MenuQueue)
+            foreach (var menu in new[] { Mats.MenuBack, Mats.MenuTile, Mats.MenuTileHot, Mats.MenuTilePrimary, Mats.MenuEdge, Mats.MenuEdgeDim, Mats.MenuEdgeHot })
+                Translucent(menu, Mats.MenuColor(menu), CompareFunction.LessEqual).renderQueue = Mats.MenuQueue(menu);
             Translucent(Mats.HudCyan, new Color(0.37f, 0.83f, 1f, 0.9f), CompareFunction.LessEqual);
             Translucent(Mats.HudWhite, new Color(1f, 1f, 1f, 0.9f), CompareFunction.LessEqual);
             Translucent(Mats.HudAmber, new Color(1f, 0.7f, 0.28f, 0.95f), CompareFunction.LessEqual);
