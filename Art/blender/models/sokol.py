@@ -3,6 +3,7 @@ Sokół: the player's balanced fighter (shown in the hangar). Grey-blue hull wit
 canopy, small canards, swept wings with two cannons each, one main engine and two small ones.
 About 11 m long. Original design. Unity frame: z forward, y up, x right.
 """
+import math
 import os
 import sys
 
@@ -50,14 +51,17 @@ def build():
         P(geo.bevel(geo.slab("WingStripe", stripe, 0.32, "STRIPE", taper=0.7, matrix=geo.at((0, -0.25, -0.6), geo.rot(z=-3 * side))), width=0.01, segments=1))
         canard = sgn([(0.7, 3.3), (0.7, 2.4), (1.9, 2.3), (2.0, 2.7)])
         P(geo.bevel(geo.slab("Canard", canard, 0.14, "HULL", taper=0.6, matrix=geo.at((0, -0.1, 0))), width=0.015))
-        for k, x in enumerate((3.2, 5.25)):
-            gx = x * side
-            P(geo.bevel(geo.cylinder("Cannon", (gx, -0.25 - 0.12 * k, -2.0), (gx, -0.25 - 0.12 * k, 1.6 - k * 0.6), 0.11, 0.08, "METAL", sides=8), width=0.006, segments=1))
+        for k, x in enumerate((3.0, 4.4)):
+            # under the drooped wing (3 degrees), the pod straddling the leading edge, the barrel ahead of it
+            lead = 0.4 + (x - 0.9) / (5.2 - 0.9) * (-2.2 - 0.4) - 0.6
+            gx, gy = x * side, -0.25 - x * math.sin(math.radians(3)) - 0.14
+            P(geo.bevel(geo.cylinder("CannonPod", (gx, gy, lead - 0.8), (gx, gy, lead + 0.3), 0.16, 0.14, "METAL", sides=10), width=0.01, segments=1))
+            P(geo.bevel(geo.cylinder("Cannon", (gx, gy, lead + 0.25), (gx, gy, lead + 1.85 - 0.3 * k), 0.08, 0.065, "DARK", sides=8), width=0.006, segments=1))
         x = 1.05 * side
         P(geo.bevel(geo.cylinder("SmallNacelle", (x, -0.3, -3.0), (x, -0.3, -4.9), 0.42, 0.38, "METAL", sides=12), width=0.012, segments=1))
         P(geo.tube("SmallNozzle", (x, -0.3, -4.85), (x, -0.3, -5.2), 0.38, 0.27, "DARK", sides=12))
         P(geo.disc("SmallCore", (x, -0.3, -4.95), (0, 0, -1), 0.28, "ENGINE", sides=12))
-        P(geo.disc("WingLight", (5.3 * side, -0.1, -3.1), (side, 0, 0), 0.07, "LIGHT", sides=8))
+        P(geo.disc("WingLight", (5.36 * side, -0.25 - 5.36 * math.sin(math.radians(3)), -3.5), (side, 0, 0), 0.07, "LIGHT", sides=8))
         fin = [(0.0, -4.6), (0.0, -2.9), (1.4, -3.8), (1.5, -4.7)]
         P(geo.bevel(geo.slab("Fin", fin, 0.12, "HULL", taper=0.6, matrix=geo.at((0.45 * side, 0.7, 0), geo.rot(z=90 - 12 * side))), width=0.015))
     P(geo.bevel(geo.cylinder("Nacelle", (0, 0.1, -4.6), (0, 0.1, -5.3), 0.7, 0.66, "METAL", sides=16), width=0.015, segments=1))

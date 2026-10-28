@@ -224,6 +224,7 @@ def render_pano(path, width, height, samples=8):
     scene.camera = cam
     scene.render.engine = 'CYCLES'
     scene.cycles.samples = samples
+    geo.limit_threads(scene)
     scene.cycles.use_denoising = False
     scene.render.resolution_x, scene.render.resolution_y = width, height
     scene.view_settings.view_transform = 'Standard'

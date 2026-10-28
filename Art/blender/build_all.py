@@ -22,11 +22,14 @@ MODELS = ["hornet", "trident", "swallow", "sokol", "jastrzab", "zubr", "transpor
 
 
 def main(names):
+    if hasattr(os, "nice"):
+        os.nice(10)   # below normal priority: the machine stays responsive during long bakes
     report = []
     for name in names or MODELS:
         t = time.time()
         module = importlib.import_module(name)
         tris = module.main()
+        tris = tuple(tris) + (0,) * (3 - len(tris))   # models with fewer LODs (the missile)
         report.append(f"{module.NAME:12s} LOD0 {tris[0]:6d}  LOD1 {tris[1]:6d}  LOD2 {tris[2]:6d}  tex {module.TEX}  ({time.time() - t:.0f} s)")
     # merge with the lines of models not rebuilt this time (keyed by the name in the first column)
     path = os.path.join(HERE, "..", "previews", "report.txt")

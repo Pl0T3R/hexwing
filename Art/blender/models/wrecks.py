@@ -70,6 +70,7 @@ def piece(index, length, width, height, rng):
             bm.faces.new((a[i], b[i], b[j], a[j]))
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     # make the outside face outward: the shell is open, so check one face against the centre
+    bm.faces.ensure_lookup_table()
     f = bm.faces[0]
     f.normal_update()
     if f.normal.dot(f.calc_center_median()) < 0:
@@ -83,6 +84,7 @@ def piece(index, length, width, height, rng):
             j = (i + 1) % n
             bm.faces.new((a[i], b[i], b[j], a[j]))
     bm.normal_update()
+    bm.faces.ensure_lookup_table()
     f = bm.faces[0]
     if f.normal.dot(f.calc_center_median()) > 0:
         bmesh.ops.reverse_faces(bm, faces=bm.faces)

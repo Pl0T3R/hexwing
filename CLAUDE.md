@@ -189,7 +189,7 @@ Everything visible was redone with real models, textures and effects (approved p
   - `bake.py`: UVs and the bake into three textures; one material slot after the bake,
   - `export.py`: FBX for Unity and the preview sheets,
   - `pipeline.py`: LODs, export and preview for ship-like assets.
-- `Art/blender/models/<asset>.py`: one script per asset. `python Art/blender/build_all.py [names]` rebuilds them (`pip install bpy==5.2.3 numpy pillow` on Python 3.13). A 1024 asset takes about 5 min, a 2048 one about 20 min on 4 cores.
+- `Art/blender/models/<asset>.py`: one script per asset. `python Art/blender/build_all.py [names]` rebuilds them (`pip install bpy==5.2.3 numpy pillow` on Python 3.13). A 1024 asset takes about 5 min, a 2048 one about 20 min. Renders and bakes use at most 80% of the cores (3 of 4) at low priority, so the machine stays usable; `HEXWING_CPU_SHARE=1.0` lifts the limit. `python Art/blender/preview_fbx.py <Name> <radius>` renders a preview again from the exported FBX without rebuilding.
 - `Art/fx/make_fx.py` (numpy): the explosion flipbook, the glow, the HUD glyph atlas, the menu panel and highlight textures.
 - Output:
   - `Assets/HexWing/Resources/Models/<Name>.fbx`: `<Name>_LOD0/1/2`, an optional `<Name>_Glow` (engine plumes) and `SOCKET_*` empties,
@@ -206,14 +206,14 @@ Everything visible was redone with real models, textures and effects (approved p
 | Hornet | enemy fighter | 4.5k | 1024 |
 | Trident | enemy elite | 3.2k | 1024 |
 | Swallow | wingman | 2.9k | 1024 |
-| Sokol, Jastrzab, Zubr | the player's ship classes (hangar showcase) | ~3–4k | 1024 |
+| Sokol, Jastrzab, Zubr | the player's ship classes (hangar showcase) | 2.8k / 2.0k / 2.6k | 1024 |
 | Transport | escort hauler | 2.2k | 1024 |
-| Drone, Missile, KolosTurret | small objects | <2k | 256–512 |
+| Drone, Missile, KolosTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
 | Cockpit + CockpitControls | the cockpit, stick and throttle | 14.3k + 0.8k | 2048 + 512 |
-| Kolos | capital ship | see `Art/previews/report.txt` | 2048 |
-| Station | landmark on Orbit | see report | 2048 |
+| Kolos | capital ship | 16.8k | 2048 |
+| Station | landmark on Orbit | 8.7k | 2048 |
 | Wrecks | four cruiser sections | see report | 2048 |
-| Asteroids | five rock shapes | see report | 1024 |
+| Asteroids | five rock shapes | 1.2k each | 1024 |
 | Sky | nebulae 4096×2048 and planets 2048×1024 per map | – | – |
 
 **In Unity**

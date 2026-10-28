@@ -23,14 +23,27 @@ def to_blender(p):
     return (TO_BLENDER @ Vector((p[0], p[1], p[2], 1.0))).to_3d()
 
 
+def limit_threads(scene=None):
+    """
+    Renders and bakes use at most HEXWING_CPU_SHARE of the cores (default 0.8: 3 of 4), so the
+    machine stays usable while assets build.
+    """
+    import os
+    scene = scene or bpy.context.scene
+    share = float(os.environ.get("HEXWING_CPU_SHARE", "0.8"))
+    scene.render.threads_mode = 'FIXED'
+    scene.render.threads = max(1, int((os.cpu_count() or 1) * share))
+
+
 def reset():
-    """An empty scene in metres, Cycles on the CPU."""
+    """An empty scene in metres, Cycles on the CPU, thread-limited."""
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
     scene.unit_settings.system = 'METRIC'
     scene.unit_settings.scale_length = 1.0
     scene.render.engine = 'CYCLES'
     scene.cycles.device = 'CPU'
+    limit_threads(scene)
     return scene
 
 

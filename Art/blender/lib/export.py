@@ -54,6 +54,10 @@ def preview(ob, name, material, radius, extra=(), size=(640, 480), samples=48, n
     for o in [ob] + [e for e in extra if e.type == 'MESH']:
         o.data.materials.clear()
         o.data.materials.append(material)
+    # frame the model: never closer than its farthest point from the origin (the cameras look at it)
+    reach = max(((o.matrix_world @ Vector(c)).length for o in [ob] + [e for e in extra if e.type == 'MESH']
+                 for c in o.bound_box), default=0.0)
+    radius = max(radius, 1.1 * reach)
 
     world = scene.world or bpy.data.worlds.new("World")
     scene.world = world
@@ -103,6 +107,7 @@ def preview(ob, name, material, radius, extra=(), size=(640, 480), samples=48, n
     scene.camera = cam
     scene.render.engine = 'CYCLES'
     scene.cycles.samples = samples
+    geo.limit_threads(scene)
     scene.cycles.use_denoising = True
     scene.render.resolution_x, scene.render.resolution_y = size
     scene.render.film_transparent = False

@@ -9,7 +9,7 @@ import os
 import bpy
 import numpy as np
 
-from . import surface
+from . import geo, surface
 
 
 def triangulate(ob):
@@ -86,6 +86,7 @@ def bake(ob, name, size, out_dir, samples=12, ao_samples=32, margin=8, ao_in_alb
     ao = _image(name + "_ao", size)
 
     scene.cycles.samples = samples
+    geo.limit_threads(scene)
     _target(ob, color, 'color')
     bpy.ops.object.bake(type='EMIT')
     _target(ob, mask, 'mask')

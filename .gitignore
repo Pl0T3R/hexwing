@@ -39,3 +39,7 @@ unity-editor.log
 
 # Blender preview tiles (the sheets are kept)
 Art/previews/_*.png
+
+# Python (Blender art scripts)
+__pycache__/
+*.pyc
