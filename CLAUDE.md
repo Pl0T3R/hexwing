@@ -213,7 +213,7 @@ Everything visible was redone with real models, textures and effects (approved p
 | Falcon, Hawk, Bison | the player's classes, Interceptor variants: Falcon exactly Photo 2 (default), Hawk longer blades + green trim, Bison armour, bomb pods + amber trim | ~7.4k each | 1024 |
 | Transport | escort hauler | 2.2k | 1024 |
 | Drone, Missile, ColossusTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
-| Cockpit + CockpitControls | the Interceptor cockpit (round window, eight spokes), stick and throttle | 15.1k + 0.8k | 2048 + 512 |
+| Cockpit + CockpitControls | the Interceptor cockpit (round window, eight spokes, instruments), stick and throttle | 21.1k + 0.9k | 2048 + 512 |
 | Colossus | capital ship | 16.8k | 2048 |
 | Station | landmark on Orbit | 8.7k | 2048 |
 | Wrecks | four cruiser sections | 2.3–2.6k each | 2048 |
@@ -251,6 +251,7 @@ Everything visible was redone with real models, textures and effects (approved p
 - [ ] No pink or black objects. Ships look like their previews, lit by the map's sun: Orbit white-warm from the upper right, Belt warm and low from the left.
 - [ ] Cockpit:
   - the window, struts, console bezels around the five displays, side consoles with switches, seat with harness, cables, light strips,
+  - instruments: lit frames on the display bezels (blue in front, red on the side consoles) that never overlap or cut into anything, the scope pod with live radar blips, the bar graph panel with live bars (throttle, heat, shields, hull), the button grid, side bar graphs and buttons, hoses. The side displays lie flat on the side consoles' inner faces. The model build prints `Cockpit check: 0 problem(s)` (overlaps seen from the eye, parts cutting into a console),
   - the light strips take the ship class colour (Falcon cyan, Hawk green, Bison amber) and flash blue-white or red on hits,
   - the stick and throttle are the new models and move.
 - [ ] Sky:
