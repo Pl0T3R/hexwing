@@ -31,6 +31,7 @@ namespace HexWing.EditorTools
         {
             ConfigureProject();
             CreateMaterials();
+            CreateArtMaterials();
             EnsureGameConfig();
             EnsureShipDefinitions();
             BuildFlightScene();
@@ -350,6 +351,32 @@ namespace HexWing.EditorTools
             text.SetColor("_BaseColor", Color.white);
             Material(Mats.Sky, "HexWing/SpaceSky");
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// One HexWing/Hull material per Blender model in Resources/Models (Art_&lt;Name&gt;), with its three
+        /// textures. Rim colours by role: enemies warm, allies and the cockpit cool.
+        /// </summary>
+        [MenuItem("HexWing/2b. Create Art Materials", priority = 21)]
+        public static void CreateArtMaterials()
+        {
+            var guids = AssetDatabase.FindAssets("t:Model", new[] { Root + "/Resources/Models" });
+            int made = 0;
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var name = Path.GetFileNameWithoutExtension(path);
+                var m = Material("Art_" + name, "HexWing/Hull");
+                m.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/{name}_Albedo.png"));
+                m.SetTexture("_MaskMap", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/{name}_Mask.png"));
+                m.SetTexture("_NormalMap", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/{name}_Normal.png"));
+                bool enemy = name == "Hornet" || name == "Trident";
+                m.SetColor("_RimColor", enemy ? Hex("#FF8A6A") : Hex("#8FC8FF"));
+                m.SetFloat("_RimStrength", enemy ? 0.3f : 0.35f);
+                made++;
+            }
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[HexWing] Art materials: {made} (HexWing/Hull).");
         }
 
         static Material Faceted(string name, Color lit, Color shadow, Color rim, float rimStrength, float specStrength, float gloss, float emission)

@@ -30,8 +30,14 @@ namespace HexWing
             go.SetActive(false);
 
             bool ally = kind == ShipMeshes.Kind.Swallow;
-            MeshKit.Part("Hull", go.transform, ShipMeshes.Hull(kind), Mats.Get(ally ? Mats.AllyHull : kind == ShipMeshes.Kind.Trident ? Mats.EliteHull : Mats.EnemyHull));
-            MeshKit.Part("Glow", go.transform, ShipMeshes.Glow(kind), Mats.Get(ally ? Mats.Accent : kind == ShipMeshes.Kind.Trident ? Mats.RingNext : Mats.EnemyGlow));
+            var glowMat = Mats.Get(ally ? Mats.Accent : kind == ShipMeshes.Kind.Trident ? Mats.RingNext : Mats.EnemyGlow);
+            var art = ArtLibrary.Get(kind.ToString());
+            if (art != null) ArtLibrary.Attach(art, go.transform, glowMat);
+            else
+            {
+                MeshKit.Part("Hull", go.transform, ShipMeshes.Hull(kind), Mats.Get(ally ? Mats.AllyHull : kind == ShipMeshes.Kind.Trident ? Mats.EliteHull : Mats.EnemyHull));
+                MeshKit.Part("Glow", go.transform, ShipMeshes.Glow(kind), glowMat);
+            }
             go.AddComponent<SphereCollider>().radius = ShipMeshes.Radius(kind);
 
             var ship = go.AddComponent<AIShip>();

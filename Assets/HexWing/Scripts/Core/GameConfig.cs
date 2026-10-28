@@ -29,6 +29,7 @@ namespace HexWing
         public EscortSettings escort = new();
         public DogfightSettings dogfight = new();
         public HapticSettings haptics = new();
+        public VisualSettings visuals = new();
         public DebugSettings debug = new();
 
         static GameConfig _instance;
@@ -124,6 +125,15 @@ namespace HexWing
         public bool inputReadout = true;
         [Tooltip("Log one [HexWing] Input: line per second while flying (to find control problems on the headset).")]
         public bool inputLog = true;
+    }
+
+    [Serializable]
+    public class VisualSettings
+    {
+        [Tooltip("Use the Blender-made models (Resources/Models) where they exist; off = the old code-built meshes.")]
+        public bool useArtModels = true;
+        [Tooltip("Screen height (share of the view) below which each LOD hands over to the next: LOD0, LOD1, LOD2.")]
+        public float[] lodScreenHeights = { 0.06f, 0.015f, 0.0005f };
     }
 
     public enum ControlScheme { ControllerDirect, VirtualStick, Thumbsticks }

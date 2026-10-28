@@ -28,6 +28,9 @@ namespace HexWing
                 if (name == Mats.Sky) continue;   // the skybox draws every frame anyway
                 list.Add(Mats.Get(name));
             }
+            // the Blender-made models' hull materials (HexWing/Hull)
+            foreach (var art in Resources.LoadAll<Material>("Materials"))
+                if (art.name.StartsWith("Art_")) list.Add(art);
             _materials = list.ToArray();
             var b = new MeshKit.Builder();
             b.Tetra(Vector3.zero, 0.5f);

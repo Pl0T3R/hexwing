@@ -177,6 +177,28 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 - [ ] Comfort test: 20 minutes of Survival or Assault with the default (balanced) preset; note the moments that feel bad and which setting helped.
 - [ ] Performance: p95 frame time under 11.1 ms at 90 Hz in every mode (`metavr perf`); record the numbers in `PLAN.md`.
 
+## Art (Blender-made models, in progress)
+
+The look is being redone with real models and textures (approved plan, 2026-10-28). They are made by Python scripts for Blender in `Art/blender` (cloud session; nothing to install on the PC):
+- `Art/blender/lib`: `geo.py` (parts written in Unity's frame: x right, y up, z forward), `surface.py` (procedural hard-surface materials: panels, edge wear, grime, emission), `bake.py` (UVs and the bake into three textures), `export.py` (FBX for Unity, preview sheets).
+- `Art/blender/models/<asset>.py`: one script per asset. `python Art/blender/build_all.py [names]` rebuilds them (needs `pip install bpy==5.2.3 numpy pillow` on Python 3.13).
+- Output:
+  - `Assets/HexWing/Resources/Models/<Name>.fbx`: meshes `<Name>_LOD0/1/2`, an optional `<Name>_Glow` and `SOCKET_*` empties,
+  - `Resources/Textures/<Name>_Albedo.png`,
+  - `<Name>_Mask.png` (R metal, G smoothness, B emission, A AO),
+  - `<Name>_Normal.png`,
+  - `Art/previews/<Name>.jpg`.
+- Unity:
+  - `Editor/ArtImport.cs` sets the import settings (no materials, MikkTSpace tangents, ASTC),
+  - **HexWing → Build Game** (or **2b. Create Art Materials**) makes `Resources/Materials/Art_<Name>.mat` with `Shaders/Hull.shader`,
+  - `Visuals/ArtLibrary.cs` loads a model and its LODs (LODGroup), else the old code-built mesh is used,
+  - `visuals.useArtModels` in GameConfig switches the art off for comparison.
+- Done so far: the Hornet (enemy fighter). Next: the cockpit, the other fighters, the sky and map content, the capital ship, effects, HUD and menus.
+- Check on the headset:
+  - the log line `Art import Hornet.fbx: 4 meshes, 4 sockets`, and no warning about the nose,
+  - `Art: Hornet, 3 LODs (... triangles at LOD0)` when Survival starts,
+  - enemies look like `Art/previews/Hornet.jpg` (lit by the map's sun), not pink, not black.
+
 ## Where to tune
 
 - `Resources/GameConfig.asset` (made by Build Game; edit in the Inspector, also in Play mode):

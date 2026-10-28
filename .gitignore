@@ -36,3 +36,6 @@ References/*.png
 # Local tooling output
 unity-editor.log
 /.utmp/
+
+# Blender preview tiles (the sheets are kept)
+Art/previews/_*.png

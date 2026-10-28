@@ -126,6 +126,18 @@ Updated after every step, so any session can pick up the work.
 - Menu STEROWANIE: invert left/right and roll, stick sideways (SKRĘT / BECZKA), throttle stick (ZOSTAJE / WRACA). KOMFORT: bank into turns. The menu panel fits 12 rows.
 - The side right display names the buttons for the flying hand, also with swapped hands.
 
+**Art redesign, step 1** (cloud session, 2026-10-28)
+- Blender 5.2 (`bpy`) pipeline in `Art/blender`: parts in Unity's frame, procedural hard-surface materials baked into albedo, mask and normal textures, FBX with three LODs, a glow part and sockets, preview sheets. See CLAUDE.md, "Art".
+- The Hornet: about 9 m, 4.5k / 1.3k / 0.4k triangles, 1024² textures, preview in `Art/previews/Hornet.jpg` (sent to the owner as the style frame).
+- Unity side:
+  - `Shaders/Hull.shader`: albedo, mask and normal maps, sun colour and sky/ground ambient from `SpaceEnvironment` (set per map by `MapTheme`), GGX highlight, sky reflection, rim, emission,
+  - `Editor/ArtImport.cs`: import settings,
+  - builder `CreateArtMaterials`,
+  - `Visuals/ArtLibrary.cs`: models with LODGroups, used by `AIShip`, falls back to the old meshes,
+  - warm-up includes the art materials,
+  - `GameConfig.visuals`.
+- The runtime and `ArtImport.cs` compile with 0 errors and 0 warnings against the Unity DLLs. The shader is checked only in the real Unity.
+
 ## Next
 
 1. **On the laptop, controls test:** `git pull`, Build Game, Build And Run. Try each scheme (Y) for a minute with the input readout on, save the log (`adb logcat -s Unity | findstr "[HexWing] Input"`) and push it as `docs/input-log.txt`. If the pose source shows BRAK or the positions stay at 0, the motion schemes still can't work and the log says why.

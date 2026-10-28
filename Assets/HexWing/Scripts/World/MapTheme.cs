@@ -43,9 +43,21 @@ namespace HexWing
                 _sky.SetColor("_PlanetColorA", new Color(0.62f, 0.38f, 0.16f));
                 _sky.SetColor("_PlanetColorB", new Color(0.85f, 0.7f, 0.48f));
                 _sky.SetColor("_AtmosphereColor", new Color(1f, 0.75f, 0.45f));
-                if (_environment != null) _environment.sunDirection = new Vector3(-0.6f, 0.25f, 0.75f);
+                if (_environment != null)
+                {
+                    _environment.sunDirection = new Vector3(-0.6f, 0.25f, 0.75f);
+                    _environment.sunColor = new Color(1.35f, 1.05f, 0.75f);
+                    _environment.skyColor = new Color(0.2f, 0.12f, 0.08f);
+                    _environment.groundColor = new Color(0.07f, 0.05f, 0.04f);
+                }
             }
-            else if (_environment != null) _environment.sunDirection = new Vector3(0.45f, 0.55f, 0.7f);
+            else if (_environment != null)
+            {
+                _environment.sunDirection = new Vector3(0.45f, 0.55f, 0.7f);
+                _environment.sunColor = new Color(1.25f, 1.18f, 1.08f);
+                _environment.skyColor = new Color(0.11f, 0.13f, 0.2f);
+                _environment.groundColor = new Color(0.05f, 0.045f, 0.06f);
+            }
 
             RenderSettings.skybox = _sky;
         }
