@@ -19,7 +19,8 @@ namespace HexWing
     [DefaultExecutionOrder(-20)]
     public class ShipWeapons : MonoBehaviour
     {
-        static readonly Vector3[] Guns = { new(-1.7f, -0.55f, 2.6f), new(1.7f, -0.55f, 2.6f) };
+        static readonly Vector3[] DefaultGuns = { new(-1.7f, -0.55f, 2.6f), new(1.7f, -0.55f, 2.6f) };
+        Vector3[] _guns = DefaultGuns;
 
         public static readonly System.Collections.Generic.List<ShipWeapons> All = new();
 
@@ -160,7 +161,9 @@ namespace HexWing
 
         void Shoot(CombatSettings cfg)
         {
-            var gun = transform.TransformPoint(Guns[_gun]);
+            var local = _guns[_gun % _guns.Length];
+            int side = local.x < 0f ? 0 : 1;   // left or right, for the sound and listeners
+            var gun = transform.TransformPoint(local);
             var convergence = transform.position + transform.forward * cfg.convergence;
             var dir = (convergence - gun).normalized;
             if (cfg.spread > 0f)
@@ -168,16 +171,26 @@ namespace HexWing
             var team = _self != null ? _self.Team : (IsPlayer ? Team.Player : Team.Enemy);
             LaserSystem.Instance?.Fire(gun, dir, _flight.Velocity, _self, team, cfg.laserDamage * DamageScale * DamageBoost);
             Effects.Instance?.SpawnFlash(gun + transform.forward * 0.6f, 0.9f, 0.06f, team == Team.Player ? Effects.FlashKind.Muzzle : Effects.FlashKind.Impact);
-            Fired?.Invoke(_gun);
+            Fired?.Invoke(side);
             if (IsPlayer)
             {
                 Haptics.Play(PlayerFlyHand, GameConfig.Instance.haptics.fire);
-                ShipAudio.Instance?.PlayLaser(_gun);
+                ShipAudio.Instance?.PlayLaser(side);
             }
-            _gun = 1 - _gun;
+            _gun = (_gun + 1) % _guns.Length;
         }
 
         float Rand() => (float)_rng.NextDouble() * 2f - 1f;
+
+        /// <summary>
+        /// Muzzle points in the ship's local space (the model's Gun sockets: the wingtip cannons). They
+        /// fire in turn; null or empty keeps the default pair under the nose.
+        /// </summary>
+        public void SetGuns(Vector3[] points)
+        {
+            _guns = points != null && points.Length > 0 ? points : DefaultGuns;
+            _gun = 0;
+        }
 
         void FireMissile(CombatSettings cfg)
         {

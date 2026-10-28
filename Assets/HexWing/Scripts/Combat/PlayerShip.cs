@@ -105,6 +105,7 @@ namespace HexWing
             if (_weapons != null)
             {
                 _weapons.DamageScale = def.laserDamage;
+                _weapons.SetGuns(ArtLibrary.GunPoints(ArtLibrary.Get(def.name)));   // the class model's wingtip cannons
                 _weapons.FireRateScale = def.fireRate;
                 _weapons.HeatScale = def.heatPerShot * (def.passive == PassiveKind.Cooling ? 0.7f : 1f);
                 _weapons.DamageBoost = 1f;

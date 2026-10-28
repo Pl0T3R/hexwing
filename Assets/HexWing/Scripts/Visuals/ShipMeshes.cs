@@ -20,7 +20,7 @@ namespace HexWing
         public static Mesh Glow(Kind kind) { Ensure(); return _glows[(int)kind]; }
 
         /// <summary>Collision radius (m) for lasers and missiles.</summary>
-        public static float Radius(Kind kind) => kind == Kind.Trident ? 6f : 4.5f;
+        public static float Radius(Kind kind) => kind == Kind.Swallow ? 4.6f : 6.2f;   // Interceptor wingmen / X-wing enemies
 
         static void Ensure()
         {

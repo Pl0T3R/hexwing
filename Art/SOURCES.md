@@ -9,3 +9,11 @@ Third-party files:
 | `Assets/HexWing/Fonts/Rajdhani-SemiBold.ttf`, `Rajdhani-Bold.ttf` | https://github.com/google/fonts/tree/main/ofl/rajdhani | Indian Type Foundry | SIL Open Font License 1.1 (`Rajdhani-OFL.txt` next to them) | cockpit displays, HUD and menu texts (TextMeshPro SDF font made by the builder) |
 
 When a CC0 asset is added (ambientCG, Poly Haven, Kenney, Quaternius), list it here: file, source URL, author, licence (CC0 1.0), and what it is used for.
+
+## Reference only (not in the repo)
+
+The fighter replicas (owner's request, private project) were measured from these blueprints. They are not copied into the repository.
+
+- X-wing: https://www.the-blueprints.com/blueprints/sciencefiction/star-wars-rebel/2745/view/x_wing/ (top, side, front and rear views)
+- TIE Interceptor: https://www.the-blueprints.com/blueprints/sciencefiction/star-wars-imperial/2684/view/tie_interceptor/ (front and side views)
+- Reference dimensions: X-wing 12.5 m long, 11.76 m span (common published figure); TIE Interceptor about 9.6 m long.

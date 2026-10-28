@@ -107,6 +107,20 @@ namespace HexWing
         /// Adds the model under parent: one child per LOD with a LODGroup (screen heights from
         /// GameConfig.visuals), and the glow parts with glowMaterial. Returns the LOD root.
         /// </summary>
+        /// <summary>
+        /// The model's Gun0.. sockets in firing order (upper right, upper left, lower right, lower left, so
+        /// shots alternate sides), or null when it has none.
+        /// </summary>
+        public static Vector3[] GunPoints(Model model)
+        {
+            if (model == null) return null;
+            var points = new List<Vector3>();
+            for (int i = 0; model.TryGetSocket("Gun" + i, out var p); i++) points.Add(p);
+            if (points.Count == 0) return null;
+            points.Sort((a, b) => a.y != b.y ? b.y.CompareTo(a.y) : b.x.CompareTo(a.x));
+            return points.ToArray();
+        }
+
         public static Transform Attach(Model model, Transform parent, Material glowMaterial, Material hullOverride = null)
         {
             var root = new GameObject(model.Name).transform;

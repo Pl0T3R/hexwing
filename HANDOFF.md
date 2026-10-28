@@ -154,6 +154,13 @@ Updated after every step, so any session can pick up the work.
 - C#: 0 errors, 0 warnings against the Unity DLLs with stubs. The shaders have only been checked by structure: the first Unity run is the real test.
 - Blender builds use at most 80% of the cores at low priority (`HEXWING_CPU_SHARE`, owner's request). Triangle counts per model in `Art/previews/report.txt`.
 
+**Replica fighters** (cloud session, 2026-10-28, owner's request with two reference images)
+- The enemy team flies X-wing replicas (Hornet; Trident is the dark elite variant), the player's team TIE Interceptor replicas (Swallow wingmen; the player's classes Sokół = Photo 2 exactly and the default, Jastrząb with longer blades and green trim, Żubr with armour, bomb pods and amber trim).
+- Built from blueprints found online (the-blueprints.com, reference only, not in the repo; see `Art/SOURCES.md`), checked with the silhouette tool `Art/blender/compare.py` against the top, side and front views.
+- The cockpit window is now the Interceptor's: round, eight spokes, a hub ring (model and code fallback).
+- Ships fire from their wingtip cannon sockets in turn; the player's team bolts are green, the enemy's red. Collision radii: X-wing 6.2 m, Interceptor 4.6 m.
+- CLAUDE.md now says the project is private and must not be published (Lucasfilm/Disney designs).
+
 ## Next
 
 1. **On the laptop, controls test:** `git pull`, Build Game, Build And Run. Try each scheme (Y) for a minute with the input readout on, save the log (`adb logcat -s Unity | findstr "[HexWing] Input"`) and push it as `docs/input-log.txt`. If the pose source shows BRAK or the positions stay at 0, the motion schemes still can't work and the log says why.
@@ -168,7 +175,7 @@ Updated after every step, so any session can pick up the work.
 3. **Language:** the cockpit texts are Polish placeholders. Polish or English in the final game?
 4. **Control default:** B for now; the owner decides after trying A/B/C.
 5. **Photon account, App ID and Fusion 2 SDK:** needed for M7 (online play). The alternative, Unity Netcode for GameObjects with Relay, needs no SDK download but has no built-in lag compensation.
-6. **Reference images** for the cockpit and ships: optional.
+6. **Publishing:** the fighters are replicas of Lucasfilm/Disney designs (owner's choice, private project). Publishing on the Meta Store or sharing publicly would need original ship designs again.
 
 ## Working rule
 

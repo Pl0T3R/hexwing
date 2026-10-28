@@ -22,7 +22,7 @@ namespace HexWing
         public const string Ring = "CourseRing";               // course rings waiting their turn, and passed ones
         public const string RingNext = "CourseRingNext";       // the ring to fly through next (glows)
         public const string Dust = "SpaceDust";                // small specks around the ship that show speed
-        public const string LaserPlayer = "LaserPlayer";       // player bolts: cyan
+        public const string LaserPlayer = "LaserPlayer";       // player team bolts: green (the Interceptor team)
         public const string LaserEnemy = "LaserEnemy";         // enemy bolts: red-orange
         public const string FlashHot = "FlashHot";             // impacts and explosions
         public const string FlashCyan = "FlashCyan";           // player muzzle flashes
@@ -44,7 +44,7 @@ namespace HexWing
         public const string HudAmber = "HudAmber";             // target brackets when locked
         public const string FxExplosion = "FxExplosion";       // explosion flipbook: fire turning into smoke (Sprite shader)
         public const string FxGlowHot = "FxGlowHot";           // soft orange glow: impacts, sparks
-        public const string FxGlowCyan = "FxGlowCyan";         // soft cyan glow: player muzzle flashes
+        public const string FxGlowCyan = "FxGlowCyan";         // soft glow of the player team's muzzle flashes (green; the name is historic)
         public const string HudGlyphCyan = "HudGlyphCyan";     // holographic HUD glyphs (Hud shader): crosshair, enemies, lead
         public const string HudGlyphWhite = "HudGlyphWhite";   // allies, brackets while locking
         public const string HudGlyphAmber = "HudGlyphAmber";   // brackets and lock ring when locked
@@ -52,7 +52,7 @@ namespace HexWing
         public const string PlumeAmber = "PlumeAmber";         // the elite, the bomber
         public const string PlumeCyan = "PlumeCyan";           // allies, transports, the fighter
         public const string PlumeGreen = "PlumeGreen";         // the interceptor
-        public const string BeamCyan = "BeamCyan";             // glow around player laser bolts (Beam shader)
+        public const string BeamCyan = "BeamCyan";             // glow around player team bolts (Beam shader; green, the name is historic)
         public const string BeamRed = "BeamRed";               // glow around enemy laser bolts
         public const string MenuPanelArt = "MenuPanelArt";     // the menu panel: glass, frame and title band (Panel shader)
         public const string MenuHighlight = "MenuHighlight";   // the glowing bar under the selected menu row (Hud shader)
@@ -84,7 +84,7 @@ namespace HexWing
         };
 
         /// <summary>Laser glow tints (same as HexWingBuilder.CreateMaterials).</summary>
-        public static Color BeamColor(string name) => name == BeamRed ? new Color(1f, 0.25f, 0.12f) : new Color(0.3f, 0.9f, 1f);
+        public static Color BeamColor(string name) => name == BeamRed ? new Color(1f, 0.25f, 0.12f) : new Color(0.38f, 1f, 0.3f);
 
         /// <summary>HUD glyph tints (same as HexWingBuilder.CreateMaterials).</summary>
         public static Color HudGlyphColor(string name) => name switch
@@ -103,7 +103,7 @@ namespace HexWing
             m.SetTexture("_MainTex", Resources.Load<Texture2D>(flipbook ? "Textures/FX_Explosion" : "Textures/FX_Glow"));
             m.SetFloat("_Columns", flipbook ? 8f : 1f);
             m.SetFloat("_Rows", flipbook ? 8f : 1f);
-            m.SetColor("_Tint", name == FxGlowCyan ? new Color(0.45f, 0.9f, 1f) : name == FxGlowHot ? new Color(1f, 0.62f, 0.3f) : Color.white);
+            m.SetColor("_Tint", name == FxGlowCyan ? new Color(0.5f, 1f, 0.4f) : name == FxGlowHot ? new Color(1f, 0.62f, 0.3f) : Color.white);
             m.SetFloat("_Intensity", flipbook ? 1.6f : 2f);
             return m;
         }
@@ -167,7 +167,7 @@ namespace HexWing
                 Ring => Hex("#4A5868"),
                 RingNext => Hex("#FFB347"),
                 Dust => Hex("#9AA8B8"),
-                LaserPlayer => Hex("#5FF2FF"),
+                LaserPlayer => Hex("#6CFF4A"),
                 LaserEnemy => Hex("#FF4A2A"),
                 FlashHot => Hex("#FFC266"),
                 FlashCyan => Hex("#9FF4FF"),

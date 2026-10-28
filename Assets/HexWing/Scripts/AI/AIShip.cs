@@ -32,7 +32,7 @@ namespace HexWing
             bool ally = kind == ShipMeshes.Kind.Swallow;
             var glowMat = Mats.Get(ally ? Mats.Accent : kind == ShipMeshes.Kind.Trident ? Mats.RingNext : Mats.EnemyGlow);
             var art = ArtLibrary.Get(kind.ToString());
-            if (art != null) ArtLibrary.Attach(art, go.transform, Mats.Get(ally ? Mats.PlumeCyan : kind == ShipMeshes.Kind.Trident ? Mats.PlumeAmber : Mats.PlumeRed));
+            if (art != null) ArtLibrary.Attach(art, go.transform, Mats.Get(kind == ShipMeshes.Kind.Trident ? Mats.PlumeAmber : Mats.PlumeRed));
             else
             {
                 MeshKit.Part("Hull", go.transform, ShipMeshes.Hull(kind), Mats.Get(ally ? Mats.AllyHull : kind == ShipMeshes.Kind.Trident ? Mats.EliteHull : Mats.EnemyHull));
@@ -49,6 +49,7 @@ namespace HexWing
             ship.Flight.Pilot = ship.Pilot;
             ship.Flight.ApplyComfort = false;
             ship.Weapons.IsPlayer = false;
+            ship.Weapons.SetGuns(ArtLibrary.GunPoints(art));   // the wingtip cannons
             ship.Health.Destroyed += ship.OnDestroyed;
             // engine hum: 3D with Doppler, so a close pass is heard going by
             var engine = go.AddComponent<AudioSource>();

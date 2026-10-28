@@ -1,6 +1,8 @@
 # Hex Wing: instructions for Claude Code on the developer's PC
 
-Hex Wing (working title) is a VR starfighter combat game for Meta Quest 3, built with Unity. It plays from the cockpit, with arcade flight and readable dogfights, in the style of Battlefront II Starfighter Assault. All names, ships, meshes and sounds are original: no Star Wars names or assets.
+Hex Wing (working title) is a VR starfighter combat game for Meta Quest 3, built with Unity. It plays from the cockpit, with arcade flight and readable dogfights, in the style of Battlefront II Starfighter Assault.
+
+**Private project, not for publishing.** At the owner's request (2026-10-28) the fighters are replicas of the two reference ships they sent: the enemy team flies the X-wing (Photo 1), the player's team the TIE Interceptor (Photo 2), and the player flies the Interceptor by default. These designs belong to Lucasfilm/Disney, so the game must not go to the Meta Store or be shared publicly; publishing would need original ship designs again. In-game names stay Polish and our own (Sokół, Jastrząb, Żubr, Hornet/WRÓG...). Everything else (maps, capital ship, sounds, UI) stays original.
 
 The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and commit messages stay in English.
 
@@ -13,7 +15,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 - M8 is written (M7, online play, waits for the owner's Photon account): the hangar and pause menus on a holographic panel with a laser pointer, the player's settings saved over GameConfig, unlockable cockpit colours, AI engine sounds in 3D with Doppler, enemy bolt flyby hisses, a music pad, shader warm-up, and draw-call/triangle/garbage counters in the readout.
 - M6 is written: the Capital Ship Assault mode (the capital ship "Kolos": shield generators, then 6 turrets, then the reactor; 15 minutes; a pool of 5 ships; wingmen), the Escort mode on the second map (3 transports through an asteroid belt, 3 ambushes), map theming (Orbit / Belt) and AI obstacle avoidance.
 - M5 is written: three ship classes as data (`ShipDefinition` assets: Sokół fighter, Jastrząb interceptor, Żubr bomber), six abilities with cooldowns (pursuit missile, repair, targeting computer, homing missiles, bomb run, turret drone), three passives, ship select (hold Y) and the Training mode.
-- M4 is written: AI pilots (attack with lead and aim error, bursts, break-off, evasion, wingmen escort), three original fighters (Hornet, Trident elite, Swallow wingman), the Survival mode with waves, an elite every 5th wave, 2 wingmen, score and best score, and missile/lock warnings.
+- M4 is written: AI pilots (attack with lead and aim error, bursts, break-off, evasion, wingmen escort), three fighter models (Hornet, Trident elite, Swallow wingman; since 2026-10-28 the X-wing and Interceptor replicas, see "Art"), the Survival mode with waves, an elite every 5th wave, 2 wingmen, score and best score, and missile/lock warnings.
 - M3 is written: lasers (pooled, swept, instanced), gun heat and overheat, targeting with the holographic HUD and a lead marker, lock-on and homing missiles, hull and shields, the evasive maneuver (jink or roll), target drones in a new drone range mode, hit feedback (haptics, sounds, cockpit lights) and a mode switch.
 - M2 is written: the flight model with throttle bands and arena bounds, the input layer with control schemes A/B/C, comfort options (vignette, auto-level, turn limit), the rings course, cockpit texts, the moving stick and throttle, space dust and synthesized ship sounds.
 - It was written in a cloud session with no Unity editor. It compiles to 0 errors and 0 warnings against the Unity 6000.0.85f1 DLLs plus stubs copied from the Meta XR Core SDK sources.
@@ -55,7 +57,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 - [ ] No exceptions in the log. It shows `Refresh rates available: ...` with 90 chosen, then every 5 s `NN fps, avg X ms, worst Y ms, display 90 Hz`.
 - [ ] The app starts black and fades in after about 0.6 s. The view is already centred in the seat (auto-recenter at 0.5 s).
 - [ ] Space: a star field that doesn't shimmer when you turn your head, faint nebula clouds, the sun glow, and a planet with a lit side and an atmosphere rim.
-- [ ] The cockpit: a ball around you with a hexagonal front window, frame beams and struts, cyan accent lights, a console with five screens, side panels, the seat, the floor plate, and the stick and throttle in front of your hands.
+- [ ] The cockpit: the Interceptor's ball around you with its round front window, eight spokes and a small hub ring, cyan accent lights, a console with five screens, side panels, the seat, the floor plate, and the stick and throttle in front of your hands.
   - Nothing is closer than about 30 cm to your eyes when you sit straight. Nothing clips when you lean forward.
   - The window is wide enough to look out of at the sides and upward.
 - [ ] Screens: the left one shows `KADŁUB 100% / OSŁONY --` with Polish letters, the right one `RADAR (M3)`, the centre one `HEX WING M1` and the readout (fps, avg, worst, slow frames), updated twice a second.
@@ -99,7 +101,7 @@ Check:
 Buttons (every scheme): flying hand's trigger = guns; the other trigger = lock-on (hold with a target near the nose, release when locked to fire a missile); X = evasive; left menu button = restart, hold 1 s = next mode (rings course ↔ drone range).
 
 - [ ] Hold the menu button for 1 s: a fade, then the drone range (log `Mode: STRZELNICA`). 8 light-grey drones with a red glowing band fly loops 350–1100 m ahead.
-- [ ] Guns: cyan bolts from the left and right gun in turn, a cyan muzzle flash and a short zap panned to that side, a light haptic tick per shot. Bolts cross about 400 m ahead.
+- [ ] Guns: green bolts from the four wingtip cannons in turn (upper right, upper left, lower right, lower left), a green muzzle flash and a short zap panned to that side, a light haptic tick per shot. Bolts cross about 400 m ahead.
 - [ ] Heat: the centre display shows `DZIAŁA [|||.......]` filling while firing and draining after. At full heat: `PRZEGRZANE 3.0 s` in red, an alarm, a long buzz; the guns stop for 3 s.
 - [ ] HUD through the canopy: a cyan hexagon crosshair, small cyan diamonds on drones ahead, white brackets on the target nearest the nose, and a small cyan dot (lead marker) ahead of a moving target. Aiming the crosshair at the dot hits the drone. The cockpit frame hides the markers behind it.
 - [ ] Hits: an orange impact flash on the drone, a high tick sound, a light haptic, the crosshair pulses. Kill: an explosion with debris, a 3D boom from the drone's direction, a two-note chime, a stronger haptic, `ZESTRZELONY!` on the right display. The drone comes back elsewhere 3 s later.
@@ -115,10 +117,10 @@ Buttons (every scheme): flying hand's trigger = guns; the other trigger = lock-o
 
 Hold the menu button to cycle modes until `PRZETRWANIE` (log `Mode: PRZETRWANIE`).
 
-- [ ] `FALA 1` and `WROGOWIE 3` on the right display for 4 s, two light-grey wingmen with cyan engines fly in beside you (small white triangles on the HUD). Then enemies appear far ahead: dark Hornets with red engines and forward-swept wings (cyan diamonds).
+- [ ] `FALA 1` and `WROGOWIE 3` on the right display for 4 s, two Interceptor wingmen fly in beside you (small white triangles on the HUD). Then enemies appear far ahead: X-wings with four red-orange engines and red bolts from their wingtip cannons (cyan diamonds).
 - [ ] Enemies come at you, bank into turns, fire red bolts in bursts when lined up, break away instead of ramming, and turn back in. Early waves miss a lot, later ones less (`skill` in the log line of each wave).
 - [ ] Shooting an enemy that's on fire (below 50% hull) leaves dark smoke behind it. Kills: explosion and debris, score +100. Wingmen also shoot enemies and can be shot down (`SKRZ.` count); they come back at the next wave.
-- [ ] Clearing a wave: +250, the next wave is bigger. Wave 5: `UWAGA: GROT!`, a near-black Trident with three blade wings and amber glow; it locks on (`NAMIERZA CIĘ!`, low beeps) and fires missiles (`RAKIETA! UNIK (X)` in red, fast beeps, a light buzz). An evasive breaks the missile's lock.
+- [ ] Clearing a wave: +250, the next wave is bigger. Wave 5: `UWAGA: GROT!`, a dark X-wing with gold markings and armoured engines (the Trident elite); it locks on (`NAMIERZA CIĘ!`, low beeps) and fires missiles (`RAKIETA! UNIK (X)` in red, fast beeps, a light buzz). An evasive breaks the missile's lock.
 - [ ] Getting shot down: the view stops, `KONIEC GRY` or `NOWY REKORD!` with wave, kills and score for 6 s, then a fade and a new game. The best score and wave survive an app restart.
 - [ ] Performance with 12 enemies, 2 wingmen and a full dogfight: 90 fps. Expect about 80 draw calls; watch CPU time (AI and raycasts) in `metavr perf`.
 - [ ] 20 minutes of Survival: comfort report (vignette level, any moment that felt bad).
@@ -159,7 +161,7 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 
 ## M7 (offline) checklist
 
-- [ ] In the hangar choose TRYB until `WALKA DRUŻYN` (log `Mode: WALKA DRUŻYN`, `Team dogfight: 4 v 4, first to 30 or 10 min`). You start on your team's side with three light-grey wingmen; four Hornets start 2.6 km away on the other side.
+- [ ] In the hangar choose TRYB until `WALKA DRUŻYN` (log `Mode: WALKA DRUŻYN`, `Team dogfight: 4 v 4, first to 30 or 10 min`). You start on your team's side with three Interceptor wingmen; four X-wings start 2.6 km away on the other side.
 - [ ] Right display: `NASI n : m ONI`, the clock, your kills and losses, score. Every ship shot down scores for the other team, yours included.
 - [ ] Shot down: you come back at your base after 3 s (fade); bots come back after 5 s. Enemy names show as `WRÓG n` on the target display, wingmen as `SKRZYDŁOWY n`.
 - [ ] First to 30, or the leader at 10:00: `WYGRANA!` / `PRZEGRANA` / `REMIS` with the score for 9 s, then a new match. A win unlocks the silver cockpit colour; the best score shows in STATYSTYKI.
@@ -198,15 +200,17 @@ Everything visible was redone with real models, textures and effects (approved p
   - `FX_*.png`, `HUD_Glyphs.png`, `UI_*.png`,
   - previews in `Art/previews/*.jpg`.
 - Fonts: `Assets/HexWing/Fonts/Rajdhani-*.ttf` (OFL, credited in `Art/SOURCES.md`).
+- The fighter replicas (`models/hornet.py` for the X-wing, `models/interceptor.py` for the Interceptor and its variants) take their measurements from blueprints (URLs in `Art/SOURCES.md`, reference only, not in the repo). `python Art/blender/compare.py <module> <variant|-> <blueprint.png> <x0,y0,x1,y1> <top|side|front> <out.png> [h]` lays the model's silhouette over a blueprint view to check the proportions in seconds, without a bake.
+- Guns: `ShipWeapons.SetGuns` takes the model's `Gun0..3` sockets (the wingtip cannons) and fires them in turn; the player's class model gives the player's. Team colours: the player's team fires green bolts, the enemy red.
 
 **Assets**
 
 | Asset | What | LOD0 triangles | Texture |
 | --- | --- | --- | --- |
-| Hornet | enemy fighter | 4.5k | 1024 |
-| Trident | enemy elite | 3.2k | 1024 |
-| Swallow | wingman | 2.9k | 1024 |
-| Sokol, Jastrzab, Zubr | the player's ship classes (hangar showcase) | 3.3k / 2.0k / 2.6k | 1024 |
+| Hornet | enemy fighter: X-wing replica (Photo 1) | 7.8k | 1024 |
+| Trident | enemy elite: the X-wing, dark with gold markings | 7.8k | 1024 |
+| Swallow | wingmen: Interceptor replica (Photo 2) | 7.4k | 1024 |
+| Sokol, Jastrzab, Zubr | the player's classes, Interceptor variants: Sokół exactly Photo 2 (default), Jastrząb longer blades + green trim, Żubr armour, bomb pods + amber trim | ~7.4k each | 1024 |
 | Transport | escort hauler | 2.2k | 1024 |
 | Drone, Missile, KolosTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
 | Cockpit + CockpitControls | the cockpit, stick and throttle | 14.3k + 0.8k | 2048 + 512 |

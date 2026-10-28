@@ -324,7 +324,7 @@ namespace HexWing.EditorTools
             Faceted(Mats.Dust, Hex("#9AA8B8"), Hex("#4A5260"), Color.white, 0f, 0f, 8f, 0.6f);
 
             // combat: glowing bolts and flashes (emission 1 = flat bright colour), grey drones, missiles, debris
-            Faceted(Mats.LaserPlayer, Hex("#5FF2FF"), Hex("#5FF2FF"), Color.white, 0f, 0f, 8f, 1f);
+            Faceted(Mats.LaserPlayer, Hex("#6CFF4A"), Hex("#6CFF4A"), Color.white, 0f, 0f, 8f, 1f);
             Faceted(Mats.LaserEnemy, Hex("#FF4A2A"), Hex("#FF4A2A"), Color.white, 0f, 0f, 8f, 1f);
             Faceted(Mats.FlashHot, Hex("#FFC266"), Hex("#FF7A2A"), Color.white, 0.4f, 0f, 8f, 1f);
             Faceted(Mats.FlashCyan, Hex("#9FF4FF"), Hex("#5FD3FF"), Color.white, 0.2f, 0f, 8f, 1f);
@@ -374,7 +374,7 @@ namespace HexWing.EditorTools
             // effect sprites (Art/fx/make_fx.py textures)
             Sprite(Mats.FxExplosion, "FX_Explosion", 8, Color.white, 1.6f);
             Sprite(Mats.FxGlowHot, "FX_Glow", 1, new Color(1f, 0.62f, 0.3f), 2f);
-            Sprite(Mats.FxGlowCyan, "FX_Glow", 1, new Color(0.45f, 0.9f, 1f), 2f);
+            Sprite(Mats.FxGlowCyan, "FX_Glow", 1, new Color(0.5f, 1f, 0.4f), 2f);
 
             var text = Material(Mats.Text, "HexWing/Text");
             text.SetColor("_BaseColor", Color.white);

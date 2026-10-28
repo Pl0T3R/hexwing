@@ -36,7 +36,7 @@ def _look(cam, target):
     cam.rotation_euler = d.to_track_quat('-Z', 'Y').to_euler()
 
 
-def preview(ob, name, material, radius, extra=(), size=(640, 480), samples=48, notes=""):
+def preview(ob, name, material, radius, extra=(), size=(640, 480), samples=48, notes="", views=None):
     """
     Renders ob with its baked textures from three sides against space and writes
     Art/previews/<name>.jpg (one sheet), so the look can be checked without Unity.
@@ -114,9 +114,9 @@ def preview(ob, name, material, radius, extra=(), size=(640, 480), samples=48, n
     scene.view_settings.view_transform = 'AgX'
     scene.view_settings.look = 'AgX - Medium High Contrast'
 
-    views = (("3/4 front", (radius * 2.2, radius * 1.1, radius * 2.6)),
-             ("side", (radius * 3.6, radius * 0.3, 0.0)),
-             ("3/4 rear, above", (-radius * 2.1, radius * 2.4, -radius * 2.5)))
+    # views: (label, camera position as multiples of the radius, Unity frame)
+    views = [(label, (radius * m[0], radius * m[1], radius * m[2])) for label, m in (views or (
+        ("3/4 front", (2.2, 1.1, 2.6)), ("side", (3.6, 0.3, 0.0)), ("3/4 rear, above", (-2.1, 2.4, -2.5))))]
     tiles = []
     for label, pos in views:
         cam.location = geo.to_blender(pos)

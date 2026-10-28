@@ -2,7 +2,7 @@
 from . import bake, export, geo
 
 
-def finish(name, hull, extra, tex, radius, lods=(0.3, 0.08), preview=True, ao_distance=1.0):
+def finish(name, hull, extra, tex, radius, lods=(0.3, 0.08), preview=True, ao_distance=1.0, views=None):
     """
     hull: the joined <name>_LOD0 object; extra: glow parts and sockets exported with it.
     Returns the triangle counts per LOD.
@@ -15,5 +15,5 @@ def finish(name, hull, extra, tex, radius, lods=(0.3, 0.08), preview=True, ao_di
     print(f"{name}: " + " / ".join(f"LOD{i} {t}" for i, t in enumerate(tris)) + " triangles")
     if preview:
         mat = bake.textured_material(name + "_Preview", paths)
-        export.preview(hull, name, mat, radius=radius, notes=f"{name}  " + " / ".join(str(t) for t in tris) + f" tri  tex {tex}")
+        export.preview(hull, name, mat, radius=radius, notes=f"{name}  " + " / ".join(str(t) for t in tris) + f" tri  tex {tex}", views=views)
     return tris

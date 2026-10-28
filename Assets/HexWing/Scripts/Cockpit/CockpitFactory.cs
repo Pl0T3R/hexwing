@@ -7,7 +7,7 @@ namespace HexWing
     /// CockpitControls) the shell, frame, console, seat and details come from it; the display glasses,
     /// their anchors and the stick and throttle pivots are always placed here, so texts and instruments
     /// work either way. Without it, the original code-built cockpit (low-poly faceted): a ball-shaped
-    /// shell with a hexagonal front window and six thin struts to an inner hex ring (the centre stays
+    /// shell with the Interceptor's round front window and eight spokes to a small hub ring (the centre stays
     /// clear for the crosshair), a front console with three displays, two side panels, a seat, a
     /// floor plate and a control stick and throttle lever. The ship's origin is the centre of the ball;
     /// +Z is forward. About 1.6k triangles in 6 draw calls (one per material).
@@ -24,7 +24,7 @@ namespace HexWing
         /// <summary>Name of the renderer of the Blender-made cockpit (CockpitAlert tints its emission).</summary>
         public const string ArtName = "Cockpit Art";
 
-        const int Sectors = 12;   // around the forward axis: hex corners and edge midpoints
+        const int Sectors = 12;   // around the forward axis
         const int Rows = 10;      // from the window edge back to the rear pole
 
         public static Displays Build(Transform ship)
@@ -67,9 +67,8 @@ namespace HexWing
         // --- shell ------------------------------------------------------------------------
 
         /// <summary>
-        /// The ball, open at the front. Each of the 12 sectors starts at the hexagonal window edge (corner
-        /// or edge midpoint) and runs back to the rear pole in 10 rows, so the window edge is exact and
-        /// the facets stay even. Faces point inward (toward the eye).
+        /// The ball, open at the front. Each of the 12 sectors starts at the round window edge and runs back
+        /// to the rear pole in 10 rows, so the facets stay even. Faces point inward (toward the eye).
         /// </summary>
         static Mesh ShellMesh(float r, float windowHalfAngle, Vector3 eye)
         {
@@ -105,18 +104,8 @@ namespace HexWing
             return new Vector3(Mathf.Sin(t) * Mathf.Cos(p), Mathf.Sin(t) * Mathf.Sin(p), Mathf.Cos(t)) * r;
         }
 
-        /// <summary>
-        /// Angle from the forward axis to the hexagonal window edge in direction phi: a regular hexagon
-        /// with corners at 0, 60, 120... degrees whose corners lie at windowHalfAngle.
-        /// </summary>
-        static float WindowEdgeAngle(float phiDeg, float windowHalfAngle)
-        {
-            float local = Mathf.Repeat(phiDeg, 60f) - 30f;   // -30..30 inside one hexagon edge
-            float corner = Mathf.Tan(windowHalfAngle * Mathf.Deg2Rad);
-            float apothem = corner * Mathf.Cos(30f * Mathf.Deg2Rad);
-            float radius = apothem / Mathf.Cos(local * Mathf.Deg2Rad);
-            return Mathf.Atan(radius) * Mathf.Rad2Deg;
-        }
+        /// <summary>Angle from the forward axis to the round window edge (the Interceptor's window).</summary>
+        static float WindowEdgeAngle(float phiDeg, float windowHalfAngle) => windowHalfAngle;
 
         static Color Shade(Vector3 p, float r)
         {
@@ -128,34 +117,32 @@ namespace HexWing
 
         // --- window frame -----------------------------------------------------------------
 
-        /// <summary>Six beams along the hexagonal window edge, six thin struts to a small inner hex ring.</summary>
+        /// <summary>The round window edge, eight spokes and the small hub ring (the Interceptor's window).</summary>
         static Mesh FrameMesh(float r, float windowHalfAngle)
         {
+            const int Segments = 24;
+            const float Hub = 15f;
             var b = new MeshKit.Builder();
-            var outer = new Vector3[6];
-            var inner = new Vector3[6];
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < Segments; i++)
             {
-                float phi = i * 60f;
-                outer[i] = SpherePoint(r - 0.015f, windowHalfAngle, phi);
-                inner[i] = SpherePoint(r - 0.015f, windowHalfAngle * 0.42f, phi);
+                float a0 = i * 360f / Segments, a1 = (i + 1) * 360f / Segments;
+                b.Prism(SpherePoint(r - 0.015f, windowHalfAngle, a0), SpherePoint(r - 0.015f, windowHalfAngle, a1), 0.04f, 0.04f, 4);
+                b.Prism(SpherePoint(r - 0.015f, Hub, a0), SpherePoint(r - 0.015f, Hub, a1), 0.012f, 0.012f, 4);
             }
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 8; i++)
             {
-                int j = (i + 1) % 6;
-                b.Prism(outer[i], outer[j], 0.04f, 0.04f, 4);         // the window edge
-                b.Prism(inner[i], inner[j], 0.012f, 0.012f, 4);       // the inner ring
-                b.Prism(outer[i], inner[i], 0.016f, 0.01f, 4);        // the struts
+                float phi = 22.5f + 45f * i;   // none straight up, down or sideways: the horizon stays clear
+                b.Prism(SpherePoint(r - 0.015f, windowHalfAngle, phi), SpherePoint(r - 0.015f, Hub, phi), 0.016f, 0.01f, 4);
             }
             return b.ToMesh("Cockpit Window Frame");
         }
 
-        /// <summary>Small glowing studs at the window corners and a strip under the window.</summary>
+        /// <summary>Small glowing studs at the spokes' outer ends and a strip under the window.</summary>
         static Mesh AccentMesh(float r, float windowHalfAngle)
         {
             var b = new MeshKit.Builder();
-            for (int i = 0; i < 6; i++)
-                b.Ico(SpherePoint(r - 0.05f, windowHalfAngle + 3f, i * 60f + 30f), Vector3.one * 0.012f);
+            for (int i = 0; i < 8; i++)
+                b.Ico(SpherePoint(r - 0.05f, windowHalfAngle + 3f, 22.5f + 45f * i), Vector3.one * 0.012f);
             b.Box(new Vector3(0f, -0.11f, 0.6f), new Vector3(0.5f, 0.008f, 0.01f), Quaternion.Euler(-35f, 0f, 0f));
             return b.ToMesh("Cockpit Accents");
         }

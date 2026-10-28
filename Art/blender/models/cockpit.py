@@ -1,10 +1,11 @@
 """
-The player's cockpit: a ball with a hexagonal front window, the layout of Cockpit/CockpitFactory.cs
-(ship origin at the ball's centre, eye at (0, 0.12, -0.05), radius 1.05 m, window corners 52 degrees
-from straight ahead at 0, 60, 120... degrees around it). The code still places the five display glasses,
+The player's cockpit: the inside of the Interceptor's ball (the team's ship, models/interceptor.py),
+with its round front window, eight spokes and the small hub ring, in the layout of
+Cockpit/CockpitFactory.cs (ship origin at the ball's centre, eye at (0, 0.12, -0.05), radius 1.05 m,
+window edge 52 degrees from straight ahead). The code still places the five display glasses,
 their texts and the moving stick and throttle; this model gives everything around them:
 - the shell with meridian ribs and a shoulder ring, equipment boxes, cables,
-- the window frame: edge beams, six thin struts and the small inner ring (the centre stays clear),
+- the window frame: the heavy round edge, eight spokes and the hub ring (clear glass inside it),
 - the front console with bezels for the three displays, side consoles with switches and bezels,
 - the seat with harness and headrest, the floor plate with pedals, the stick and throttle housings,
 - light strips (emission tinted at runtime with the ship class's accent colour).
@@ -46,11 +47,13 @@ def sphere(r, theta, phi):
     return Vector((math.sin(t) * math.cos(p), math.sin(t) * math.sin(p), math.cos(t))) * r
 
 
+HUB = 15.0                      # the hub ring's angle from straight ahead
+SPOKES = [22.5 + 45.0 * i for i in range(8)]   # none straight up, down or sideways: the horizon stays clear
+
+
 def window_edge(phi):
-    """Angle from straight ahead to the hexagonal window edge in direction phi (as CockpitFactory)."""
-    local = (phi % 60.0) - 30.0
-    apothem = math.tan(math.radians(HALF)) * math.cos(math.radians(30.0))
-    return math.degrees(math.atan(apothem / math.cos(math.radians(local))))
+    """Angle from straight ahead to the round window edge (the same in every direction)."""
+    return HALF
 
 
 def inward(p):
@@ -115,8 +118,7 @@ def build_cockpit():
     P(shell())
 
     # ribs along the shell: from the window corners back over the top, sides and floor
-    for i in range(6):
-        phi = i * 60.0
+    for phi in SPOKES:
         path = arc(window_edge(phi) + 1.0, 168.0, phi, R - 0.03, n=20)
         P(geo.bevel(geo.sweep("Rib", path, geo.rect(0.075, 0.06), "FRAME", up=inward), width=0.01, segments=1, angle=40))
     # shoulder ring behind the pilot and a lower ring
@@ -124,19 +126,16 @@ def build_cockpit():
         ring = [sphere(R - 0.03, theta, a) for a in range(0, 360, 10)]
         P(geo.bevel(geo.sweep("Ring", ring, geo.rect(*size), "FRAME", up=inward, closed_path=True), width=0.008, segments=1, angle=40))
 
-    # window frame: heavy edge beams, six thin struts to a small inner ring (the centre stays clear)
+    # window frame: the heavy round edge, eight spokes to the hub ring (clear glass inside it)
     edge_path = [sphere(R - 0.025, window_edge(a), a) for a in range(0, 360, 3)]
     P(geo.bevel(geo.sweep("WindowEdge", edge_path, geo.rect(0.09, 0.07), "FRAME", up=inward, closed_path=True), width=0.012, segments=2, angle=30))
-    inner_r = math.radians(HALF * 0.42)
-    inner = [sphere(R - 0.02, math.degrees(math.atan(math.tan(inner_r) * math.cos(math.radians(30.0)) / math.cos(math.radians((a % 60) - 30.0)))), a)
-             for a in range(0, 360, 6)]
-    P(geo.bevel(geo.sweep("InnerRing", inner, geo.rect(0.024, 0.022), "FRAME", up=inward, closed_path=True), width=0.004, segments=1, angle=30))
-    for i in range(6):
-        phi = i * 60.0
-        strut = [sphere(R - 0.02, HALF * 0.42 + (window_edge(phi) - HALF * 0.42) * t / 10.0, phi) for t in range(11)]
-        P(geo.bevel(geo.sweep("Strut", strut, geo.rect(0.022, 0.026), "FRAME", up=inward), width=0.004, segments=1, angle=30))
-        # corner light studs just outside the window corners
-        P(geo.disc("Stud", sphere(R - 0.06, window_edge(phi + 30.0) + 4.0, phi + 30.0), inward(sphere(1, window_edge(phi + 30.0) + 4.0, phi + 30.0)), 0.012, "LIGHT", sides=8))
+    inner = [sphere(R - 0.02, HUB, a) for a in range(0, 360, 6)]
+    P(geo.bevel(geo.sweep("HubRing", inner, geo.rect(0.026, 0.024), "FRAME", up=inward, closed_path=True), width=0.004, segments=1, angle=30))
+    for phi in SPOKES:
+        spoke = [sphere(R - 0.02, HUB + (window_edge(phi) - HUB) * t / 10.0, phi) for t in range(11)]
+        P(geo.bevel(geo.sweep("Spoke", spoke, geo.rect(0.026, 0.03), "FRAME", up=inward), width=0.004, segments=1, angle=30))
+        # light studs just outside the window edge, at the spokes
+        P(geo.disc("Stud", sphere(R - 0.06, window_edge(phi) + 4.0, phi), inward(sphere(1, window_edge(phi) + 4.0, phi)), 0.012, "LIGHT", sides=8))
 
     # front console: a body under the window, faceted toward the pilot, with bezels for the three displays
     body = [(-0.62, 0.50), (-0.40, 0.43), (-0.08, 0.61), (-0.06, 0.79), (-0.62, 0.84)]
