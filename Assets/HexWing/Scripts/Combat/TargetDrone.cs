@@ -29,7 +29,7 @@ namespace HexWing
             drone._visual = new GameObject("Visual");
             drone._visual.transform.SetParent(go.transform, false);
             var art = ArtLibrary.Get("Drone");
-            if (art != null) ArtLibrary.Attach(art, drone._visual.transform, null);
+            if (art != null) ArtLibrary.Attach(art, drone._visual.transform, Mats.Get(Mats.PlumeRed));
             else
             {
                 MeshKit.Part("Body", drone._visual.transform, _body, Mats.Get(Mats.Drone));
