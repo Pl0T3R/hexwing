@@ -82,10 +82,11 @@ namespace HexWing
             float s = Mathf.InverseLerp(f.minSpeed, f.maxSpeed, _ship.Speed);
             _engine.pitch = Mathf.Lerp(0.75f, 1.45f, s);
             _engine.volume = Mathf.Lerp(0.22f, 0.42f, s);
-            float boost = _ship.CurrentBand == ShipFlight.Band.Boost ? 1f : 0f;
-            _boost.volume = Mathf.MoveTowards(_boost.volume, boost * 0.3f, Time.deltaTime * 0.8f);
-            _boost.pitch = Mathf.Lerp(0.9f, 1.2f, s);
-            Haptics.SetRumble(OVRInput.Controller.Touch, boost * GameConfig.Instance.haptics.boostRumble);
+            float boost = _ship.Afterburning ? 1.6f : _ship.CurrentBand == ShipFlight.Band.Boost ? 1f : 0f;
+            _boost.volume = Mathf.MoveTowards(_boost.volume, boost * 0.3f, Time.deltaTime * 1.2f);
+            _boost.pitch = Mathf.Lerp(0.9f, 1.2f, s) + (_ship.Afterburning ? 0.15f : 0f);
+            var h = GameConfig.Instance.haptics;
+            Haptics.SetRumble(OVRInput.Controller.Touch, _ship.Afterburning ? h.afterburnerRumble : boost * h.boostRumble);
         }
 
         void OnDisable() => Haptics.SetRumble(OVRInput.Controller.Touch, 0f);

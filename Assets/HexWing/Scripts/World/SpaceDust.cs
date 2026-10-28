@@ -5,11 +5,11 @@ namespace HexWing
     /// <summary>
     /// Small specks floating in a box around the ship. In empty space they are the only thing that
     /// shows speed and turning up close. Specks that fall behind the box wrap to the other side, so the
-    /// field never ends. They stretch a little along the flight path at high speed. One instanced draw.
+    /// field never ends. They stretch into streaks along the flight path with speed. One instanced draw.
     /// </summary>
     public class SpaceDust : MonoBehaviour
     {
-        public int Count = 220;
+        public int Count = 320;
         public float BoxSize = 260f;
         public float SpeckSize = 0.22f;
 
@@ -53,7 +53,8 @@ namespace HexWing
             var velocity = _flight != null ? _flight.Velocity : Vector3.zero;
             float speed = velocity.magnitude;
             var look = speed > 1f ? Quaternion.LookRotation(velocity / speed) : Quaternion.identity;
-            float stretch = 1f + speed * 0.025f;
+            // streaks grow with speed (and more with the afterburner), which is most of the sense of speed
+            float stretch = 1f + speed * 0.045f * (_flight != null && _flight.Afterburning ? 1.6f : 1f);
             var scale = new Vector3(SpeckSize, SpeckSize, SpeckSize * stretch);
 
             for (int i = 0; i < _points.Length; i++)

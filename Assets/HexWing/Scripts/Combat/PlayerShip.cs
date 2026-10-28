@@ -49,6 +49,7 @@ namespace HexWing
             hitbox.radius = GameConfig.Instance.flight.collisionRadius * 0.8f;
 
             _flight = GetComponent<ShipFlight>();
+            if (_flight != null) _flight.AllowAfterburner = true;
             _weapons = GetComponent<ShipWeapons>();
             _input = GetComponent<PlayerInput>();
             _alert = GetComponent<CockpitAlert>();

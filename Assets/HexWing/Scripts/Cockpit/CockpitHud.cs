@@ -30,6 +30,7 @@ namespace HexWing
         int _shownShip = -1;
         float _next;
         ControlScheme _shownScheme = (ControlScheme)(-1);
+        string _shownInput;
 
         void Start()
         {
@@ -60,6 +61,9 @@ namespace HexWing
             _sb.Append("CIĄG ").Append(Mathf.RoundToInt(_ship.Controls.Throttle * 100f)).Append("%  ").Append(BandLabel(_ship.CurrentBand)).Append('\n');
             _sb.Append("SKRĘT x").Append(_ship.TurnMultiplier.ToString("0.0"));
             if (_ship.AutoLeveling) _sb.Append("  POZIOM");
+            _sb.Append("\nDOPALACZ ");
+            Bar(_ship.AfterburnerFuel, 8);
+            if (_ship.Afterburning) _sb.Append(" PALI");
             if (_input != null && _input.Scheme == ControlScheme.VirtualStick)
                 _sb.Append('\n').Append(_input.StickHeld ? "[DRĄŻEK]" : " drążek ").Append(' ').Append(_input.ThrottleHeld ? "[MANETKA]" : " manetka ");
             _cockpit.Left.SetText(_sb.ToString());
@@ -339,27 +343,41 @@ namespace HexWing
         {
             var player = PlayerShip.Instance;
             int ship = player != null ? player.ShipIndex : 0;
+            if (_input != null && GameConfig.Instance.debug.inputReadout)
+            {
+                // the raw input readout replaces the scheme help while it is on (debug.inputReadout)
+                if (!ReferenceEquals(_input.DebugText, _shownInput))
+                {
+                    _shownInput = _input.DebugText;
+                    _cockpit.SideLeft.SetText(_shownInput);
+                }
+            }
             if (_input == null || (_input.Scheme == _shownScheme && ship == _shownShip)) return;   // these only change with the scheme or ship
             _shownScheme = _input.Scheme;
             _shownShip = ship;
             var cfg = GameConfig.Instance;
-            _cockpit.SideLeft.SetText(PlayerInput.SchemeLabel(_shownScheme) + "\n" + SchemeHelp(_shownScheme, cfg.controls.swapHands) +
-                                      (cfg.controls.cycleWithY ? "\nY: ZMIEŃ STER" : ""));
+            if (!cfg.debug.inputReadout)
+                _cockpit.SideLeft.SetText(PlayerInput.SchemeLabel(_shownScheme) + "\n" + SchemeHelp(_shownScheme, cfg.controls.swapHands) +
+                                          (cfg.controls.cycleWithY ? "\nY: ZMIEŃ STER" : ""));
             _cockpit.SideRight.SetText(
                 (player != null && player.Definition != null ? player.Definition.displayName + "  (" + ShipDefinition.PassiveLabel(player.Definition.passive) + ")\n" : "") +
                 "WINIETA " + VignetteLabel(cfg.comfort.vignette) + "\n" +
                 "POZIOMOWANIE " + (cfg.comfort.autoLevel ? "TAK" : "NIE") + "\n" +
                 "LIMIT SKRĘTU " + (cfg.comfort.turnRateLimit > 0f ? Mathf.RoundToInt(cfg.comfort.turnRateLimit) + "°/s" : "BRAK") + "\n" +
-                "MENU: PAUZA I HANGAR\nTRZYMAJ L-GAŁKĘ: CENTRUJ\n" +
-                "SPUST P: DZIAŁA  SPUST L: RAKIETA\nX: UNIK  A/B: ZDOLNOŚCI\nTRZYMAJ Y: STATEK");
+                "MENU: PAUZA I HANGAR\nTRZYMAJ L-GAŁKĘ: CENTRUJ\n" + ButtonMap(cfg.controls.swapHands));
         }
+
+        /// <summary>The buttons that are the same in every scheme, named for the hand that flies.</summary>
+        static string ButtonMap(bool swapped) => swapped
+            ? "SPUST L: DZIAŁA  SPUST P: RAKIETA\nA: UNIK  X/Y: ZDOLNOŚCI\nB: STER, TRZYMAJ B: STATEK"
+            : "SPUST P: DZIAŁA  SPUST L: RAKIETA\nX: UNIK  A/B: ZDOLNOŚCI\nY: STER, TRZYMAJ Y: STATEK";
 
         static string SchemeHelp(ControlScheme s, bool swapped)
         {
             string fly = swapped ? "LEWY" : "PRAWY", other = swapped ? "PRAWY" : "LEWY";
             return s switch
             {
-                ControlScheme.ControllerDirect => $"{fly} PAD: PRZECHYŁ = SKRĘT\n{fly} GAŁKA KLIK: ZERO\n{other} GAŁKA: CIĄG / BECZKA",
+                ControlScheme.ControllerDirect => $"{fly} PAD = DRĄŻEK: POCHYL / OBRÓĆ\n{fly} GAŁKA KLIK: ZERO\n{other} GAŁKA: CIĄG / BECZKA",
                 ControlScheme.VirtualStick => $"{fly} CHWYT: DRĄŻEK\n{other} CHWYT: MANETKA\n{other} GAŁKA X: BECZKA",
                 _ => $"{fly} GAŁKA: SKRĘT\n{other} GAŁKA: CIĄG / BECZKA",
             };

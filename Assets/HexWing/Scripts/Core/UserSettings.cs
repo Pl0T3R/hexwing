@@ -19,7 +19,9 @@ namespace HexWing
         /// <summary>The asset's own values of the menu-owned fields, put back when play mode ends.</summary>
         struct Original
         {
-            public bool SwapHands, InvertPitch, AutoLevel;
+            public bool SwapHands, InvertPitch, InvertYaw, InvertRoll, AutoLevel, BankIntoTurns;
+            public StickSideways Sideways;
+            public ThrottleStickMode ThrottleStick;
             public float Sensitivity, TurnLimit, Haptics;
             public VignetteLevel Vignette;
             public EvasiveStyle Evasive;
@@ -40,7 +42,10 @@ namespace HexWing
                 _original = new Original
                 {
                     SwapHands = cfg.controls.swapHands, InvertPitch = cfg.controls.invertPitch, Sensitivity = cfg.controls.sensitivity,
+                    InvertYaw = cfg.controls.invertYaw, InvertRoll = cfg.controls.invertRoll,
+                    Sideways = cfg.controls.sideways, ThrottleStick = cfg.controls.throttleStick,
                     Vignette = cfg.comfort.vignette, AutoLevel = cfg.comfort.autoLevel, TurnLimit = cfg.comfort.turnRateLimit,
+                    BankIntoTurns = cfg.comfort.bankIntoTurns,
                     Evasive = cfg.combat.evasiveStyle, Haptics = cfg.haptics.master,
                 };
                 UnityEditor.EditorApplication.playModeStateChanged += RestoreOnExit;
@@ -48,6 +53,11 @@ namespace HexWing
 #endif
             cfg.controls.swapHands = GetBool("SwapHands", cfg.controls.swapHands);
             cfg.controls.invertPitch = GetBool("InvertPitch", cfg.controls.invertPitch);
+            cfg.controls.invertYaw = GetBool("InvertYaw", cfg.controls.invertYaw);
+            cfg.controls.invertRoll = GetBool("InvertRoll", cfg.controls.invertRoll);
+            cfg.controls.sideways = (StickSideways)PlayerPrefs.GetInt(Prefix + "Sideways", (int)cfg.controls.sideways);
+            cfg.controls.throttleStick = (ThrottleStickMode)PlayerPrefs.GetInt(Prefix + "ThrottleStick", (int)cfg.controls.throttleStick);
+            cfg.comfort.bankIntoTurns = GetBool("BankIntoTurns", cfg.comfort.bankIntoTurns);
             cfg.controls.sensitivity = PlayerPrefs.GetFloat(Prefix + "Sensitivity", cfg.controls.sensitivity);
             cfg.comfort.vignette = (VignetteLevel)PlayerPrefs.GetInt(Prefix + "Vignette", (int)cfg.comfort.vignette);
             cfg.comfort.autoLevel = GetBool("AutoLevel", cfg.comfort.autoLevel);
@@ -66,6 +76,11 @@ namespace HexWing
             var cfg = GameConfig.Instance;
             cfg.controls.swapHands = o.SwapHands;
             cfg.controls.invertPitch = o.InvertPitch;
+            cfg.controls.invertYaw = o.InvertYaw;
+            cfg.controls.invertRoll = o.InvertRoll;
+            cfg.controls.sideways = o.Sideways;
+            cfg.controls.throttleStick = o.ThrottleStick;
+            cfg.comfort.bankIntoTurns = o.BankIntoTurns;
             cfg.controls.sensitivity = o.Sensitivity;
             cfg.comfort.vignette = o.Vignette;
             cfg.comfort.autoLevel = o.AutoLevel;
@@ -86,6 +101,24 @@ namespace HexWing
 
         public static void ToggleSwapHands() { var c = GameConfig.Instance.controls; c.swapHands = !c.swapHands; SetBool("SwapHands", c.swapHands); }
         public static void ToggleInvertPitch() { var c = GameConfig.Instance.controls; c.invertPitch = !c.invertPitch; SetBool("InvertPitch", c.invertPitch); }
+        public static void ToggleInvertYaw() { var c = GameConfig.Instance.controls; c.invertYaw = !c.invertYaw; SetBool("InvertYaw", c.invertYaw); }
+        public static void ToggleInvertRoll() { var c = GameConfig.Instance.controls; c.invertRoll = !c.invertRoll; SetBool("InvertRoll", c.invertRoll); }
+
+        public static void ToggleSideways()
+        {
+            var c = GameConfig.Instance.controls;
+            c.sideways = c.sideways == StickSideways.Yaw ? StickSideways.Roll : StickSideways.Yaw;
+            SetInt("Sideways", (int)c.sideways);
+        }
+
+        public static void ToggleThrottleStick()
+        {
+            var c = GameConfig.Instance.controls;
+            c.throttleStick = c.throttleStick == ThrottleStickMode.Hold ? ThrottleStickMode.Spring : ThrottleStickMode.Hold;
+            SetInt("ThrottleStick", (int)c.throttleStick);
+        }
+
+        public static void ToggleBankIntoTurns() { var c = GameConfig.Instance.comfort; c.bankIntoTurns = !c.bankIntoTurns; SetBool("BankIntoTurns", c.bankIntoTurns); }
 
         public static void CycleSensitivity()
         {
@@ -139,10 +172,12 @@ namespace HexWing
             var c = GameConfig.Instance.comfort;
             c.vignette = preset == 0 ? VignetteLevel.High : preset == 1 ? VignetteLevel.Medium : VignetteLevel.Off;
             c.autoLevel = preset < 2;
+            c.bankIntoTurns = preset > 0;
             c.turnRateLimit = preset == 0 ? 60f : 0f;
             GameConfig.Instance.combat.evasiveStyle = preset == 2 ? EvasiveStyle.Roll : EvasiveStyle.Jink;
             SetInt("Vignette", (int)c.vignette);
             SetBool("AutoLevel", c.autoLevel);
+            SetBool("BankIntoTurns", c.bankIntoTurns);
             SetFloat("TurnLimit", c.turnRateLimit);
             SetInt("Evasive", (int)GameConfig.Instance.combat.evasiveStyle);
         }

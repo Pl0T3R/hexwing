@@ -235,7 +235,7 @@ namespace HexWing
                 Step.Turn => "2. SKRĘĆ W LEWO\nI W PRAWO  " + Progress + "/2\n" + (scheme switch
                 {
                     ControlScheme.VirtualStick => "TRZYMAJ PRAWY CHWYT,\nRUCH RĘKI W BOK",
-                    ControlScheme.ControllerDirect => "PRZECHYL PRAWY PAD\nW BOK",
+                    ControlScheme.ControllerDirect => "OBRÓĆ PRAWY PAD\nW LEWO I W PRAWO",
                     _ => "PRAWA GAŁKA W BOK",
                 }),
                 Step.Rings => "3. PRZELEĆ PRZEZ\nPIERŚCIENIE  " + Progress + "/3\nSTRZAŁKA WSKAZUJE\nKIERUNEK",

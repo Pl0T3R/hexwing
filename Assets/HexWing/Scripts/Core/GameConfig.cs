@@ -90,6 +90,8 @@ namespace HexWing
         public float autoLevelDelay = 0.8f;
         [Tooltip("Auto-level roll speed (deg/s). Gentle, so the horizon never swings.")]
         public float autoLevelRate = 40f;
+        [Tooltip("Bank into yaw turns (flight.coordinatedBank). Off keeps the horizon still in yaw turns.")]
+        public bool bankIntoTurns = true;
 
         [Header("Turn limit")]
         [Tooltip("Caps the pitch and yaw rate (deg/s). 0 = off (the ship's own rates).")]
@@ -118,9 +120,17 @@ namespace HexWing
         public bool performanceReadout = true;
         [Tooltip("Seconds between readout updates (the text is rebuilt only then).")]
         public float readoutInterval = 0.5f;
+        [Tooltip("Show the raw input (scheme, grips, controller poses, resulting axes) on the left side display.")]
+        public bool inputReadout = true;
+        [Tooltip("Log one [HexWing] Input: line per second while flying (to find control problems on the headset).")]
+        public bool inputLog = true;
     }
 
     public enum ControlScheme { ControllerDirect, VirtualStick, Thumbsticks }
+    /// <summary>What moving the virtual stick (B) or tipping the controller (A) sideways does.</summary>
+    public enum StickSideways { Yaw, Roll }
+    /// <summary>Thumbstick throttle: Hold keeps the throttle where you leave it, Spring returns to cruise.</summary>
+    public enum ThrottleStickMode { Hold, Spring }
 
     [Serializable]
     public class ControlSettings
@@ -132,6 +142,10 @@ namespace HexWing
         [Tooltip("Swap hands: the left hand flies, the right hand throttles.")]
         public bool swapHands = false;
         public bool invertPitch = false;
+        public bool invertYaw = false;
+        public bool invertRoll = false;
+        [Tooltip("Sideways stick (B) or sideways tip (A): Yaw turns the nose (the ship banks into the turn by itself), Roll rolls.")]
+        public StickSideways sideways = StickSideways.Yaw;
 
         [Header("Response")]
         [Range(0f, 0.5f)] public float deadzone = 0.12f;
@@ -150,14 +164,24 @@ namespace HexWing
         public float gripThreshold = 0.55f;
 
         [Header("A: controller tilt")]
-        [Tooltip("Controller tilt (deg) from the neutral pose for full pitch / yaw. Click the flying hand's thumbstick to set the neutral pose.")]
+        [Tooltip("Controller tilt (deg) from the neutral pose for full pitch / sideways. The neutral pose is set when the scheme starts and by clicking the flying hand's thumbstick.")]
         public float tiltRange = 30f;
+        [Tooltip("Wrist twist (deg) from the neutral pose for full roll (A).")]
+        public float tiltTwistRange = 45f;
 
         [Header("A and C: thumbstick throttle")]
-        [Tooltip("Throttle with the stick centred. Up = full, down = minimum, like Starfighter Assault.")]
+        [Tooltip("Hold (default): pushing the stick up or down changes the throttle and it stays when you let go. Spring: centred = cruise, up = full, down = minimum.")]
+        public ThrottleStickMode throttleStick = ThrottleStickMode.Hold;
+        [Tooltip("Hold mode: throttle change per second with the stick pushed all the way.")]
+        public float throttleStickRate = 0.6f;
+        [Tooltip("Starting throttle, and the centre in Spring mode.")]
         [Range(0f, 1f)] public float cruiseThrottle = 0.4f;
-        [Tooltip("How fast the throttle follows the stick (1/s).")]
+        [Tooltip("Spring mode: how fast the throttle follows the stick (1/s).")]
         public float throttleResponse = 3f;
+
+        [Header("Throttle detents (all schemes)")]
+        [Tooltip("The throttle sticks to cruise and to the boost line when it comes within this distance, with a haptic click.")]
+        public float detentWidth = 0.03f;
     }
 
     [Serializable]
@@ -177,6 +201,21 @@ namespace HexWing
         public float angularResponse = 6f;
         [Tooltip("Seconds for the flight path to follow the nose (slight drift in turns).")]
         public float noseLag = 0.2f;
+        [Tooltip("Extra nose lag (s) in the hardest turn at full speed: the ship slides a little through hard turns.")]
+        public float driftLag = 0.25f;
+        [Tooltip("Bank angle (deg) the ship rolls into when turning with yaw only, like a plane. 0 = off. The player's comfort presets can turn it off.")]
+        public float coordinatedBank = 22f;
+
+        [Header("Afterburner (player): full throttle burns it for extra speed")]
+        [Tooltip("Top speed multiplier while the afterburner burns.")]
+        public float afterburnerMultiplier = 1.45f;
+        [Tooltip("Seconds of afterburner from full to empty.")]
+        public float afterburnerSeconds = 4f;
+        [Tooltip("Seconds to refill from empty, starting after the delay.")]
+        public float afterburnerRefill = 8f;
+        public float afterburnerRefillDelay = 1.5f;
+        [Tooltip("Throttle at or above which the afterburner burns.")]
+        [Range(0.9f, 1f)] public float afterburnerFrom = 0.98f;
 
         [Header("Throttle bands: turn rate multiplier by throttle (the sweet spot)")]
         [Tooltip("Throttle range of the sweet spot (tightest turns).")]
@@ -504,7 +543,10 @@ namespace HexWing
         public HapticPulse missile = new(0.4f, 0.7f, 0.15f);
         public HapticPulse evasive = new(0.5f, 0.5f, 0.1f);
         public HapticPulse missileWarning = new(0.2f, 0.35f, 0.08f);
+        public HapticPulse detent = new(0.9f, 0.35f, 0.02f);
         [Tooltip("Constant light rumble while boosting (amplitude).")]
         [Range(0f, 1f)] public float boostRumble = 0.12f;
+        [Tooltip("Rumble while the afterburner burns (amplitude).")]
+        [Range(0f, 1f)] public float afterburnerRumble = 0.28f;
     }
 }

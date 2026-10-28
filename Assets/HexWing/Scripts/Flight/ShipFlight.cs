@@ -39,6 +39,11 @@ namespace HexWing
         public bool AutoLeveling { get; private set; }
         public bool Frozen { get; set; }
         public bool Evading => _evadeTime < _evadeDuration;
+        /// <summary>The player's ship has an afterburner (full throttle); AI ships don't.</summary>
+        public bool AllowAfterburner { get; set; }
+        /// <summary>0..1 afterburner left.</summary>
+        public float AfterburnerFuel { get; private set; } = 1f;
+        public bool Afterburning { get; private set; }
         public float EvasiveCooldownLeft => Mathf.Max(0f, _evadeReadyAt - Time.time);
 
         /// <summary>Raised when an evasive maneuver starts (sign: -1 left, +1 right).</summary>
@@ -53,6 +58,8 @@ namespace HexWing
         float _sinceRoll;
         float _evadeTime = 1f, _evadeDuration = 0f, _evadeSign = 1f, _evadeReadyAt, _breakLockUntil;
         bool _evasiveHeld;
+        bool _banked, _burnLocked;
+        float _burnStoppedAt = float.NegativeInfinity;
         Damageable _self;
         readonly RaycastHit[] _hits = new RaycastHit[4];
 
@@ -73,6 +80,8 @@ namespace HexWing
             _sinceRoll = 0f;
             _evadeTime = _evadeDuration = 0f;
             _evadeReadyAt = 0f;
+            _banked = _burnLocked = Afterburning = false;
+            AfterburnerFuel = 1f;
             Speed = TargetSpeed(GameConfig.Instance.controls.cruiseThrottle);
         }
 
@@ -115,6 +124,7 @@ namespace HexWing
                     AutoLeveling = true;
                 }
             }
+            CoordinatedBank(ref target, f, comfort);
 
             _rates = Vector3.Lerp(_rates, target, 1f - Mathf.Exp(-f.angularResponse * dt));
             // Unity: +x pitches the nose down and +z rolls left, so both are negated
@@ -122,14 +132,60 @@ namespace HexWing
 
             Vector3 evadeStep = Evasive(dt);
 
-            float targetSpeed = TargetSpeed(throttle);
-            Speed = Mathf.MoveTowards(Speed, targetSpeed, (targetSpeed > Speed ? f.acceleration : f.deceleration) * dt);
+            Afterburner(throttle, f, dt);
+            float targetSpeed = Afterburning ? f.maxSpeed * f.afterburnerMultiplier : TargetSpeed(throttle);
+            float accel = Afterburning ? f.acceleration * 1.5f : f.acceleration;
+            Speed = Mathf.MoveTowards(Speed, targetSpeed, (targetSpeed > Speed ? accel : f.deceleration) * dt);
             Speed = Mathf.Max(Speed, f.minSpeed * 0.5f);   // never stalls, even right after a collision
 
-            float follow = f.noseLag > 0f ? 1f - Mathf.Exp(-dt / f.noseLag) : 1f;
+            // drift: in a hard turn at speed the flight path follows the nose a little later, so the ship slides
+            float turn = Mathf.Clamp01(Mathf.Max(Mathf.Abs(_rates.x) / Mathf.Max(1f, f.pitchRate), Mathf.Abs(_rates.y) / Mathf.Max(1f, f.yawRate)));
+            float lag = f.noseLag + f.driftLag * turn * Mathf.InverseLerp(f.minSpeed, f.maxSpeed, Speed);
+            float follow = lag > 0f ? 1f - Mathf.Exp(-dt / lag) : 1f;
             _direction = Vector3.Slerp(_direction, transform.forward, follow).normalized;
             Move(_direction * (Speed * dt) + evadeStep, f);
             if (_self != null) _self.Velocity = Velocity;
+        }
+
+        /// <summary>
+        /// The player's ship banks into yaw turns like a plane (flight.coordinatedBank) and levels out
+        /// again when the yaw stops, unless the pilot rolls. Off with comfort.bankIntoTurns.
+        /// </summary>
+        void CoordinatedBank(ref Vector3 target, FlightSettings f, ComfortSettings comfort)
+        {
+            if (!ApplyComfort || !comfort.bankIntoTurns || f.coordinatedBank <= 0f || _controls.Rolling || Evading)
+            {
+                _banked = false;
+                return;
+            }
+            bool yawing = Mathf.Abs(_controls.Yaw) > 0.02f;
+            if (!yawing && !_banked) return;
+            float bank = BankAngle();
+            if (float.IsNaN(bank)) return;
+            float desired = -_controls.Yaw * f.coordinatedBank;   // yaw right = banked right = a negative bank angle
+            if (!yawing && Mathf.Abs(bank) < 1f) { _banked = false; return; }
+            _banked = true;
+            float limit = f.rollRate * 0.5f;
+            target.z = Mathf.Clamp((bank - desired) * 3f, -limit, limit);
+            AutoLeveling = false;
+        }
+
+        /// <summary>
+        /// Full throttle burns the afterburner (player only): more top speed until it runs dry. Once
+        /// empty it lights again only after the throttle comes off full; it refills after a short delay.
+        /// </summary>
+        void Afterburner(float throttle, FlightSettings f, float dt)
+        {
+            if (throttle < f.afterburnerFrom) _burnLocked = false;
+            Afterburning = AllowAfterburner && !_burnLocked && throttle >= f.afterburnerFrom && AfterburnerFuel > 0f;
+            if (Afterburning)
+            {
+                AfterburnerFuel = Mathf.Max(0f, AfterburnerFuel - dt / Mathf.Max(0.1f, f.afterburnerSeconds));
+                _burnStoppedAt = Time.time;
+                if (AfterburnerFuel <= 0f) { _burnLocked = true; Afterburning = false; }
+            }
+            else if (Time.time - _burnStoppedAt >= f.afterburnerRefillDelay)
+                AfterburnerFuel = Mathf.Min(1f, AfterburnerFuel + dt / Mathf.Max(0.1f, f.afterburnerRefill));
         }
 
         /// <summary>

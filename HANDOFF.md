@@ -103,10 +103,35 @@ Updated after every step, so any session can pick up the work.
 - Step 4 blocked on: Build And Run stops at the dialog "Active Input Handling is set to Both" until the setting is Input System Package (New): set it by hand in Project Settings → Player (the builder tries too, unverified). The APK goes to `Builds/` (ignored by git). The Quest 3 is visible to `metavr device list` (developer mode is on now).
 - Nothing has run on the headset yet, so the M1 checklist and step 5 are open.
 
+**Controls rework after the first headset test** (cloud session, 2026-10-28; compiled, not run on a headset)
+- The owner's report from the headset:
+  - steering and throttle by hand movement didn't work, only the thumbsticks did,
+  - the speed went to maximum when a control was let go,
+  - some directions and buttons felt wrong,
+  - flying felt stiff.
+- Checked in the Meta XR Core 207.0.1 sources: `OVRInput.GetLocalControllerPosition/Rotation` reads OVRPlugin node poses (`USING_INPUT_SYSTEM_PACKAGE` is not defined, so the Input System path is off), and the OpenXR settings have Meta XR Feature and the Touch profiles on. So the static check found no cause. The headset log has to show it.
+- `Input/ControllerPose.cs`: a pose comes from OVRInput, or from Unity's XR input devices if OVRInput returns nothing. The source shows in the readout.
+- `PlayerInput`:
+  - A is now "the controller is the stick": tip = pitch, point left/right = yaw, twist = roll.
+  - B can put sideways movement on roll instead of yaw (`controls.sideways`).
+  - The thumbstick throttle holds by default (`controls.throttleStick` Hold), so letting go never changes the speed. Spring is the old behaviour.
+  - Throttle notches at cruise and at the boost line, with a haptic click (`controls.detentWidth`, `haptics.detent`).
+  - Yaw and roll can be inverted.
+  - Input readout on the left side display (`debug.inputReadout`): scheme, pose source (OVR / XR / BRAK), grips, both poses in cm and degrees, sticks, resulting axes. One `[HexWing] Input:` log line per second (`debug.inputLog`). Turn both off once the controls are confirmed.
+- `ShipFlight`:
+  - coordinated bank: yaw banks the ship up to 22° and it levels out after (`flight.coordinatedBank`; `comfort.bankIntoTurns`, off in the most comfortable preset),
+  - drift in hard turns at speed (`flight.driftLag`),
+  - an afterburner for the player at full throttle (`flight.afterburner*`), shown as `DOPALACZ [||||....]` on the left display, with a louder boost sound and a stronger rumble.
+- Space dust streaks grow more with speed.
+- Menu STEROWANIE: invert left/right and roll, stick sideways (SKRĘT / BECZKA), throttle stick (ZOSTAJE / WRACA). KOMFORT: bank into turns. The menu panel fits 12 rows.
+- The side right display names the buttons for the flying hand, also with swapped hands.
+
 ## Next
 
-1. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M8 checklists, record fps and p95 per mode in `PLAN.md`, and report the best control scheme and any discomfort. Fix what the real Unity and headset show (expect some API or tuning surprises: none of this has run yet).
-2. **M7, Team Dogfight online** (the offline mode with bots is done; the online part fills `TeamRoster` slots with remote players flown by a network `IShipPilot`): needs the owner's free Photon account, the Fusion 2 App ID and the Fusion 2 SDK imported into the project (it is downloaded after logging in at photonengine.com, so the cloud session can't fetch it). Design in `PLAN.md`: Host mode, 2–8 players, bots fill the rest, 30 kills or 10 minutes, fire events instead of networked bolts, lag-compensated hitboxes, Meta Platform invites. `IShipPilot` and `ShipControls` already separate input from flight, which is where a network pilot plugs in.
+1. **On the laptop, controls test:** `git pull`, Build Game, Build And Run. Try each scheme (Y) for a minute with the input readout on, save the log (`adb logcat -s Unity | findstr "[HexWing] Input"`) and push it as `docs/input-log.txt`. If the pose source shows BRAK or the positions stay at 0, the motion schemes still can't work and the log says why.
+2. **Art redesign** (approved plan, in progress in the cloud): Blender models, textures and a Hull shader, the cockpit, fighters, sky, map content, capital ship, effects, HUD and menus. Style frame first, for the owner's OK.
+3. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M8 checklists, record fps and p95 per mode in `PLAN.md`, and report the best control scheme and any discomfort. Fix what the real Unity and headset show (expect some API or tuning surprises: none of this has run yet).
+4. **M7, Team Dogfight online** (the offline mode with bots is done; the online part fills `TeamRoster` slots with remote players flown by a network `IShipPilot`): needs the owner's free Photon account, the Fusion 2 App ID and the Fusion 2 SDK imported into the project (it is downloaded after logging in at photonengine.com, so the cloud session can't fetch it). Design in `PLAN.md`: Host mode, 2–8 players, bots fill the rest, 30 kills or 10 minutes, fire events instead of networked bolts, lag-compensated hitboxes, Meta Platform invites. `IShipPilot` and `ShipControls` already separate input from flight, which is where a network pilot plugs in.
 
 ## Open issues
 

@@ -64,10 +64,12 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 
 ## M2 checklist
 
-Control schemes (Y cycles them; the side-left display explains the current one):
-- **A, controller tilt:** tilt the right controller to steer (click its thumbstick to set the neutral pose), left stick up/down = throttle, left/right = roll.
-- **B, virtual stick (default):** hold the right grip anywhere to take the stick; move the hand forward/back (pitch) and sideways (yaw), twist the wrist (roll). Hold the left grip to take the throttle lever: push forward = faster. Letting go of the stick centres it; the throttle stays. Left stick X also rolls.
-- **C, thumbsticks:** right stick = pitch/yaw (forward = nose down), left stick Y = throttle (centred = cruise), X = roll.
+Control schemes (Y cycles them; the side-left display explains the current one, or shows the raw input while `debug.inputReadout` is on):
+- **A, controller tilt:** the right controller is the stick. Tip it up/down = pitch, point it left/right = yaw, twist the wrist = roll. The neutral pose is taken when the scheme starts; click the right thumbstick to take it again. Left stick up/down = throttle, left/right = roll.
+- **B, virtual stick (default):** hold the right grip anywhere to take the stick; move the hand forward/back (pitch) and sideways (yaw, or roll with STEROWANIE → DRĄŻEK W BOK: BECZKA), twist the wrist (the other one). Hold the left grip to take the throttle lever: push forward = faster. Letting go of the stick centres it; the throttle stays. Left stick X also rolls.
+- **C, thumbsticks:** right stick = pitch/yaw (forward = nose down), left stick Y = throttle, X = roll.
+- Throttle in every scheme: letting go never changes it. The thumbstick throttle holds where you leave it (GAŁKA CIĄGU: ZOSTAJE; WRACA is the old spring to cruise). It clicks into notches at cruise and at the boost line. Full throttle burns the afterburner (`DOPALACZ` bar on the left display).
+- **Input readout (`debug.inputReadout`, on for now):** the left side display shows the scheme, where the controller poses come from (OVR = OVRInput, XR = Unity's XR devices, BRAK = none), both grips (`*` = held), both poses (cm, degrees, `!` = not tracked), the sticks and the resulting pitch, yaw, roll and throttle. `debug.inputLog` writes the same once per second as `[HexWing] Input: ...`.
 
 Check:
 - [ ] The log shows `Rings course: 16 rings, seed 7, farthest N m from the centre (arena 3000 m)`, then `M2 flight scene running.`
@@ -81,6 +83,10 @@ Check:
 - [ ] Flying more than 3 km from the centre: `POZA STREFĄ! WRACAJ 5…1` in red, a haptic tick each second, the arrow points home; at 0 the course restarts with a fade.
 - [ ] Vignette (default medium): the edges darken during fast turns and clear when flying straight; no hard edge visible. Try Off / Low / High in GameConfig `comfort.vignette`.
 - [ ] Auto-level: after letting go of roll, the ship rolls gently back to level (`POZIOM` on the left display). Off with `comfort.autoLevel`.
+- [ ] Yaw alone banks the ship into the turn (up to about 22°) and it levels out when the yaw stops. Off with KOMFORT → PRZECHYŁ W ZAKRĘCIE (and in the most comfortable preset).
+- [ ] Letting go of the throttle lever (B) or the left stick (A, C) never changes the speed. The throttle clicks (haptic) at cruise and at the boost line.
+- [ ] Full throttle: `DOPALACZ ... PALI`, more speed, longer dust streaks, a stronger rumble; after about 4 s it runs dry and refills after you come off full throttle.
+- [ ] Moving the right hand in A and B steers: the readout shows the pose source `OVR` (or `XR`) and the positions change as the hands move.
 - [ ] Turn limit: `comfort.turnRateLimit` 45 makes turns slower; 0 is off.
 - [ ] Space dust specks stream past and show speed; they never pop up inside the cockpit.
 - [ ] Opening the system menu or taking the headset off pauses everything (log `Paused`), coming back resumes it.
@@ -208,7 +214,8 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 - **Text:** the cockpit screens use the legacy `TextMesh` with the built-in `LegacyRuntime.ttf`, so no TMP import is needed in M1. If Polish letters show as boxes, check the font's dynamic character set.
 - **Recenter:** `OVRManager.display.RecenterPose()` with EyeLevel tracking. If the view doesn't return to the seat, check that the tracking origin really is EyeLevel on the rig's `OVRManager`.
 - **Virtual stick (B):** positions come from `OVRInput.GetLocalControllerPosition` in tracking space, which is fixed to the cockpit. If the stick reacts to turning the ship, check that the rig has no rotation relative to the ship. If it's too twitchy or too lazy, tune `controls.stickRange` first, then `deadzone` and `curve`.
-- **Twist roll and axes:** the sign conventions (push forward = nose down, twist clockwise = roll right) were derived on paper. If any axis is reversed on the headset, fix it in `PlayerInput`, not with the invert option.
+- **Twist roll and axes:** the sign conventions (push forward = nose down, twist clockwise = roll right) were derived on paper. If any axis is reversed for everyone on the headset, fix it in `PlayerInput`; the invert options (pitch, yaw, roll) are for personal taste.
+- **Motion controls didn't respond in the first headset test** (only the sticks did). `ControllerPose` falls back to Unity's XR devices when OVRInput gives no pose. The input readout and log show which source works; if both show `BRAK`, check that the OpenXR Meta XR Feature and the Touch controller profiles are on and that `OVRManager` is on the rig.
 - **Lock-on button:** the plan had lock-on on the right grip, but scheme B uses that grip for the stick, so lock-on is the other hand's trigger in every scheme.
 - **Holographic HUD:** markers are drawn 30 m from the eye in the true direction of what they mark (`combat.hudDistance`). If they are uncomfortable to focus on, try 15–60 m. They are depth-tested, so the canopy frame hides them.
 - **AI** (`AI/AIPilot.cs`) was tuned on paper. If enemies are too hard, lower `ai.damageScale` and raise `ai.aimError` first; if they circle without fighting, raise `ai.fireCone`; if they ram, raise `ai.breakOffDistance`. Its axis signs follow `ShipFlight` (pitch + = nose up, yaw + = right, roll + = right).

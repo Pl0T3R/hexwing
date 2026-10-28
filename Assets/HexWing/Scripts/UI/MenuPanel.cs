@@ -26,8 +26,8 @@ namespace HexWing
     /// </summary>
     public class MenuPanel : MonoBehaviour
     {
-        const int MaxRows = 9;
-        const float Width = 1.0f, Height = 0.86f, RowHeight = 0.075f, Distance = 1.5f;
+        const int MaxRows = 12;
+        const float Width = 1.0f, Height = 0.86f, RowHeight = 0.06f, Distance = 1.5f;
 
         public bool Visible { get; private set; }
 
