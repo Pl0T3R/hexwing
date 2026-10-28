@@ -9,8 +9,10 @@ namespace HexWing
     /// - the crosshair (a hexagon) where the guns converge; it pulses on every hit,
     /// - a small diamond on every enemy in range ahead, a small white triangle on every wingman,
     /// - brackets on the current target: white, closing in while locking, amber and turning when locked,
-    /// - the lead marker: aim the crosshair at it and the bolts meet the target.
-    /// All markers are instanced: 6 draw calls at most.
+    /// - the lead marker: aim the crosshair at it and the bolts meet the target,
+    /// - a turning lock ring around a locked target.
+    /// The markers are glowing glyphs from one atlas (Art/fx/make_fx.py, Hud shader); without the atlas the
+    /// older flat outlines are drawn. All markers are instanced: 7 draw calls at most.
     /// </summary>
     public class TargetingHud : MonoBehaviour
     {
@@ -20,7 +22,7 @@ namespace HexWing
         Transform _eye;
         ShipWeapons _weapons;
         Damageable _self;
-        InstancedBatch _crosshair, _diamonds, _allies, _bracketWhite, _bracketAmber, _lead;
+        InstancedBatch _crosshair, _diamonds, _allies, _bracketWhite, _bracketAmber, _lead, _lockRing;
         float _hitPulse;
 
         void Start()
@@ -29,14 +31,31 @@ namespace HexWing
             _eye = cockpit != null ? cockpit.Head : transform;
             _weapons = GetComponent<ShipWeapons>();
             _self = GetComponent<Damageable>();
-            var cyan = Mats.Get(Mats.HudCyan);
-            _crosshair = new InstancedBatch(Outline(6, 0.5f, 0.06f, 30f), cyan, 1);
-            _diamonds = new InstancedBatch(Outline(4, 0.5f, 0.1f, 0f), cyan, 64);
-            _allies = new InstancedBatch(Outline(3, 0.5f, 0.12f, 90f), Mats.Get(Mats.HudWhite), 16);
-            var bracket = Brackets();
-            _bracketWhite = new InstancedBatch(bracket, Mats.Get(Mats.HudWhite), 1);
-            _bracketAmber = new InstancedBatch(bracket, Mats.Get(Mats.HudAmber), 1);
-            _lead = new InstancedBatch(Filled(6, 0.5f), cyan, 1);
+            if (Resources.Load<Texture2D>("Textures/HUD_Glyphs") != null)
+            {
+                var cyan = Mats.Get(Mats.HudGlyphCyan);
+                var white = Mats.Get(Mats.HudGlyphWhite);
+                var amber = Mats.Get(Mats.HudGlyphAmber);
+                _crosshair = new InstancedBatch(Glyph(0), cyan, 1);
+                _diamonds = new InstancedBatch(Glyph(1), cyan, 64);
+                _allies = new InstancedBatch(Glyph(2), white, 16);
+                _bracketWhite = new InstancedBatch(Glyph(3), white, 1);
+                _bracketAmber = new InstancedBatch(Glyph(3), amber, 1);
+                _lead = new InstancedBatch(Glyph(4), cyan, 1);
+                _lockRing = new InstancedBatch(Glyph(5), amber, 1);
+            }
+            else
+            {
+                var cyan = Mats.Get(Mats.HudCyan);
+                _crosshair = new InstancedBatch(Outline(6, 0.5f, 0.06f, 30f), cyan, 1);
+                _diamonds = new InstancedBatch(Outline(4, 0.5f, 0.1f, 0f), cyan, 64);
+                _allies = new InstancedBatch(Outline(3, 0.5f, 0.12f, 90f), Mats.Get(Mats.HudWhite), 16);
+                var bracket = Brackets();
+                _bracketWhite = new InstancedBatch(bracket, Mats.Get(Mats.HudWhite), 1);
+                _bracketAmber = new InstancedBatch(bracket, Mats.Get(Mats.HudAmber), 1);
+                _lead = new InstancedBatch(Filled(6, 0.5f), cyan, 1);
+                _lockRing = new InstancedBatch(Outline(16, 0.5f, 0.04f, 0f), Mats.Get(Mats.HudAmber), 1);
+            }
             if (LaserSystem.Instance != null) LaserSystem.Instance.Hit += OnLaserHit;
             if (MissileSystem.Instance != null) MissileSystem.Instance.Hit += OnMissileHit;
         }
@@ -67,7 +86,7 @@ namespace HexWing
             float d = cfg.hudDistance;
             var eye = _eye.position;
             var up = transform.up;
-            _crosshair.Clear(); _diamonds.Clear(); _allies.Clear(); _bracketWhite.Clear(); _bracketAmber.Clear(); _lead.Clear();
+            _crosshair.Clear(); _diamonds.Clear(); _allies.Clear(); _bracketWhite.Clear(); _bracketAmber.Clear(); _lead.Clear(); _lockRing.Clear();
             bool alive = _self == null || _self.Alive;
 
             if (alive)
@@ -92,14 +111,17 @@ namespace HexWing
                 {
                     float progress = _weapons.LockProgress;
                     if (_weapons.Locked)
-                        Place(_bracketAmber, eye, target.transform.position, d, BracketDeg, up, Time.time * 90f);
+                    {
+                        Place(_bracketAmber, eye, target.transform.position, d, BracketDeg, up, 0f);
+                        Place(_lockRing, eye, target.transform.position, d, BracketDeg * 1.25f, up, Time.time * 90f);
+                    }
                     else
                         Place(_bracketWhite, eye, target.transform.position, d, BracketDeg * Mathf.Lerp(2f, 1f, progress), up, progress * 45f);
                     Place(_lead, eye, _weapons.LeadPoint, d, LeadDeg, up, 0f);
                 }
             }
 
-            _crosshair.Draw(); _diamonds.Draw(); _allies.Draw(); _bracketWhite.Draw(); _bracketAmber.Draw(); _lead.Draw();
+            _crosshair.Draw(); _diamonds.Draw(); _allies.Draw(); _bracketWhite.Draw(); _bracketAmber.Draw(); _lead.Draw(); _lockRing.Draw();
         }
 
         static void Place(InstancedBatch batch, Vector3 eye, Vector3 worldTarget, float distance, float degrees, Vector3 up, float spin)
@@ -113,6 +135,22 @@ namespace HexWing
         }
 
         // --- marker meshes (unit size, in the XY plane, facing -Z toward the eye) ---------------
+
+        /// <summary>
+        /// A quad showing one cell of the glyph atlas (4 x 2 cells). The glyph's main shape fills 77% of the
+        /// cell, so the quad is 1.3 units across to keep the markers the size the outlines had.
+        /// </summary>
+        static Mesh Glyph(int cell)
+        {
+            const float h = 0.65f;
+            float u0 = (cell % 4) * 0.25f, v1 = 1f - (cell / 4) * 0.5f, u1 = u0 + 0.25f, v0 = v1 - 0.5f;
+            var m = new Mesh { name = "HUD Glyph " + cell };
+            m.vertices = new[] { new Vector3(-h, -h, 0f), new Vector3(h, -h, 0f), new Vector3(h, h, 0f), new Vector3(-h, h, 0f) };
+            m.uv = new[] { new Vector2(u0, v0), new Vector2(u1, v0), new Vector2(u1, v1), new Vector2(u0, v1) };
+            m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+            m.RecalculateBounds();
+            return m;
+        }
 
         static Mesh Outline(int sides, float radius, float width, float startDeg)
         {

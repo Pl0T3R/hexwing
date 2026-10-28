@@ -32,6 +32,7 @@ namespace HexWing
         {
             _panel = GetComponent<MenuPanel>();
             _input = GetComponent<PlayerInput>();
+            if (GetComponent<HangarShowcase>() == null) gameObject.AddComponent<HangarShowcase>();   // the ship on its pad in the hangar
         }
 
         void Update()

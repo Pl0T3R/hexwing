@@ -3,7 +3,10 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// Builds the default ship's cockpit from code (original design, low-poly faceted): a ball-shaped
+    /// Builds the player's cockpit. With the Blender-made model (Resources/Models/Cockpit and
+    /// CockpitControls) the shell, frame, console, seat and details come from it; the display glasses,
+    /// their anchors and the stick and throttle pivots are always placed here, so texts and instruments
+    /// work either way. Without it, the original code-built cockpit (low-poly faceted): a ball-shaped
     /// shell with a hexagonal front window and six thin struts to an inner hex ring (the centre stays
     /// clear for the crosshair), a front console with three displays, two side panels, a seat, a
     /// floor plate and a control stick and throttle lever. The ship's origin is the centre of the ball;
@@ -18,6 +21,9 @@ namespace HexWing
             public Transform Stick, Throttle;
         }
 
+        /// <summary>Name of the renderer of the Blender-made cockpit (CockpitAlert tints its emission).</summary>
+        public const string ArtName = "Cockpit Art";
+
         const int Sectors = 12;   // around the forward axis: hex corners and edge midpoints
         const int Rows = 10;      // from the window edge back to the rear pole
 
@@ -29,10 +35,21 @@ namespace HexWing
             var root = new GameObject("Cockpit").transform;
             root.SetParent(ship, false);
 
-            MeshKit.Part("Shell", root, ShellMesh(r, cfg.windowHalfAngle, eye), Mats.Get(Mats.CockpitShell));
-            MeshKit.Part("Window Frame", root, FrameMesh(r, cfg.windowHalfAngle), Mats.Get(Mats.CockpitFrame));
-            MeshKit.Part("Accents", root, AccentMesh(r, cfg.windowHalfAngle), Mats.Get(Mats.Accent));
-            MeshKit.Part("Interior", root, InteriorMesh(eye), Mats.Get(Mats.CockpitTrim));
+            // the Blender-made cockpit (Art/blender/models/cockpit.py) if it is in the build, else the code-built one
+            var art = ArtLibrary.Get("Cockpit");
+            if (art != null && art.Lods.Length > 0)
+            {
+                // its own material copy: CockpitAlert tints the emission (the light strips) per ship class and on hits
+                var go = MeshKit.Part(ArtName, root, art.Lods[0], new Material(art.Material) { name = "Cockpit (lights)" });
+                go.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            }
+            else
+            {
+                MeshKit.Part("Shell", root, ShellMesh(r, cfg.windowHalfAngle, eye), Mats.Get(Mats.CockpitShell));
+                MeshKit.Part("Window Frame", root, FrameMesh(r, cfg.windowHalfAngle), Mats.Get(Mats.CockpitFrame));
+                MeshKit.Part("Accents", root, AccentMesh(r, cfg.windowHalfAngle), Mats.Get(Mats.Accent));
+                MeshKit.Part("Interior", root, InteriorMesh(eye), Mats.Get(Mats.CockpitTrim));
+            }
 
             var d = new Displays
             {
@@ -183,6 +200,12 @@ namespace HexWing
             var pivot = new GameObject(name).transform;
             pivot.SetParent(root, false);
             pivot.localPosition = basePoint;
+            var controls = ArtLibrary.Get("CockpitControls");
+            if (controls != null && controls.Meshes.TryGetValue("CockpitControls_" + name, out var mesh))
+            {
+                MeshKit.Part("Mesh", pivot, mesh, controls.Material);
+                return pivot;
+            }
             var b = new MeshKit.Builder();
             b.Prism(Vector3.zero, new Vector3(0f, length, 0f), radius * 1.6f, radius, 6);
             b.Box(new Vector3(0f, length + 0.04f, 0f), new Vector3(radius * 2.4f, 0.09f, radius * 2.6f), Quaternion.identity, 0.8f);

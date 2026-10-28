@@ -10,6 +10,7 @@ namespace HexWing.EditorTools
     ///   light mesh compression; Read/Write only for collision proxies ("_COL").
     /// - Resources/Textures/*_Albedo (sRGB), *_Mask (linear, alpha = AO), *_Normal (normal map): mipmaps,
     ///   ASTC 6x6 on Android (4x4 for normal maps), at most 2048.
+    /// - Resources/Textures/Sky_* and Planet_* (lat-long backdrops): no mipmaps, repeat across, up to 4096.
     /// Logs one line per model so the PC session can check that the art arrived.
     /// </summary>
     public class ArtImport : AssetPostprocessor
@@ -34,7 +35,9 @@ namespace HexWing.EditorTools
             m.importNormals = ModelImporterNormals.Import;
             m.importTangents = ModelImporterTangents.CalculateMikk;
             m.meshCompression = ModelImporterMeshCompression.Low;
-            m.isReadable = assetPath.Contains("_COL");
+            // scenery with mesh colliders built at runtime (station, wrecks) must stay readable
+            var file = System.IO.Path.GetFileNameWithoutExtension(assetPath);
+            m.isReadable = assetPath.Contains("_COL") || file == "Station" || file == "Wrecks";
             m.optimizeMeshPolygons = true;
             m.optimizeMeshVertices = true;
             m.weldVertices = true;
@@ -44,6 +47,17 @@ namespace HexWing.EditorTools
         void OnPostprocessModel(GameObject root)
         {
             if (!assetPath.StartsWith(ModelDir)) return;
+            // one submesh per mesh: the Blender parts had a material each, but the baked atlas covers them
+            // all and the game draws every mesh with one material
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                var mesh = mf.sharedMesh;
+                if (mesh == null || mesh.subMeshCount <= 1) continue;
+                var all = new System.Collections.Generic.List<int>();
+                for (int i = 0; i < mesh.subMeshCount; i++) all.AddRange(mesh.GetTriangles(i));
+                mesh.subMeshCount = 1;
+                mesh.SetTriangles(all, 0);
+            }
             int meshes = 0, sockets = 0;
             Transform nose = null;
             foreach (var t in root.GetComponentsInChildren<Transform>(true))
@@ -62,6 +76,41 @@ namespace HexWing.EditorTools
         {
             if (!assetPath.StartsWith(TextureDir)) return;
             var t = (TextureImporter)assetImporter;
+            var file = System.IO.Path.GetFileName(assetPath);
+            if (file.StartsWith("Sky_") || file.StartsWith("Planet_"))
+            {
+                // lat-long backdrops: read at mip 0 by SpaceSky.shader with its own mapping (no seam)
+                t.textureType = TextureImporterType.Default;
+                t.sRGBTexture = true;
+                t.mipmapEnabled = false;
+                t.wrapModeU = TextureWrapMode.Repeat;
+                t.wrapModeV = TextureWrapMode.Clamp;
+                t.maxTextureSize = 4096;
+                t.alphaSource = TextureImporterAlphaSource.None;
+                var sky = t.GetPlatformTextureSettings("Android");
+                sky.overridden = true;
+                sky.maxTextureSize = 4096;
+                sky.format = TextureImporterFormat.ASTC_5x5;
+                t.SetPlatformTextureSettings(sky);
+                return;
+            }
+            if (file.StartsWith("FX_") || file.StartsWith("HUD_") || file.StartsWith("UI_"))
+            {
+                // effect sprites: premultiplied colour (sRGB) with alpha as coverage
+                t.textureType = TextureImporterType.Default;
+                t.sRGBTexture = true;
+                t.alphaSource = TextureImporterAlphaSource.FromInput;
+                t.alphaIsTransparency = false;
+                t.mipmapEnabled = true;
+                t.wrapMode = TextureWrapMode.Clamp;
+                t.maxTextureSize = 1024;
+                var fx = t.GetPlatformTextureSettings("Android");
+                fx.overridden = true;
+                fx.maxTextureSize = 1024;
+                fx.format = TextureImporterFormat.ASTC_5x5;
+                t.SetPlatformTextureSettings(fx);
+                return;
+            }
             bool normal = assetPath.EndsWith("_Normal.png");
             bool linear = normal || assetPath.EndsWith("_Mask.png");
             t.textureType = normal ? TextureImporterType.NormalMap : TextureImporterType.Default;

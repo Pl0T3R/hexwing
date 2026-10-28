@@ -22,6 +22,8 @@ namespace HexWing
             public Mesh Glow;
             public Material Material;
             public readonly Dictionary<string, Vector3> Sockets = new();
+            /// <summary>Every mesh of the file by object name (moving parts, extra pieces).</summary>
+            public readonly Dictionary<string, Mesh> Meshes = new();
 
             public bool TryGetSocket(string name, out Vector3 local) => Sockets.TryGetValue(name, out local);
         }
@@ -43,6 +45,8 @@ namespace HexWing
             }
 
             model = new Model { Name = name };
+            foreach (var mf in prefab.GetComponentsInChildren<MeshFilter>(true))
+                if (mf.sharedMesh != null) model.Meshes[mf.name] = mf.sharedMesh;
             var lods = new List<Mesh>();
             for (int i = 0; i < 4; i++)
             {
@@ -50,9 +54,9 @@ namespace HexWing
                 if (mesh == null) break;
                 lods.Add(mesh);
             }
-            if (lods.Count == 0)
+            if (lods.Count == 0 && model.Meshes.Count == 0)
             {
-                Debug.LogWarning($"[HexWing] Model {name} has no {name}_LOD0 mesh; using the built-in one.");
+                Debug.LogWarning($"[HexWing] Model {name} has no meshes; using the built-in one.");
                 Missing.Add(name);
                 return null;
             }
@@ -65,7 +69,7 @@ namespace HexWing
             }
             model.Material = HullMaterial(name);
             Cache[name] = model;
-            Debug.Log($"[HexWing] Art: {name}, {model.Lods.Length} LODs ({Triangles(model.Lods[0])} triangles at LOD0), {model.Sockets.Count} sockets.");
+            Debug.Log($"[HexWing] Art: {name}, {model.Lods.Length} LODs ({(model.Lods.Length > 0 ? Triangles(model.Lods[0]) : 0)} triangles at LOD0), {model.Meshes.Count} meshes, {model.Sockets.Count} sockets.");
             return model;
         }
 

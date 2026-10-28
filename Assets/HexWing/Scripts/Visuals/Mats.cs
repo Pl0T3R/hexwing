@@ -42,6 +42,20 @@ namespace HexWing
         public const string HudCyan = "HudCyan";               // holographic crosshair, enemy diamonds, lead marker
         public const string HudWhite = "HudWhite";             // target brackets while locking
         public const string HudAmber = "HudAmber";             // target brackets when locked
+        public const string FxExplosion = "FxExplosion";       // explosion flipbook: fire turning into smoke (Sprite shader)
+        public const string FxGlowHot = "FxGlowHot";           // soft orange glow: impacts, sparks
+        public const string FxGlowCyan = "FxGlowCyan";         // soft cyan glow: player muzzle flashes
+        public const string HudGlyphCyan = "HudGlyphCyan";     // holographic HUD glyphs (Hud shader): crosshair, enemies, lead
+        public const string HudGlyphWhite = "HudGlyphWhite";   // allies, brackets while locking
+        public const string HudGlyphAmber = "HudGlyphAmber";   // brackets and lock ring when locked
+        public const string PlumeRed = "PlumeRed";             // engine plumes of the Blender-made ships (Plume shader): enemies
+        public const string PlumeAmber = "PlumeAmber";         // the elite, the bomber
+        public const string PlumeCyan = "PlumeCyan";           // allies, transports, the fighter
+        public const string PlumeGreen = "PlumeGreen";         // the interceptor
+        public const string BeamCyan = "BeamCyan";             // glow around player laser bolts (Beam shader)
+        public const string BeamRed = "BeamRed";               // glow around enemy laser bolts
+        public const string MenuPanelArt = "MenuPanelArt";     // the menu panel: glass, frame and title band (Panel shader)
+        public const string MenuHighlight = "MenuHighlight";   // the glowing bar under the selected menu row (Hud shader)
 
         static readonly Dictionary<string, Material> Cache = new();
 
@@ -60,8 +74,76 @@ namespace HexWing
 
         static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out var c) ? c : Color.magenta;
 
+        /// <summary>Engine plume colours (same as HexWingBuilder.CreateMaterials).</summary>
+        public static Color PlumeColor(string name) => name switch
+        {
+            PlumeRed => new Color(1f, 0.25f, 0.1f),
+            PlumeAmber => new Color(1f, 0.6f, 0.15f),
+            PlumeGreen => new Color(0.35f, 1f, 0.45f),
+            _ => new Color(0.3f, 0.85f, 1f),
+        };
+
+        /// <summary>Laser glow tints (same as HexWingBuilder.CreateMaterials).</summary>
+        public static Color BeamColor(string name) => name == BeamRed ? new Color(1f, 0.25f, 0.12f) : new Color(0.3f, 0.9f, 1f);
+
+        /// <summary>HUD glyph tints (same as HexWingBuilder.CreateMaterials).</summary>
+        public static Color HudGlyphColor(string name) => name switch
+        {
+            HudGlyphWhite => new Color(0.9f, 0.95f, 1f),
+            HudGlyphAmber => new Color(1f, 0.66f, 0.22f),
+            _ => new Color(0.35f, 0.85f, 1f),
+        };
+
+        /// <summary>The effect sprites (same values as HexWingBuilder.CreateMaterials).</summary>
+        static Material CreateSpriteFallback(string name)
+        {
+            var shader = Shader.Find("HexWing/Sprite") ?? Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            var m = new Material(shader) { name = name, enableInstancing = true };
+            bool flipbook = name == FxExplosion;
+            m.SetTexture("_MainTex", Resources.Load<Texture2D>(flipbook ? "Textures/FX_Explosion" : "Textures/FX_Glow"));
+            m.SetFloat("_Columns", flipbook ? 8f : 1f);
+            m.SetFloat("_Rows", flipbook ? 8f : 1f);
+            m.SetColor("_Tint", name == FxGlowCyan ? new Color(0.45f, 0.9f, 1f) : name == FxGlowHot ? new Color(1f, 0.62f, 0.3f) : Color.white);
+            m.SetFloat("_Intensity", flipbook ? 1.6f : 2f);
+            return m;
+        }
+
         static Material CreateFallback(string name)
         {
+            if (name is FxExplosion or FxGlowHot or FxGlowCyan) return CreateSpriteFallback(name);
+            if (name is PlumeRed or PlumeAmber or PlumeCyan or PlumeGreen)
+            {
+                var plume = new Material(Shader.Find("HexWing/Plume") ?? Shader.Find("Universal Render Pipeline/Unlit")) { name = name, enableInstancing = true };
+                plume.SetColor("_BaseColor", PlumeColor(name));
+                return plume;
+            }
+            if (name is BeamCyan or BeamRed)
+            {
+                var beam = new Material(Shader.Find("HexWing/Beam") ?? Shader.Find("Universal Render Pipeline/Unlit")) { name = name, enableInstancing = true };
+                beam.SetTexture("_MainTex", Resources.Load<Texture2D>("Textures/FX_Glow"));
+                beam.SetColor("_BaseColor", BeamColor(name));
+                return beam;
+            }
+            if (name == MenuPanelArt)
+            {
+                var panel = new Material(Shader.Find("HexWing/Panel") ?? Shader.Find("Universal Render Pipeline/Unlit")) { name = name, enableInstancing = true };
+                panel.SetTexture("_MainTex", Resources.Load<Texture2D>("Textures/UI_Panel"));
+                return panel;
+            }
+            if (name == MenuHighlight)
+            {
+                var bar = new Material(Shader.Find("HexWing/Hud") ?? Shader.Find("Universal Render Pipeline/Unlit")) { name = name, enableInstancing = true };
+                bar.SetTexture("_MainTex", Resources.Load<Texture2D>("Textures/UI_Highlight"));
+                bar.SetColor("_BaseColor", HudGlyphColor(HudGlyphCyan));
+                return bar;
+            }
+            if (name is HudGlyphCyan or HudGlyphWhite or HudGlyphAmber)
+            {
+                var hud = new Material(Shader.Find("HexWing/Hud") ?? Shader.Find("Universal Render Pipeline/Unlit")) { name = name, enableInstancing = true };
+                hud.SetTexture("_MainTex", Resources.Load<Texture2D>("Textures/HUD_Glyphs"));
+                hud.SetColor("_BaseColor", HudGlyphColor(name));
+                return hud;
+            }
             string shaderName = name switch
             {
                 Glass or Fade or Vignette or FlashShield or HudCyan or HudWhite or HudAmber or MenuBack => "HexWing/Transparent",

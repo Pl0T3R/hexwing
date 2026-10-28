@@ -40,7 +40,11 @@ namespace HexWing
             for (int i = 0; i < 4; i++)
                 b.Box(Quaternion.Euler(0f, 0f, i * 90f + 45f) * new Vector3(0f, 0.32f, -0.9f), new Vector3(0.04f, 0.25f, 0.4f),
                       Quaternion.Euler(0f, 0f, i * 90f + 45f));
-            _batch = new InstancedBatch(b.ToMesh("Missile"), Mats.Get(Mats.Missile), MaxMissiles);
+            // the Blender-made missile if it is in the build (its mesh is +z forward like this one)
+            var art = ArtLibrary.Get("Missile");
+            _batch = art != null && art.Lods.Length > 0
+                ? new InstancedBatch(art.Lods[0], art.Material, MaxMissiles)
+                : new InstancedBatch(b.ToMesh("Missile"), Mats.Get(Mats.Missile), MaxMissiles);
         }
 
         /// <param name="damage">Negative = the config's missile damage.</param>

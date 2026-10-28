@@ -11,8 +11,8 @@ Every part is its own object while building, tagged with a material slot name; p
 """
 import math
 
+import bpy  # noqa: F401  (first: it makes bmesh and mathutils importable)
 import bmesh
-import bpy
 from mathutils import Euler, Matrix, Vector
 
 # Unity (x right, y up, z forward) -> Blender
@@ -272,3 +272,132 @@ def decimate(ob, ratio, name):
     m.use_collapse_triangulate = True
     _apply(copy, m)
     return copy
+
+
+def from_bmesh(name, bm, slot, matrix=None):
+    """An object from a bmesh built in the Unity frame (the orientation of its faces is kept)."""
+    return _object(name, bm, slot, matrix)
+
+
+def sweep(name, path, profile, slot, up=None, closed_path=False, caps=True):
+    """
+    Sweeps a closed 2D profile [(a, b), ...] along a 3D path (Unity frame). At each point the profile's
+    b axis points along up (a vector, or a function of the point), its a axis across the path; up
+    defaults to world y. Beams along the cockpit shell, frame rails, cables and pipes.
+    """
+    pts = [Vector(p) for p in path]
+    n = len(pts)
+    bm = bmesh.new()
+    rings = []
+    for i, p in enumerate(pts):
+        if closed_path:
+            t = (pts[(i + 1) % n] - pts[i - 1]).normalized()
+        else:
+            t = (pts[min(i + 1, n - 1)] - pts[max(i - 1, 0)]).normalized()
+        u = Vector(up(p) if callable(up) else (up or (0.0, 1.0, 0.0)))
+        b = (u - t * u.dot(t))
+        if b.length < 1e-5:
+            b = Vector((1.0, 0.0, 0.0)) - t * t.x
+        b.normalize()
+        a = b.cross(t).normalized()
+        rings.append([bm.verts.new(p + a * pa + b * pb) for pa, pb in profile])
+    m = len(profile)
+    pairs = list(zip(rings, rings[1:] + ([rings[0]] if closed_path else [])))
+    for r0, r1 in pairs:
+        for j in range(m):
+            k = (j + 1) % m
+            bm.faces.new((r0[j], r0[k], r1[k], r1[j]))
+    if caps and not closed_path:
+        bm.faces.new(rings[0])
+        bm.faces.new(list(reversed(rings[-1])))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return _object(name, bm, slot)
+
+
+def rect(w, h):
+    """A rectangular profile for sweep() (w across, h along up)."""
+    return [(-w / 2, -h / 2), (w / 2, -h / 2), (w / 2, h / 2), (-w / 2, h / 2)]
+
+
+def circle(r, sides=8):
+    return [(math.cos(2 * math.pi * i / sides) * r, math.sin(2 * math.pi * i / sides) * r) for i in range(sides)]
+
+
+def look_matrix(center, forward, up=(0.0, 1.0, 0.0)):
+    """Like Unity's LookRotation at a point: local z = forward, y close to up, x = right."""
+    f = Vector(forward).normalized()
+    r = Vector(up).cross(f).normalized()
+    u = f.cross(r)
+    m = Matrix((
+        (r.x, u.x, f.x, center[0]),
+        (r.y, u.y, f.y, center[1]),
+        (r.z, u.z, f.z, center[2]),
+        (0.0, 0.0, 0.0, 1.0)))
+    return m
+
+
+def tag_part(ob, value):
+    """Marks every face of ob with a part number (kept through join), for split_parts after a bake."""
+    me = ob.data
+    attr = me.attributes.get("part") or me.attributes.new("part", 'INT', 'FACE')
+    attr.data.foreach_set('value', [value] * len(me.polygons))
+
+
+def split_parts(ob, names):
+    """Splits a joined, baked object back into one object per part number (names[i] for part i)."""
+    out = []
+    for value, name in enumerate(names):
+        copy = ob.copy()
+        copy.data = ob.data.copy()
+        copy.name = name
+        copy.data.name = name
+        bpy.context.scene.collection.objects.link(copy)
+        me = copy.data
+        part = me.attributes["part"].data
+        keep = [part[i].value == value for i in range(len(me.polygons))]
+        for v in me.vertices:
+            v.select = False
+        for e in me.edges:
+            e.select = False
+        for poly, k in zip(me.polygons, keep):
+            poly.select = not k
+            if not k:
+                for vi in poly.vertices:
+                    me.vertices[vi].select = True
+        # edit-mode operators act on the view layer's active object: make it this copy alone
+        for o in bpy.context.view_layer.objects:
+            o.select_set(False)
+        bpy.context.view_layer.objects.active = copy
+        copy.select_set(True)
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_mode(type='FACE')
+        bpy.ops.mesh.delete(type='FACE')
+        bpy.ops.object.mode_set(mode='OBJECT')
+        out.append(copy)
+    bpy.data.objects.remove(ob)
+    bpy.context.view_layer.update()
+    return out
+
+
+def xf(matrix, point):
+    """A point moved by a Unity-frame matrix (to place small parts on rotated ones)."""
+    return tuple((matrix @ Vector((point[0], point[1], point[2], 1.0)))[:3])
+
+
+def xd(matrix, direction):
+    """A direction turned by a Unity-frame matrix."""
+    return tuple((matrix.to_3x3() @ Vector(direction))[:])
+
+
+def apply_transform(ob):
+    with bpy.context.temp_override(object=ob, active_object=ob, selected_objects=[ob], selected_editable_objects=[ob]):
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+
+
+def recenter(ob, offset):
+    """Moves the mesh data by -offset (Blender frame), so a part spread out for baking sits at the origin again."""
+    me = ob.data
+    off = Vector(offset)
+    for v in me.vertices:
+        v.co -= off
+    me.update()

@@ -138,10 +138,25 @@ Updated after every step, so any session can pick up the work.
   - `GameConfig.visuals`.
 - The runtime and `ArtImport.cs` compile with 0 errors and 0 warnings against the Unity DLLs. The shader is checked only in the real Unity.
 
+**Art redesign, step 2: everything else** (cloud session, 2026-10-28)
+- Models (Blender scripts in `Art/blender/models`, previews in `Art/previews`, triangle counts in `Art/previews/report.txt`):
+  - the cockpit (14.3k triangles, 2048²) with a separate stick and throttle (`CockpitControls`),
+  - fighters: Trident (elite), Swallow (wingman), the three player classes Sokół, Jastrząb and Żubr (hangar showcase),
+  - the transport, the target drone, the missile, the Kolos turret,
+  - the capital ship Kolos, the ring station "Brzask", four wreck sections, five asteroid shapes.
+- Sky: a nebula panorama (4096×2048) and a planet map per map; `SpaceSky.shader` samples them and draws Belt's planet rings (with the planet's shadow on them).
+- Map content (`World/MapSet.cs`): on Orbit the station outside the arena and two wreck fields with tumbling debris, all with colliders. Belt's asteroids use the new rock shapes with three LODs.
+- Effects (`Art/fx/make_fx.py`): an 8×8 explosion flipbook (fire into smoke), soft glows, drawn instanced by the new `Sprite.shader` (`Effects.cs`). Laser bolts get a glow (`Beam.shader`), engines soft plumes (`Plume.shader`).
+- HUD: glyph atlas (hexagon crosshair, diamonds, chevrons, brackets, lock ring, lead pip) drawn with `Hud.shader`.
+- Texts: TextMeshPro with Rajdhani (OFL), made by the builder (`HexWing > 5. Text Font`); the legacy font is the fallback.
+- Menu: the textured glass panel (`Panel.shader`), a glowing highlight bar, and the selected ship turning on a pad in the hangar (`UI/HangarShowcase.cs`).
+- Every model has a fallback to the old code-built mesh (`visuals.useArtModels` off switches them all off).
+- C#: 0 errors, 0 warnings against the Unity DLLs with stubs. The shaders have only been checked by structure: the first Unity run is the real test.
+
 ## Next
 
 1. **On the laptop, controls test:** `git pull`, Build Game, Build And Run. Try each scheme (Y) for a minute with the input readout on, save the log (`adb logcat -s Unity | findstr "[HexWing] Input"`) and push it as `docs/input-log.txt`. If the pose source shows BRAK or the positions stay at 0, the motion schemes still can't work and the log says why.
-2. **Art redesign** (approved plan, in progress in the cloud): Blender models, textures and a Hull shader, the cockpit, fighters, sky, map content, capital ship, effects, HUD and menus. Style frame first, for the owner's OK.
+2. **Art redesign, check on the headset:** `git pull`, **HexWing → Build Game twice** (the first run imports TMP Essentials, the second makes the Rajdhani font), Build And Run. Go through the "Art" checklist in CLAUDE.md, fix any pink shader first (the Console names the line), then send screenshots or the owner's verdict back. Next art steps after that: icons and frames on the cockpit screens, a mining outpost for Belt, a shield-hit ripple.
 3. **On the laptop:** CLAUDE.md steps 1–5. Run the M1–M8 checklists, record fps and p95 per mode in `PLAN.md`, and report the best control scheme and any discomfort. Fix what the real Unity and headset show (expect some API or tuning surprises: none of this has run yet).
 4. **M7, Team Dogfight online** (the offline mode with bots is done; the online part fills `TeamRoster` slots with remote players flown by a network `IShipPilot`): needs the owner's free Photon account, the Fusion 2 App ID and the Fusion 2 SDK imported into the project (it is downloaded after logging in at photonengine.com, so the cloud session can't fetch it). Design in `PLAN.md`: Host mode, 2–8 players, bots fill the rest, 30 kills or 10 minutes, fire events instead of networked bolts, lag-compensated hitboxes, Meta Platform invites. `IShipPilot` and `ShipControls` already separate input from flight, which is where a network pilot plugs in.
 

@@ -32,6 +32,7 @@ namespace HexWing.EditorTools
             ConfigureProject();
             CreateMaterials();
             CreateArtMaterials();
+            EnsureTextFont();
             EnsureGameConfig();
             EnsureShipDefinitions();
             BuildFlightScene();
@@ -347,9 +348,45 @@ namespace HexWing.EditorTools
             Translucent(Mats.HudWhite, new Color(1f, 1f, 1f, 0.9f), CompareFunction.LessEqual);
             Translucent(Mats.HudAmber, new Color(1f, 0.7f, 0.28f, 0.95f), CompareFunction.LessEqual);
 
+            // holographic HUD glyphs (one atlas, three tints)
+            foreach (var hud in new[] { Mats.HudGlyphCyan, Mats.HudGlyphWhite, Mats.HudGlyphAmber })
+            {
+                var m = Material(hud, "HexWing/Hud");
+                m.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/HUD_Glyphs.png"));
+                m.SetColor("_BaseColor", Mats.HudGlyphColor(hud));
+            }
+            // engine plumes of the Blender-made ships
+            foreach (var plume in new[] { Mats.PlumeRed, Mats.PlumeAmber, Mats.PlumeCyan, Mats.PlumeGreen })
+                Material(plume, "HexWing/Plume").SetColor("_BaseColor", Mats.PlumeColor(plume));
+            // glow around laser bolts
+            foreach (var beam in new[] { Mats.BeamCyan, Mats.BeamRed })
+            {
+                var m = Material(beam, "HexWing/Beam");
+                m.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/FX_Glow.png"));
+                m.SetColor("_BaseColor", Mats.BeamColor(beam));
+            }
+            // menu panel and its selection bar
+            var panelArt = Material(Mats.MenuPanelArt, "HexWing/Panel");
+            panelArt.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/UI_Panel.png"));
+            var highlight = Material(Mats.MenuHighlight, "HexWing/Hud");
+            highlight.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/UI_Highlight.png"));
+            highlight.SetColor("_BaseColor", Mats.HudGlyphColor(Mats.HudGlyphCyan));
+            // effect sprites (Art/fx/make_fx.py textures)
+            Sprite(Mats.FxExplosion, "FX_Explosion", 8, Color.white, 1.6f);
+            Sprite(Mats.FxGlowHot, "FX_Glow", 1, new Color(1f, 0.62f, 0.3f), 2f);
+            Sprite(Mats.FxGlowCyan, "FX_Glow", 1, new Color(0.45f, 0.9f, 1f), 2f);
+
             var text = Material(Mats.Text, "HexWing/Text");
             text.SetColor("_BaseColor", Color.white);
-            Material(Mats.Sky, "HexWing/SpaceSky");
+            var sky = Material(Mats.Sky, "HexWing/SpaceSky");
+            // the Blender-rendered nebula and planet of the default map (MapTheme swaps them for the Belt)
+            var nebula = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Resources/Textures/Sky_Orbit_Nebula.jpg");
+            var planet = AssetDatabase.LoadAssetAtPath<Texture2D>(Root + "/Resources/Textures/Planet_Orbit.jpg");
+            sky.SetTexture("_NebulaMap", nebula);
+            sky.SetFloat("_NebulaMapAmount", nebula != null ? 1f : 0f);
+            sky.SetTexture("_PlanetMap", planet);
+            sky.SetFloat("_PlanetMapAmount", planet != null ? 1f : 0f);
+            sky.SetFloat("_RingStrength", 0f);
             AssetDatabase.SaveAssets();
         }
 
@@ -379,6 +416,72 @@ namespace HexWing.EditorTools
             Debug.Log($"[HexWing] Art materials: {made} (HexWing/Hull).");
         }
 
+        // --- text font (TextMeshPro) ------------------------------------------------------------
+
+        const string TmpShaderName = "TextMeshPro/Distance Field";
+        const string FontSource = Root + "/Fonts/Rajdhani-SemiBold.ttf";
+        const string FontAssetPath = Root + "/Resources/Fonts/Rajdhani SDF.asset";
+        const string FontCharacters = " !\"#%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]_abcdefghijklmnopqrstuvwxyz|°±×" +
+                                      "ĄĆĘŁŃÓŚŹŻąćęłńóśźż…•→←↑↓";
+
+        /// <summary>
+        /// The cockpit, HUD and menu font: a TextMeshPro SDF font asset (Resources/Fonts/Rajdhani SDF) made from
+        /// Fonts/Rajdhani-SemiBold.ttf (OFL), dynamic, with the Polish letters added up front. It needs TMP
+        /// Essential Resources (the SDF shaders): imported here if missing, which finishes after this call,
+        /// so the first Build Game may only import them; run Build Game again to make the font. Without the
+        /// font asset, CockpitDisplay uses the legacy built-in font.
+        /// </summary>
+        [MenuItem("HexWing/5. Text Font (TextMeshPro)", priority = 24)]
+        public static void EnsureTextFont()
+        {
+            if (AssetDatabase.LoadAssetAtPath<TMPro.TMP_FontAsset>(FontAssetPath) != null) return;
+            if (Shader.Find(TmpShaderName) == null)
+            {
+                ImportTmpEssentials();
+                return;
+            }
+            var font = AssetDatabase.LoadAssetAtPath<Font>(FontSource);
+            if (font == null)
+            {
+                Debug.LogWarning($"[HexWing] {FontSource} missing: the texts keep the built-in font.");
+                return;
+            }
+            var asset = TMPro.TMP_FontAsset.CreateFontAsset(font, 72, 8, UnityEngine.TextCore.LowLevel.GlyphRenderMode.SDFAA, 1024, 1024,
+                                                            TMPro.AtlasPopulationMode.Dynamic, true);
+            if (asset == null)
+            {
+                Debug.LogWarning("[HexWing] Could not make the TextMeshPro font asset; the texts keep the built-in font.");
+                return;
+            }
+            asset.name = "Rajdhani SDF";
+            Directory.CreateDirectory(Path.GetDirectoryName(FontAssetPath));
+            AssetDatabase.CreateAsset(asset, FontAssetPath);
+            var atlas = asset.atlasTextures[0];
+            atlas.name = "Rajdhani SDF Atlas";
+            AssetDatabase.AddObjectToAsset(atlas, asset);
+            asset.material.name = "Rajdhani SDF Material";
+            AssetDatabase.AddObjectToAsset(asset.material, asset);
+            asset.TryAddCharacters(FontCharacters);
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[HexWing] Text font: {FontAssetPath} (TextMeshPro SDF, Polish letters included).");
+        }
+
+        static void ImportTmpEssentials()
+        {
+            foreach (var package in new[] { "com.unity.ugui", "com.unity.textmeshpro" })
+            {
+                var info = UnityEditor.PackageManager.PackageInfo.FindForAssetPath($"Packages/{package}");
+                if (info == null || string.IsNullOrEmpty(info.resolvedPath)) continue;
+                var unityPackage = Path.Combine(info.resolvedPath, "Package Resources", "TMP Essential Resources.unitypackage");
+                if (!File.Exists(unityPackage)) continue;
+                AssetDatabase.ImportPackage(unityPackage, false);
+                Debug.Log("[HexWing] Importing TMP Essential Resources. When it is done, run HexWing > Build Game again to make the text font.");
+                return;
+            }
+            Debug.LogWarning("[HexWing] TMP Essential Resources not found. Import them by hand (Window > TextMeshPro > Import TMP Essential Resources), then run Build Game again.");
+        }
+
         static Material Faceted(string name, Color lit, Color shadow, Color rim, float rimStrength, float specStrength, float gloss, float emission)
         {
             var m = Material(name, "HexWing/Faceted");
@@ -389,6 +492,17 @@ namespace HexWing.EditorTools
             m.SetFloat("_SpecStrength", specStrength);
             m.SetFloat("_Gloss", gloss);
             m.SetFloat("_Emission", emission);
+            return m;
+        }
+
+        static Material Sprite(string name, string texture, int frames, Color tint, float intensity)
+        {
+            var m = Material(name, "HexWing/Sprite");
+            m.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/Textures/{texture}.png"));
+            m.SetFloat("_Columns", frames);
+            m.SetFloat("_Rows", frames);
+            m.SetColor("_Tint", tint);
+            m.SetFloat("_Intensity", intensity);
             return m;
         }
 

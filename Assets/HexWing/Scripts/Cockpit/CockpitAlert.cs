@@ -10,10 +10,12 @@ namespace HexWing
     public class CockpitAlert : MonoBehaviour
     {
         static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
         static readonly Color ShieldColor = new(0.75f, 0.9f, 1f);
         static readonly Color HullColor = new(1f, 0.18f, 0.12f);
 
         Material _material;
+        int _colorId = BaseColorId;
         Color _normal;
         Color _flashColor;
         Color _pendingColor;
@@ -26,11 +28,20 @@ namespace HexWing
             _health = GetComponent<Damageable>();
             foreach (var r in GetComponentsInChildren<MeshRenderer>(true))
             {
-                if (r.name != "Accents") continue;
-                _material = new Material(r.sharedMaterial);
-                _normal = _hasPending ? _pendingColor : _material.GetColor(BaseColorId);
-                _material.SetColor(BaseColorId, _normal);
-                r.sharedMaterial = _material;
+                if (r.name == CockpitFactory.ArtName)
+                {
+                    // the Blender-made cockpit: its light strips are the material's emission (already a copy)
+                    _material = r.sharedMaterial;
+                    _colorId = EmissionId;
+                }
+                else if (r.name == "Accents")
+                {
+                    _material = new Material(r.sharedMaterial);
+                    r.sharedMaterial = _material;
+                }
+                else continue;
+                _normal = _hasPending ? _pendingColor : _material.GetColor(_colorId);
+                _material.SetColor(_colorId, _normal);
                 break;
             }
         }
@@ -39,7 +50,7 @@ namespace HexWing
         public void SetBaseColor(Color color)
         {
             _normal = color;
-            if (_material != null) _material.SetColor(BaseColorId, color);
+            if (_material != null) _material.SetColor(_colorId, color);
             _pendingColor = color;
             _hasPending = _material == null;
         }
@@ -53,7 +64,7 @@ namespace HexWing
         public void Clear()
         {
             _flash = 0f;
-            if (_material != null) _material.SetColor(BaseColorId, _normal);
+            if (_material != null) _material.SetColor(_colorId, _normal);
         }
 
         void Update()
@@ -67,8 +78,8 @@ namespace HexWing
                 _flash = Mathf.Max(0f, _flash - Time.deltaTime * 5f);
                 color = Color.Lerp(color, _flashColor, _flash);
             }
-            else if (!low && _material.GetColor(BaseColorId) == _normal) return;
-            _material.SetColor(BaseColorId, color);
+            else if (!low && _material.GetColor(_colorId) == _normal) return;
+            _material.SetColor(_colorId, color);
         }
     }
 }

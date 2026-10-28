@@ -4,10 +4,11 @@ using UnityEngine;
 namespace HexWing
 {
     /// <summary>
-    /// A field of rocks for the Belt map: faceted asteroids of three shapes, scattered from a seed around
-    /// a route but never inside the clear tube along it (so the convoy's way is free; flying off the
-    /// route means weaving between rocks). Each rock has a sphere collider (ships bounce off, bolts stop);
-    /// all rocks draw instanced, one call per shape.
+    /// A field of rocks for the Belt map, scattered from a seed around a route but never inside the clear
+    /// tube along it (so the convoy's way is free; flying off the route means weaving between rocks). Each
+    /// rock has a sphere collider (ships bounce off, bolts stop); all rocks draw instanced, one call per
+    /// shape and level of detail. The rocks are the Blender-made Asteroids model (five textured shapes,
+    /// three LODs picked by on-screen size) if it is in the build, else three code-built faceted shapes.
     /// </summary>
     public class AsteroidField : MonoBehaviour
     {
@@ -22,6 +23,8 @@ namespace HexWing
         readonly List<Rock> _rocks = new();
         InstancedBatch[] _batches;
         GameObject _colliders;
+        int _shapes = 3, _lods = 1;
+        Transform _eye;
 
         public int Count => _rocks.Count;
 
@@ -30,16 +33,7 @@ namespace HexWing
         {
             if (_rocks.Count > 0) return;
             var rng = new System.Random(cfg.asteroidSeed);
-            if (_batches == null)
-            {
-                _batches = new InstancedBatch[3];
-                for (int s = 0; s < 3; s++)
-                {
-                    var b = new MeshKit.Builder();
-                    b.Ico(Vector3.zero, new Vector3(0.5f, 0.42f + s * 0.06f, 0.48f - s * 0.04f), 0.12f + s * 0.04f, new System.Random(30 + s));
-                    _batches[s] = new InstancedBatch(b.ToMesh($"Asteroid {s + 1}"), Mats.Get(Mats.Asteroid), 512);
-                }
-            }
+            if (_batches == null) CreateBatches();
             _colliders = new GameObject("Asteroid Colliders");
             _colliders.transform.SetParent(transform, false);
 
@@ -61,7 +55,7 @@ namespace HexWing
                     Rotation = Quaternion.Euler(R(rng) * 180f, R(rng) * 180f, R(rng) * 180f),
                     Spin = Quaternion.Euler(R(rng) * 4f, R(rng) * 4f, R(rng) * 4f),
                     Size = size,
-                    Shape = rng.Next(3),
+                    Shape = rng.Next(_shapes),
                 };
                 _rocks.Add(rock);
                 var col = _colliders.AddComponent<SphereCollider>();
@@ -73,10 +67,48 @@ namespace HexWing
 
         static float R(System.Random rng) => (float)rng.NextDouble() * 2f - 1f;
 
+        void CreateBatches()
+        {
+            var art = ArtLibrary.Get("Asteroids");
+            if (art != null && art.Meshes.ContainsKey("Asteroids_0_LOD0"))
+            {
+                int shapes = 0;
+                while (art.Meshes.ContainsKey($"Asteroids_{shapes}_LOD0")) shapes++;
+                _shapes = shapes;
+                _lods = 3;
+                _batches = new InstancedBatch[_shapes * _lods];
+                for (int s = 0; s < _shapes; s++)
+                    for (int l = 0; l < _lods; l++)
+                    {
+                        if (!art.Meshes.TryGetValue($"Asteroids_{s}_LOD{l}", out var mesh)) mesh = art.Meshes[$"Asteroids_{s}_LOD0"];
+                        _batches[s * _lods + l] = new InstancedBatch(mesh, art.Material, 512);
+                    }
+                return;
+            }
+            _shapes = 3;
+            _lods = 1;
+            _batches = new InstancedBatch[3];
+            for (int s = 0; s < 3; s++)
+            {
+                var b = new MeshKit.Builder();
+                b.Ico(Vector3.zero, new Vector3(0.5f, 0.42f + s * 0.06f, 0.48f - s * 0.04f), 0.12f + s * 0.04f, new System.Random(30 + s));
+                _batches[s] = new InstancedBatch(b.ToMesh($"Asteroid {s + 1}"), Mats.Get(Mats.Asteroid), 512);
+            }
+        }
+
+        /// <summary>Level of detail from the rock's size over its distance (about its share of the view).</summary>
+        int Lod(Vector3 position, float size)
+        {
+            if (_lods == 1 || _eye == null) return 0;
+            float ratio = size / Mathf.Max(1f, Vector3.Distance(_eye.position, position));
+            return ratio > 0.06f ? 0 : ratio > 0.015f ? 1 : 2;
+        }
+
         void LateUpdate()
         {
             if (_batches == null) return;
             foreach (var b in _batches) b.Clear();
+            if (_eye == null && PlayerCockpit.Instance != null) _eye = PlayerCockpit.Instance.Head;
             float dt = Time.deltaTime;
             for (int i = 0; i < _rocks.Count; i++)
             {
@@ -84,7 +116,7 @@ namespace HexWing
                 // a slow tumble (visual only; colliders are spheres, so they don't care)
                 r.Rotation = Quaternion.SlerpUnclamped(Quaternion.identity, r.Spin, dt) * r.Rotation;
                 _rocks[i] = r;
-                _batches[r.Shape].Add(Matrix4x4.TRS(r.Position, r.Rotation, Vector3.one * r.Size));
+                _batches[r.Shape * _lods + Lod(r.Position, r.Size)].Add(Matrix4x4.TRS(r.Position, r.Rotation, Vector3.one * r.Size));
             }
             foreach (var b in _batches) b.Draw();
         }

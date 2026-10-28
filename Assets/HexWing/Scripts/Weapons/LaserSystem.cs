@@ -25,7 +25,7 @@ namespace HexWing
         readonly Bolt[] _bolts = new Bolt[MaxBolts];
         readonly RaycastHit[] _hits = new RaycastHit[8];
         int _count;
-        InstancedBatch _player, _enemy;
+        InstancedBatch _player, _enemy, _playerGlow, _enemyGlow;
 
         /// <summary>Raised when a bolt hits: target hit, point, whether it destroyed it. For hit markers.</summary>
         public event System.Action<Damageable, Vector3, bool, Damageable> Hit;
@@ -40,6 +40,17 @@ namespace HexWing
             var mesh = b.ToMesh("Laser Bolt");
             _player = new InstancedBatch(mesh, Mats.Get(Mats.LaserPlayer), MaxBolts);
             _enemy = new InstancedBatch(mesh, Mats.Get(Mats.LaserEnemy), MaxBolts);
+            // a soft glow around each bolt (a quad along it, turned to the camera by the Beam shader)
+            if (Resources.Load<Texture2D>("Textures/FX_Glow") != null)
+            {
+                var quad = new Mesh { name = "Bolt Glow" };
+                quad.vertices = new[] { new Vector3(-0.5f, 0f, -0.5f), new Vector3(0.5f, 0f, -0.5f), new Vector3(0.5f, 0f, 0.5f), new Vector3(-0.5f, 0f, 0.5f) };
+                quad.uv = new[] { new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) };
+                quad.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+                quad.bounds = new Bounds(Vector3.zero, Vector3.one * 2f);
+                _playerGlow = new InstancedBatch(quad, Mats.Get(Mats.BeamCyan), MaxBolts);
+                _enemyGlow = new InstancedBatch(quad, Mats.Get(Mats.BeamRed), MaxBolts);
+            }
         }
 
         public void Fire(Vector3 position, Vector3 direction, Vector3 inheritVelocity, Damageable owner, Team team, float damage)
@@ -131,7 +142,10 @@ namespace HexWing
             var cfg = GameConfig.Instance.combat;
             _player.Clear();
             _enemy.Clear();
+            _playerGlow?.Clear();
+            _enemyGlow?.Clear();
             var scale = new Vector3(cfg.boltThickness, cfg.boltThickness, cfg.boltLength);
+            var glowScale = new Vector3(cfg.boltThickness * 9f, 1f, cfg.boltLength * 1.6f);
             for (int i = 0; i < _count; i++)
             {
                 ref var bolt = ref _bolts[i];
@@ -139,9 +153,16 @@ namespace HexWing
                 // the bolt's head is at its position; the body trails behind it
                 var m = Matrix4x4.TRS(bolt.Position - dir * (cfg.boltLength * 0.5f), Quaternion.LookRotation(dir), scale);
                 if (bolt.Team == Team.Player) _player.Add(m); else _enemy.Add(m);
+                if (_playerGlow != null)
+                {
+                    var g = Matrix4x4.TRS(bolt.Position - dir * (cfg.boltLength * 0.5f), Quaternion.LookRotation(dir), glowScale);
+                    if (bolt.Team == Team.Player) _playerGlow.Add(g); else _enemyGlow.Add(g);
+                }
             }
             _player.Draw();
             _enemy.Draw();
+            _playerGlow?.Draw();
+            _enemyGlow?.Draw();
         }
     }
 }

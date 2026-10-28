@@ -28,8 +28,13 @@ namespace HexWing
             var drone = go.AddComponent<TargetDrone>();
             drone._visual = new GameObject("Visual");
             drone._visual.transform.SetParent(go.transform, false);
-            MeshKit.Part("Body", drone._visual.transform, _body, Mats.Get(Mats.Drone));
-            MeshKit.Part("Eye", drone._visual.transform, _eye, Mats.Get(Mats.DroneCore));
+            var art = ArtLibrary.Get("Drone");
+            if (art != null) ArtLibrary.Attach(art, drone._visual.transform, null);
+            else
+            {
+                MeshKit.Part("Body", drone._visual.transform, _body, Mats.Get(Mats.Drone));
+                MeshKit.Part("Eye", drone._visual.transform, _eye, Mats.Get(Mats.DroneCore));
+            }
             drone._collider = go.AddComponent<SphereCollider>();
             drone._collider.radius = cfg.radius;
             var health = go.AddComponent<Damageable>();

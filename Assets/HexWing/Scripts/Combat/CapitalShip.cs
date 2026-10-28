@@ -49,8 +49,14 @@ namespace HexWing
         {
             _body = new GameObject("Body");
             _body.transform.SetParent(transform, false);
-            MeshKit.Part("Hull", _body.transform, _hull, Mats.Get(Mats.CapitalHull));
-            MeshKit.Part("Glow", _body.transform, _glow, Mats.Get(Mats.EnemyGlow));
+            // the Blender-made hull (Art/blender/models/kolos.py, same layout) if it is in the build
+            var art = ArtLibrary.Get("Kolos");
+            if (art != null) ArtLibrary.Attach(art, _body.transform, Mats.Get(Mats.PlumeRed));
+            else
+            {
+                MeshKit.Part("Hull", _body.transform, _hull, Mats.Get(Mats.CapitalHull));
+                MeshKit.Part("Glow", _body.transform, _glow, Mats.Get(Mats.EnemyGlow));
+            }
             // hull colliders: absorb bolts, ships slide off
             HullBox(new Vector3(0f, 0f, -45f), new Vector3(110f, 100f, 430f));
             HullBox(new Vector3(0f, 0f, 225f), new Vector3(70f, 60f, 110f));
@@ -73,7 +79,10 @@ namespace HexWing
             };
             for (int i = 0; i < turretSpots.Length; i++)
             {
-                var health = Part($"Turret {i + 1}", turretSpots[i], _turret, Mats.Get(Mats.EnemyHull), 8f, 120f, "DZIAŁO");
+                var turretArt = ArtLibrary.Get("KolosTurret");
+                var health = turretArt != null && turretArt.Lods.Length > 0
+                    ? Part($"Turret {i + 1}", turretSpots[i], turretArt.Lods[0], turretArt.Material, 8f, 120f, "DZIAŁO")
+                    : Part($"Turret {i + 1}", turretSpots[i], _turret, Mats.Get(Mats.EnemyHull), 8f, 120f, "DZIAŁO");
                 var turret = health.gameObject.AddComponent<CapitalTurret>();
                 turret.Init(this, health, turretSpots[i].x > 0f ? Vector3.right : Vector3.left);
                 Turrets.Add(turret);

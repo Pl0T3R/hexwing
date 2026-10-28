@@ -32,7 +32,7 @@ namespace HexWing
             bool ally = kind == ShipMeshes.Kind.Swallow;
             var glowMat = Mats.Get(ally ? Mats.Accent : kind == ShipMeshes.Kind.Trident ? Mats.RingNext : Mats.EnemyGlow);
             var art = ArtLibrary.Get(kind.ToString());
-            if (art != null) ArtLibrary.Attach(art, go.transform, glowMat);
+            if (art != null) ArtLibrary.Attach(art, go.transform, Mats.Get(ally ? Mats.PlumeCyan : kind == ShipMeshes.Kind.Trident ? Mats.PlumeAmber : Mats.PlumeRed));
             else
             {
                 MeshKit.Part("Hull", go.transform, ShipMeshes.Hull(kind), Mats.Get(ally ? Mats.AllyHull : kind == ShipMeshes.Kind.Trident ? Mats.EliteHull : Mats.EnemyHull));

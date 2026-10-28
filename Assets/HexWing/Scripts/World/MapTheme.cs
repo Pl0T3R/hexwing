@@ -43,6 +43,13 @@ namespace HexWing
                 _sky.SetColor("_PlanetColorA", new Color(0.62f, 0.38f, 0.16f));
                 _sky.SetColor("_PlanetColorB", new Color(0.85f, 0.7f, 0.48f));
                 _sky.SetColor("_AtmosphereColor", new Color(1f, 0.75f, 0.45f));
+                SetMaps("Belt");
+                // the gas giant's rings (tilted toward the arena), with the planet's shadow on them
+                _sky.SetVector("_RingNormal", new Vector4(0.35f, 1f, -0.25f, 0f));
+                _sky.SetFloat("_RingInner", 1.45f);
+                _sky.SetFloat("_RingOuter", 2.4f);
+                _sky.SetColor("_RingColor", new Color(0.86f, 0.7f, 0.5f));
+                _sky.SetFloat("_RingStrength", 0.85f);
                 if (_environment != null)
                 {
                     _environment.sunDirection = new Vector3(-0.6f, 0.25f, 0.75f);
@@ -60,6 +67,16 @@ namespace HexWing
             }
 
             RenderSettings.skybox = _sky;
+            MapSet.Show(map);
+        }
+
+        /// <summary>The Blender-rendered nebula and planet surface of a map, if they are in the build.</summary>
+        static void SetMaps(string map)
+        {
+            var nebula = Resources.Load<Texture2D>($"Textures/Sky_{map}_Nebula");
+            var planet = Resources.Load<Texture2D>($"Textures/Planet_{map}");
+            if (nebula != null) { _sky.SetTexture("_NebulaMap", nebula); _sky.SetFloat("_NebulaMapAmount", 1f); }
+            if (planet != null) { _sky.SetTexture("_PlanetMap", planet); _sky.SetFloat("_PlanetMapAmount", 1f); }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

@@ -17,6 +17,7 @@ The owner (Pl0T3R) speaks Polish, so talk to them in Polish. Code, comments and 
 - M3 is written: lasers (pooled, swept, instanced), gun heat and overheat, targeting with the holographic HUD and a lead marker, lock-on and homing missiles, hull and shields, the evasive maneuver (jink or roll), target drones in a new drone range mode, hit feedback (haptics, sounds, cockpit lights) and a mode switch.
 - M2 is written: the flight model with throttle bands and arena bounds, the input layer with control schemes A/B/C, comfort options (vignette, auto-level, turn limit), the rings course, cockpit texts, the moving stick and throttle, space dust and synthesized ship sounds.
 - It was written in a cloud session with no Unity editor. It compiles to 0 errors and 0 warnings against the Unity 6000.0.85f1 DLLs plus stubs copied from the Meta XR Core SDK sources.
+- The art redesign (2026-10-28, see "Art"): Blender-made models and textures, new shaders, effects, HUD, menu, sky and map content. Compiled against the Unity DLLs with stubs; not yet seen in Unity.
 - It has **never been opened in Unity or run on a headset**. Expect to fix compile errors against the real packages and to tune on the device.
 - The Unity project scaffold (`Packages/`, `ProjectSettings/`) does not exist yet. You create it in step 1.
 
@@ -177,27 +178,90 @@ Modes are chosen in the hangar (M8): TRENING → TOR PIERŚCIENI → STRZELNICA 
 - [ ] Comfort test: 20 minutes of Survival or Assault with the default (balanced) preset; note the moments that feel bad and which setting helped.
 - [ ] Performance: p95 frame time under 11.1 ms at 90 Hz in every mode (`metavr perf`); record the numbers in `PLAN.md`.
 
-## Art (Blender-made models, in progress)
+## Art (the visual redesign, 2026-10-28)
 
-The look is being redone with real models and textures (approved plan, 2026-10-28). They are made by Python scripts for Blender in `Art/blender` (cloud session; nothing to install on the PC):
-- `Art/blender/lib`: `geo.py` (parts written in Unity's frame: x right, y up, z forward), `surface.py` (procedural hard-surface materials: panels, edge wear, grime, emission), `bake.py` (UVs and the bake into three textures), `export.py` (FBX for Unity, preview sheets).
-- `Art/blender/models/<asset>.py`: one script per asset. `python Art/blender/build_all.py [names]` rebuilds them (needs `pip install bpy==5.2.3 numpy pillow` on Python 3.13).
+Everything visible was redone with real models, textures and effects (approved plan). It was made in a cloud session: Blender 5.2 as a Python module, plus numpy for the effect textures. Nothing needs installing on the PC, and the generated files are in git.
+
+**How it is made**
+- `Art/blender/lib`:
+  - `geo.py`: parts written in Unity's frame (x right, y up, z forward),
+  - `surface.py`: procedural hard-surface and rock materials (panels, edge wear, grime, emission, craters and veins),
+  - `bake.py`: UVs and the bake into three textures; one material slot after the bake,
+  - `export.py`: FBX for Unity and the preview sheets,
+  - `pipeline.py`: LODs, export and preview for ship-like assets.
+- `Art/blender/models/<asset>.py`: one script per asset. `python Art/blender/build_all.py [names]` rebuilds them (`pip install bpy==5.2.3 numpy pillow` on Python 3.13). A 1024 asset takes about 5 min, a 2048 one about 20 min on 4 cores.
+- `Art/fx/make_fx.py` (numpy): the explosion flipbook, the glow, the HUD glyph atlas, the menu panel and highlight textures.
 - Output:
-  - `Assets/HexWing/Resources/Models/<Name>.fbx`: meshes `<Name>_LOD0/1/2`, an optional `<Name>_Glow` and `SOCKET_*` empties,
-  - `Resources/Textures/<Name>_Albedo.png`,
-  - `<Name>_Mask.png` (R metal, G smoothness, B emission, A AO),
-  - `<Name>_Normal.png`,
-  - `Art/previews/<Name>.jpg`.
-- Unity:
-  - `Editor/ArtImport.cs` sets the import settings (no materials, MikkTSpace tangents, ASTC),
-  - **HexWing → Build Game** (or **2b. Create Art Materials**) makes `Resources/Materials/Art_<Name>.mat` with `Shaders/Hull.shader`,
-  - `Visuals/ArtLibrary.cs` loads a model and its LODs (LODGroup), else the old code-built mesh is used,
-  - `visuals.useArtModels` in GameConfig switches the art off for comparison.
-- Done so far: the Hornet (enemy fighter). Next: the cockpit, the other fighters, the sky and map content, the capital ship, effects, HUD and menus.
-- Check on the headset:
-  - the log line `Art import Hornet.fbx: 4 meshes, 4 sockets`, and no warning about the nose,
-  - `Art: Hornet, 3 LODs (... triangles at LOD0)` when Survival starts,
-  - enemies look like `Art/previews/Hornet.jpg` (lit by the map's sun), not pink, not black.
+  - `Assets/HexWing/Resources/Models/<Name>.fbx`: `<Name>_LOD0/1/2`, an optional `<Name>_Glow` (engine plumes) and `SOCKET_*` empties,
+  - `Resources/Textures/<Name>_Albedo/_Mask/_Normal.png`; the mask is R metal, G smoothness, B emission, A AO,
+  - `Sky_<Map>_Nebula.jpg` and `Planet_<Map>.jpg` (lat-long),
+  - `FX_*.png`, `HUD_Glyphs.png`, `UI_*.png`,
+  - previews in `Art/previews/*.jpg`.
+- Fonts: `Assets/HexWing/Fonts/Rajdhani-*.ttf` (OFL, credited in `Art/SOURCES.md`).
+
+**Assets**
+
+| Asset | What | LOD0 triangles | Texture |
+| --- | --- | --- | --- |
+| Hornet | enemy fighter | 4.5k | 1024 |
+| Trident | enemy elite | 3.2k | 1024 |
+| Swallow | wingman | 2.9k | 1024 |
+| Sokol, Jastrzab, Zubr | the player's ship classes (hangar showcase) | ~3–4k | 1024 |
+| Transport | escort hauler | 2.2k | 1024 |
+| Drone, Missile, KolosTurret | small objects | <2k | 256–512 |
+| Cockpit + CockpitControls | the cockpit, stick and throttle | 14.3k + 0.8k | 2048 + 512 |
+| Kolos | capital ship | see `Art/previews/report.txt` | 2048 |
+| Station | landmark on Orbit | see report | 2048 |
+| Wrecks | four cruiser sections | see report | 2048 |
+| Asteroids | five rock shapes | see report | 1024 |
+| Sky | nebulae 4096×2048 and planets 2048×1024 per map | – | – |
+
+**In Unity**
+- `Editor/ArtImport.cs` sets every import setting:
+  - models: no materials, MikkTSpace tangents, submeshes merged into one; the station and wrecks stay readable for their mesh colliders,
+  - textures: ASTC, lat-long sky without mips, sprites and HUD.
+- **HexWing → Build Game** makes:
+  - `Art_<Name>` materials (`Hull.shader`),
+  - the effect materials (`Sprite`, `Beam`, `Plume`, `Hud`, `Panel` shaders),
+  - the sky material with the nebula and planet maps,
+  - the TextMeshPro font `Resources/Fonts/Rajdhani SDF`. It needs TMP Essential Resources; the first Build Game imports them, so **run Build Game twice** on a fresh project.
+- Code:
+  - `Visuals/ArtLibrary.cs` loads a model and its LODs (LODGroup); without it the old code-built mesh is used,
+  - `World/MapSet.cs` places the station and the wreck fields on Orbit,
+  - `World/AsteroidField.cs` uses the rock shapes with LODs,
+  - `Visuals/Effects.cs`: sprite explosions, glows and smoke,
+  - `Weapons/LaserSystem.cs`: bolt glow,
+  - `Cockpit/TargetingHud.cs`: HUD glyphs,
+  - `Cockpit/CockpitDisplay.cs`: TMP texts,
+  - `UI/MenuPanel.cs`: the textured panel,
+  - `UI/HangarShowcase.cs`: the ship on its pad,
+  - `World/MapTheme.cs`: sky maps and Belt's planet rings.
+- `visuals.useArtModels` in GameConfig switches the models off for comparison.
+
+**Check on the headset (after Build Game twice)**
+- [ ] Log lines:
+  - `Art import <Name>.fbx: N meshes, M sockets` for every model, with no warning about the nose pointing backwards,
+  - `Art: <Name>, 3 LODs ...` as things appear,
+  - `Texts: TextMeshPro (Rajdhani SDF)`,
+  - `Map set: station at 3333 m`, `Map set: 2 wreck fields ...`.
+- [ ] No pink or black objects. Ships look like their previews, lit by the map's sun: Orbit white-warm from the upper right, Belt warm and low from the left.
+- [ ] Cockpit:
+  - the window, struts, console bezels around the five displays, side consoles with switches, seat with harness, cables, light strips,
+  - the light strips take the ship class colour (Sokół cyan, Jastrząb green, Żubr amber) and flash blue-white or red on hits,
+  - the stick and throttle are the new models and move.
+- [ ] Sky:
+  - Orbit: violet-teal nebulae and a galactic band with dark lanes, the stars still sharp, the blue ocean planet with clouds,
+  - Belt: red-brown dust, the banded amber gas giant with rings; the rings pass behind the planet and the planet's shadow falls on them.
+- [ ] Orbit map: the station, a big ring station with solar wings, is visible about 3.3 km away (outside the arena). Two wreck fields lie above and below the middle: torn cruiser sections with embers, slowly tumbling debris; ships bounce off them.
+- [ ] Belt map: the asteroids are textured rocks with craters and bright veins; distant ones switch to lighter LODs without popping.
+- [ ] Explosions: a white flash, a fireball turning into dark smoke and two smaller late blasts, plus shards. Impacts and muzzle flashes are soft glows. Laser bolts have a coloured glow. Engines have soft plumes.
+- [ ] HUD: a hexagon crosshair with ticks, diamond corners on enemies, chevrons on allies, brackets on the target, a turning amber lock ring when locked, the lead pip; all glow and hide behind the cockpit frame.
+- [ ] Menu:
+  - a glass panel with a cyan frame and an amber title accent,
+  - the chosen row has a glowing bar and amber text,
+  - texts in Rajdhani with Polish letters,
+  - in the hangar, the selected ship turns on a lit pad to the right of the panel.
+- [ ] Performance in the biggest fights (Assault, Escort, Team Dogfight): 90 fps, p95 under 11.1 ms, at most 150 draw calls in the readout. If over, lower `visuals.lodScreenHeights` first (LODs switch sooner), then the texture sizes in `ArtImport` (Android max size).
 
 ## Where to tune
 
@@ -229,6 +293,11 @@ The look is being redone with real models and textures (approved plan, 2026-10-2
 - `Scripts/World/SpaceEnvironment.cs`: the sun direction (lighting on the cockpit and the sun in the sky).
 
 ## Known risks
+
+- **The art shaders have never compiled in Unity:** `Hull`, `Sprite`, `Beam`, `Plume`, `Hud`, `Panel` and the new parts of `SpaceSky` (textures, rings). They follow `Faceted.shader`'s structure and URP Core functions. A pink object means a shader error: the Console names the line. `Sprite.shader` reads per-instance `_Age` and `_Seed` from `UNITY_INSTANCING_BUFFER`. If explosions show only their first frame, check that `RenderMeshInstanced` passes the `MaterialPropertyBlock` arrays (`SpriteBatch`).
+- **FBX axes:** the Blender scripts model in Unity's frame and export with forward -Z, up Y. `ArtImport` warns if a model's `SOCKET_Nose` ends up behind its centre. If a ship flies backwards or sideways, fix `export.fbx` axes, not the models.
+- **Text font:** `Rajdhani SDF` is made by the builder only after TMP Essential Resources are imported; until then the texts use the built-in font (log `Texts: built-in font`). TMP sizes: `CockpitDisplay` sets `fontSize = lineHeight × 10 / 1.2`; if the texts are too big or small on the screens, tune that factor.
+- **Mesh colliders:** the station and the wrecks use their LOD2 meshes as static mesh colliders (the importer keeps them readable). Ships sweep spheres against them like any collider.
 
 - **Builder APIs:** `ConfigureOpenXR` uses reflection and logs what it can't find; set those values by hand if the log says so. The rest of the builder is the Stopklatka builder adapted for pure VR (EyeLevel tracking, no passthrough or scene).
 - **Menu over the canopy:** the panel sits in the window's clear centre; if a strut or the inner hex ring cuts through it on the headset, move it (`MenuPanel.Distance`, the y offset in `Build`) or shrink it.

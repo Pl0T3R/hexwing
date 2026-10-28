@@ -25,8 +25,13 @@ namespace HexWing
             EnsureMeshes();
             var go = new GameObject($"Transport {index + 1}");
             go.transform.SetParent(parent, false);
-            MeshKit.Part("Hull", go.transform, _hull, Mats.Get(Mats.AllyHull));
-            MeshKit.Part("Glow", go.transform, _glow, Mats.Get(Mats.Accent));
+            var art = ArtLibrary.Get("Transport");
+            if (art != null) ArtLibrary.Attach(art, go.transform, Mats.Get(Mats.PlumeCyan));
+            else
+            {
+                MeshKit.Part("Hull", go.transform, _hull, Mats.Get(Mats.AllyHull));
+                MeshKit.Part("Glow", go.transform, _glow, Mats.Get(Mats.Accent));
+            }
             var box = go.AddComponent<BoxCollider>();
             box.size = new Vector3(16f, 16f, 70f);
             var t = go.AddComponent<Transport>();

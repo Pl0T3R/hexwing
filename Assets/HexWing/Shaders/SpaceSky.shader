@@ -1,7 +1,10 @@
-// Procedural space skybox: a star field, a faint two-colour nebula, the sun's glow and one planet with a
-// lit side and an atmosphere rim. Everything is computed from the view direction, so there is no texture
-// to load and the planet is "infinitely" far away (no depth-precision problems with huge meshes).
-// Stars are antialiased with fwidth so they don't shimmer. Sun direction: global _HexSunDirection.
+// Space skybox: the nebula and galactic band from a lat-long texture rendered in Blender (Art/blender/
+// models/sky.py; without it, a faint procedural two-colour nebula), a procedural star field, the sun's
+// glow, and one planet with a lat-long surface texture, a lit side, an atmosphere rim and optional rings
+// (with the planet's shadow on them). Everything is a function of the view direction, so the planet is
+// "infinitely" far away (no depth-precision problems with huge meshes). Stars are antialiased with
+// fwidth so they don't shimmer. Textures are read at mip 0 with the shader's own lat-long mapping
+// (centre = +z, right = +x), so there is no seam. Sun direction: global _HexSunDirection.
 Shader "HexWing/SpaceSky"
 {
     Properties
@@ -20,6 +23,16 @@ Shader "HexWing/SpaceSky"
         _PlanetColorA("Planet Color A", Color) = (0.16, 0.36, 0.55, 1)
         _PlanetColorB("Planet Color B", Color) = (0.55, 0.62, 0.68, 1)
         _AtmosphereColor("Atmosphere Color", Color) = (0.45, 0.75, 1, 1)
+        _NebulaMap("Nebula (lat-long)", 2D) = "black" {}
+        _NebulaMapAmount("Nebula Map Amount", Range(0, 2)) = 1
+        _PlanetMap("Planet Surface (lat-long)", 2D) = "white" {}
+        _PlanetMapAmount("Planet Map Amount", Range(0, 1)) = 1
+        _PlanetSpin("Planet Map Turn (0..1)", Float) = 0
+        _RingNormal("Ring Plane Normal", Vector) = (0.25, 1, 0.15, 0)
+        _RingInner("Ring Inner Radius (planet radii)", Float) = 1.45
+        _RingOuter("Ring Outer Radius (planet radii)", Float) = 2.35
+        _RingColor("Ring Color", Color) = (0.85, 0.72, 0.52, 1)
+        _RingStrength("Ring Strength (0 = no rings)", Range(0, 1)) = 0
     }
 
     SubShader
@@ -56,7 +69,33 @@ Shader "HexWing/SpaceSky"
                 half4 _PlanetColorA;
                 half4 _PlanetColorB;
                 half4 _AtmosphereColor;
+                half _NebulaMapAmount;
+                half _PlanetMapAmount;
+                float _PlanetSpin;
+                float4 _RingNormal;
+                float _RingInner;
+                float _RingOuter;
+                half4 _RingColor;
+                half _RingStrength;
             CBUFFER_END
+
+            TEXTURE2D(_NebulaMap);  SAMPLER(sampler_NebulaMap);
+            TEXTURE2D(_PlanetMap);  SAMPLER(sampler_PlanetMap);
+
+            // lat-long coordinates of a direction: centre = +z, right = +x, top = +y
+            float2 LatLong(float3 d)
+            {
+                return float2(0.5 + atan2(d.x, d.z) * (0.5 / PI), 0.5 + asin(clamp(d.y, -1.0, 1.0)) * (1.0 / PI));
+            }
+
+            // distance along a ray from the origin to a sphere (center c, radius r); negative = no hit
+            float SphereHit(float3 o, float3 d, float3 c, float r)
+            {
+                float3 oc = o - c;
+                float b = dot(oc, d);
+                float disc = b * b - (dot(oc, oc) - r * r);
+                return disc < 0.0 ? -1.0 : -b - sqrt(disc);
+            }
 
             float4 _HexSunDirection;
 
@@ -124,8 +163,10 @@ Shader "HexWing/SpaceSky"
                 float n1 = sin(d.x * 2.1 + d.y * 3.3) * sin(d.z * 2.7 - d.y * 1.4);
                 float n2 = sin(d.y * 4.2 + d.z * 1.7 + 1.3) * sin(d.x * 3.1 + 0.7);
                 half3 color = _SpaceColor.rgb;
-                color += _NebulaColorA.rgb * (half)(saturate(n1) * _NebulaStrength);
-                color += _NebulaColorB.rgb * (half)(saturate(n2) * _NebulaStrength);
+                half waves = (half)(1.0 - saturate(_NebulaMapAmount));
+                color += _NebulaColorA.rgb * (half)(saturate(n1) * _NebulaStrength) * waves;
+                color += _NebulaColorB.rgb * (half)(saturate(n2) * _NebulaStrength) * waves;
+                color += SAMPLE_TEXTURE2D_LOD(_NebulaMap, sampler_NebulaMap, LatLong(d), 0).rgb * _NebulaMapAmount;
                 color += (half3)Stars(d) * _StarBrightness;
 
                 // sun: a bright core and a wide soft glow
@@ -138,6 +179,7 @@ Shader "HexWing/SpaceSky"
                 float3 up = cross(p, right);
                 float facing = dot(d, p);
                 float tanR = tan(radians(_PlanetRadius));
+                bool onPlanet = false;
                 if (facing > 0.0)
                 {
                     float2 q = float2(dot(d, right), dot(d, up)) / (facing * tanR);
@@ -148,6 +190,11 @@ Shader "HexWing/SpaceSky"
                         float light = saturate(dot(normal, sun) * 0.9 + 0.1);
                         float bands = sin(dot(normal, up) * 9.0 + sin(dot(normal, right) * 3.0)) * 0.5 + 0.5;
                         half3 surface = lerp(_PlanetColorA.rgb, _PlanetColorB.rgb, (half)bands);
+                        float3 local = float3(dot(normal, right), dot(normal, up), dot(normal, -p));
+                        float2 puv = LatLong(local) + float2(_PlanetSpin, 0.0);
+                        half3 mapped = SAMPLE_TEXTURE2D_LOD(_PlanetMap, sampler_PlanetMap, puv, 0).rgb;
+                        surface = lerp(surface, mapped, _PlanetMapAmount);
+                        onPlanet = true;
                         half rim = (half)pow(r2, 4.0);
                         color = surface * (half)light + _AtmosphereColor.rgb * rim * (half)(light + 0.15);
                     }
@@ -157,6 +204,37 @@ Shader "HexWing/SpaceSky"
                         float halo = saturate(1.0 - (sqrt(r2) - 1.0) * 14.0);
                         float sunSide = saturate(dot(normalize(q.x * right + q.y * up), sun) * 0.7 + 0.4);
                         color += _AtmosphereColor.rgb * (half)(halo * halo * 0.5 * sunSide);
+                    }
+                }
+
+                // rings: a disc in a plane through the planet's centre (the planet sits at distance 1 with
+                // radius tanR), hidden behind the planet, in the planet's shadow where it is behind it
+                if (_RingStrength > 0.0)
+                {
+                    float3 c = p;
+                    float3 rn = normalize(_RingNormal.xyz);
+                    float dn = dot(d, rn);
+                    if (abs(dn) > 1e-4)
+                    {
+                        float t = dot(c, rn) / dn;
+                        float3 x = d * t;
+                        float rr = length(x - c) / tanR;
+                        if (t > 0.0 && rr > _RingInner && rr < _RingOuter)
+                        {
+                            float hit = SphereHit(0.0, d, c, tanR);
+                            bool hidden = onPlanet && hit > 0.0 && hit < t;
+                            if (!hidden)
+                            {
+                                float k = (rr - _RingInner) / (_RingOuter - _RingInner);
+                                float bandsR = 0.55 + 0.25 * sin(rr * 41.0) + 0.2 * sin(rr * 113.0 + 1.3);
+                                float gap = smoothstep(0.0, 0.03, abs(k - 0.62));                     // one dark division
+                                float edge = smoothstep(0.0, 0.06, k) * smoothstep(1.0, 0.85, k);
+                                float alpha = saturate(bandsR) * gap * edge * _RingStrength;
+                                float shadowed = SphereHit(x, sun, c, tanR) > 0.0 ? 0.15 : 1.0;
+                                float lit = (0.35 + 0.65 * abs(dot(rn, sun))) * shadowed;
+                                color = lerp(color, _RingColor.rgb * (half)lit, (half)alpha);
+                            }
+                        }
                     }
                 }
                 return half4(color, 1.0h);

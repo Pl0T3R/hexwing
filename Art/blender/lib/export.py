@@ -17,7 +17,8 @@ def fbx(objects, name):
     """Writes Models/<name>.fbx with the given meshes and empties (Unity frame: see geo.py)."""
     os.makedirs(MODELS, exist_ok=True)
     for o in bpy.context.view_layer.objects:
-        o.select_set(False)
+        if o is not None:
+            o.select_set(False)
     for o in objects:
         o.select_set(True)
     path = os.path.join(MODELS, name + ".fbx")
@@ -50,8 +51,9 @@ def preview(ob, name, material, radius, extra=(), size=(640, 480), samples=48, n
             bpy.data.objects.remove(o)
         elif o.name not in keep:
             o.hide_render = True
-    ob.data.materials.clear()
-    ob.data.materials.append(material)
+    for o in [ob] + [e for e in extra if e.type == 'MESH']:
+        o.data.materials.clear()
+        o.data.materials.append(material)
 
     world = scene.world or bpy.data.worlds.new("World")
     scene.world = world

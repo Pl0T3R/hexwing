@@ -64,12 +64,12 @@ def _pixels(img):
     return buf.reshape(img.size[1], img.size[0], 4)
 
 
-def bake(ob, name, size, out_dir, samples=12, ao_samples=32, margin=8, ao_in_albedo=0.35):
+def bake(ob, name, size, out_dir, samples=12, ao_samples=32, margin=8, ao_in_albedo=0.35, ao_distance=1.0):
     """Bakes the four passes of ob and writes the three game textures. Returns their paths."""
     scene = bpy.context.scene
     if scene.world is None:
         scene.world = bpy.data.worlds.new("World")
-    scene.world.light_settings.distance = 1.0
+    scene.world.light_settings.distance = ao_distance
     for o in bpy.context.view_layer.objects:
         o.select_set(False)
     ob.select_set(True)
@@ -115,7 +115,19 @@ def bake(ob, name, size, out_dir, samples=12, ao_samples=32, margin=8, ao_in_alb
     for img in (color, mask, normal, ao):
         bpy.data.images.remove(img)
     _target(ob, None, 'bsdf')
+    single_material(ob)
     return paths
+
+
+def single_material(ob):
+    """After the bake one atlas covers every part: one material slot, so the FBX has one submesh."""
+    if len(ob.material_slots) <= 1:
+        return
+    first = ob.material_slots[0].material
+    for p in ob.data.polygons:
+        p.material_index = 0
+    ob.data.materials.clear()
+    ob.data.materials.append(first)
 
 
 def _to_srgb(x):

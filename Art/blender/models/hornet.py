@@ -7,7 +7,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from lib import bake, export, geo, surface  # noqa: E402
+from lib import geo, pipeline, surface  # noqa: E402
 
 NAME = "Hornet"
 TEX = 1024
@@ -143,17 +143,7 @@ def build():
 
 def main(preview=True):
     hull, glow, sockets = build()
-    bake.unwrap(hull)
-    paths = bake.bake(hull, NAME, TEX, export.TEXTURES)
-    lod1 = geo.decimate(hull, 0.3, NAME + "_LOD1")
-    lod2 = geo.decimate(hull, 0.08, NAME + "_LOD2")
-    export.fbx([hull, lod1, lod2, glow] + sockets, NAME)
-    tris = (geo.triangles(hull), geo.triangles(lod1), geo.triangles(lod2))
-    print(f"{NAME}: LOD0 {tris[0]} / LOD1 {tris[1]} / LOD2 {tris[2]} triangles")
-    if preview:
-        mat = bake.textured_material(NAME + "_Preview", paths)
-        export.preview(hull, NAME, mat, radius=6.0, notes=f"{NAME}  {tris[0]} / {tris[1]} / {tris[2]} tri  tex {TEX}")
-    return tris
+    return pipeline.finish(NAME, hull, [glow] + sockets, TEX, radius=6.0, preview=preview)
 
 
 if __name__ == "__main__":

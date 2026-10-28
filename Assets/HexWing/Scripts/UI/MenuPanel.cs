@@ -36,6 +36,7 @@ namespace HexWing
         readonly CockpitDisplay[] _rows = new CockpitDisplay[MaxRows];
         readonly List<MenuEntry> _items = new();
         int _hover = -1, _selected, _colored = -2;
+        bool _textured;
         bool _trigger, _stickMoved;
         PlayerCockpit _cockpit;
         PlayerInput _input;
@@ -56,15 +57,25 @@ namespace HexWing
             _panel.localPosition = eye + new Vector3(0f, -0.06f, Distance);
             _panel.localRotation = Quaternion.identity;   // +Z away from the eye, like the cockpit displays
 
-            var back = new MeshKit.Builder();
-            back.Quad(new Vector3(-Width / 2, -Height / 2, 0.01f), new Vector3(Width / 2, -Height / 2, 0.01f),
-                      new Vector3(Width / 2, Height / 2, 0.01f), new Vector3(-Width / 2, Height / 2, 0.01f), new Vector3(0f, 0f, 1f));
-            MeshKit.Part("Background", _panel, back.ToMesh("Menu Background"), Mats.Get(Mats.MenuBack));
-
-            var bar = new MeshKit.Builder();
-            bar.Quad(new Vector3(-Width / 2 + 0.03f, -RowHeight * 0.45f, 0.005f), new Vector3(Width / 2 - 0.03f, -RowHeight * 0.45f, 0.005f),
-                     new Vector3(Width / 2 - 0.03f, RowHeight * 0.45f, 0.005f), new Vector3(-Width / 2 + 0.03f, RowHeight * 0.45f, 0.005f), new Vector3(0f, 0f, 1f));
-            _highlight = MeshKit.Part("Highlight", _panel, bar.ToMesh("Menu Highlight"), Mats.Get(Mats.HudCyan)).transform;
+            // the textured panel (glass, frame, title band) and a glowing selection bar, if their textures are
+            // in the build; else the plain dark panel and a solid bar
+            _textured = Resources.Load<Texture2D>("Textures/UI_Panel") != null;
+            if (_textured)
+            {
+                MeshKit.Part("Background", _panel, UvQuad("Menu Background", Width, Height, 0.01f), Mats.Get(Mats.MenuPanelArt));
+                _highlight = MeshKit.Part("Highlight", _panel, UvQuad("Menu Highlight", Width - 0.06f, RowHeight * 1.05f, 0.005f), Mats.Get(Mats.MenuHighlight)).transform;
+            }
+            else
+            {
+                var back = new MeshKit.Builder();
+                back.Quad(new Vector3(-Width / 2, -Height / 2, 0.01f), new Vector3(Width / 2, -Height / 2, 0.01f),
+                          new Vector3(Width / 2, Height / 2, 0.01f), new Vector3(-Width / 2, Height / 2, 0.01f), new Vector3(0f, 0f, 1f));
+                MeshKit.Part("Background", _panel, back.ToMesh("Menu Background"), Mats.Get(Mats.MenuBack));
+                var bar = new MeshKit.Builder();
+                bar.Quad(new Vector3(-Width / 2 + 0.03f, -RowHeight * 0.45f, 0.005f), new Vector3(Width / 2 - 0.03f, -RowHeight * 0.45f, 0.005f),
+                         new Vector3(Width / 2 - 0.03f, RowHeight * 0.45f, 0.005f), new Vector3(-Width / 2 + 0.03f, RowHeight * 0.45f, 0.005f), new Vector3(0f, 0f, 1f));
+                _highlight = MeshKit.Part("Highlight", _panel, bar.ToMesh("Menu Highlight"), Mats.Get(Mats.HudCyan)).transform;
+            }
 
             var titleAnchor = new GameObject("Title").transform;
             titleAnchor.SetParent(_panel, false);
@@ -87,6 +98,17 @@ namespace HexWing
         }
 
         static float RowY(int i) => Height / 2 - 0.15f - i * RowHeight;
+
+        /// <summary>A quad with UVs 0..1, centred, in the panel's plane (z behind the texts).</summary>
+        static Mesh UvQuad(string name, float w, float h, float z)
+        {
+            var m = new Mesh { name = name };
+            m.vertices = new[] { new Vector3(-w / 2, -h / 2, z), new Vector3(w / 2, -h / 2, z), new Vector3(w / 2, h / 2, z), new Vector3(-w / 2, h / 2, z) };
+            m.uv = new[] { new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f), new Vector2(0f, 1f) };
+            m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+            m.RecalculateBounds();
+            return m;
+        }
 
         public void Show(string title, List<MenuEntry> items)
         {
@@ -165,7 +187,9 @@ namespace HexWing
             {
                 // only when the selection moves: setting a TextMesh colour rebuilds its mesh
                 _colored = _selected;
-                for (int i = 0; i < MaxRows; i++) _rows[i].SetColor(i == _selected ? new Color(0.02f, 0.05f, 0.08f) : Color.white);
+                // on the solid bar the chosen row is dark; on the glowing bar it lights up amber
+                var chosen = _textured ? new Color(1f, 0.78f, 0.38f) : new Color(0.02f, 0.05f, 0.08f);
+                for (int i = 0; i < MaxRows; i++) _rows[i].SetColor(i == _selected ? chosen : Color.white);
             }
 
             bool trigger = OVRInput.Get(OVRInput.Axis1D.PrimaryIndexTrigger, hand) > 0.6f;
