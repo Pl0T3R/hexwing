@@ -213,7 +213,7 @@ Everything visible was redone with real models, textures and effects (approved p
 | Falcon, Hawk, Bison | the player's classes, Interceptor variants: Falcon exactly Photo 2 (default), Hawk longer blades + green trim, Bison armour, bomb pods + amber trim | ~7.4k each | 1024 |
 | Transport | escort hauler | 2.2k | 1024 |
 | Drone, Missile, ColossusTurret | small objects | 1.1k / 0.5k / 1.1k | 512 / 256 / 512 |
-| Cockpit + CockpitControls | the Interceptor cockpit (round window, eight spokes, instruments), stick and throttle | 21.1k + 0.9k | 2048 + 512 |
+| Cockpit + CockpitControls | the Interceptor cockpit (round window, eight spokes, instruments, overhead display), stick and throttle | 21.5k + 0.9k | 2048 + 512 |
 | Colossus | capital ship | 16.8k | 2048 |
 | Station | landmark on Orbit | 8.7k | 2048 |
 | Wrecks | four cruiser sections | 2.3–2.6k each | 2048 |
@@ -252,6 +252,7 @@ Everything visible was redone with real models, textures and effects (approved p
 - [ ] Cockpit:
   - the window, struts, console bezels around the five displays, side consoles with switches, seat with harness, cables, light strips,
   - instruments: lit frames on the display bezels (blue in front, red on the side consoles) that never overlap or cut into anything, the scope pod with live radar blips, the bar graph panel with live bars (throttle, heat, shields, hull), the button grid, side bar graphs and buttons, hoses. The side displays lie flat on the side consoles' inner faces. The model build prints `Cockpit check: 0 problem(s)` (overlaps seen from the eye, parts cutting into a console),
+  - the overhead display: a long strip with an amber frame above the window, between two ribs (62° up, 0.85 m away). It can't be seen when looking straight ahead (its lowest point is 54° up), only with the head lifted. One amber line of the mode's less urgent stats (e.g. `SURVIVAL · WAVE 3 · ENEMIES 4/7 · KILLS 12 · SCORE 2350 · BEST 4100`; assault: generators, turrets, fighters, ships; escort: route, ambushes; dogfight: score and fighters left) and a lit progress bar under it (wave, objectives, route, kills to win, rings, training steps; amber when complete, none in the drone range),
   - the light strips take the ship class colour (Falcon cyan, Hawk green, Bison amber) and flash blue-white or red on hits,
   - the stick and throttle are the new models and move.
 - [ ] Sky:
