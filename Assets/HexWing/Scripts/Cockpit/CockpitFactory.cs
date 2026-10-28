@@ -18,6 +18,8 @@ namespace HexWing
         public struct Displays
         {
             public Transform Center, Left, Right, SideLeft, SideRight;
+            /// <summary>The long strip above the window: mode stats, seen only with the head lifted.</summary>
+            public Transform Overhead;
             public Transform Stick, Throttle;
         }
 
@@ -61,6 +63,8 @@ namespace HexWing
                                   Quaternion.LookRotation(new Vector3(-0.9063f, -0.4226f, 0f), new Vector3(-0.4226f, 0.9063f, 0f))),
                 SideRight = Screen(root, "Display Side Right", new Vector3(0.5293f, -0.2039f, 0.205f), new Vector2(0.18f, 0.13f),
                                    Quaternion.LookRotation(new Vector3(0.9063f, -0.4226f, 0f), new Vector3(0.4226f, 0.9063f, 0f))),
+                // 62 degrees up and 0.85 m from the eye, above the window (cockpit.py, OVERHEAD)
+                Overhead = Screen(root, "Display Overhead", new Vector3(0f, 0.8705f, 0.3491f), new Vector2(0.44f, 0.075f), eye),
             };
             d.Stick = Control(root, "Stick", new Vector3(0.24f, -0.52f, 0.22f), 0.22f, 0.024f);
             d.Throttle = Control(root, "Throttle", new Vector3(-0.3f, -0.48f, 0.12f), 0.16f, 0.02f);

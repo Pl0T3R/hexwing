@@ -22,6 +22,7 @@ namespace HexWing
         public CockpitDisplay Right { get; private set; }
         public CockpitDisplay SideLeft { get; private set; }
         public CockpitDisplay SideRight { get; private set; }
+        public CockpitDisplay Overhead { get; private set; }
 
         void Awake()
         {
@@ -43,6 +44,11 @@ namespace HexWing
             Right = CockpitDisplay.Create(Displays.Right, cyan);
             SideLeft = CockpitDisplay.Create(Displays.SideLeft, cyan, 0.011f);
             SideRight = CockpitDisplay.Create(Displays.SideRight, cyan, 0.011f);
+            var overheadLine = new GameObject("Stats Line").transform;   // the text above the progress bar
+            overheadLine.SetParent(Displays.Overhead, false);
+            overheadLine.localPosition = new Vector3(0f, 0.011f, 0f);
+            Overhead = CockpitDisplay.Create(overheadLine, new Color(1f, 0.78f, 0.42f), 0.022f);
+            Overhead.FitWidth(0.42f);
             gameObject.AddComponent<CockpitInstrumentPanel>();   // radar blips and bar graphs on the Blender cockpit
         }
 

@@ -9,7 +9,9 @@ namespace HexWing
     /// - right: the mode (rings: ring, time, best; drones: target, kills, accuracy) or the out-of-bounds
     ///   countdown in red,
     /// - centre: hull, shields, gun heat, missile and evasive readiness, then the performance readout,
-    /// - side left: how the current scheme works, side right: the comfort settings.
+    /// - side left: how the current scheme works, side right: the comfort settings,
+    /// - overhead (above the window, seen with the head lifted): the mode's less urgent stats in one line and
+    ///   its progress (<see cref="OverheadProgress"/>, drawn as a bar by CockpitInstrumentPanel).
     /// </summary>
     public class CockpitHud : MonoBehaviour
     {
@@ -28,6 +30,9 @@ namespace HexWing
         Damageable _health;
         AbilitySystem _abilities;
         int _shownShip = -1;
+
+        /// <summary>The current mode's progress 0..1 for the overhead bar; below 0 = no bar (free play).</summary>
+        public float OverheadProgress { get; private set; } = -1f;
         float _next;
         ControlScheme _shownScheme = (ControlScheme)(-1);
         string _shownInput;
@@ -49,6 +54,7 @@ namespace HexWing
             _next = Time.unscaledTime + Interval;
             FlightDisplay();
             CourseDisplay();
+            OverheadDisplay();
             PerfDisplay();
             HelpDisplays();
         }
@@ -228,6 +234,99 @@ namespace HexWing
             _cockpit.Right.SetText(_sb.ToString());
             bool losing = mode.Phase == TeamDogfight.State.Over ? mode.Result < 0 : false;
             _cockpit.Right.SetColor(_threat || losing ? Red : mode.Phase == TeamDogfight.State.Fighting ? Cyan : Amber);
+        }
+
+        void OverheadDisplay()
+        {
+            if (_cockpit.Overhead == null) return;
+            _sb.Clear();
+            float progress = -1f;
+            var mode = ModeDirector.Instance != null ? ModeDirector.Instance.Current : null;
+            if (mode != null) _sb.Append(mode.Title);
+            if (Training.Instance != null && Training.Instance.isActiveAndEnabled)
+            {
+                var t = Training.Instance;
+                Sep().Append("STEP ").Append(Mathf.Min(t.StepNumber + 1, t.StepCount)).Append('/').Append(t.StepCount);
+                progress = t.StepNumber / (float)Mathf.Max(1, t.StepCount);
+            }
+            else if (Survival.Instance != null && Survival.Instance.isActiveAndEnabled)
+            {
+                var s = Survival.Instance;
+                Sep().Append("WAVE ").Append(s.Wave);
+                Sep().Append("ENEMIES ").Append(s.EnemiesLeft).Append('/').Append(s.WaveSize);
+                Sep().Append("KILLS ").Append(s.Kills);
+                Sep().Append("SCORE ").Append(s.Score);
+                Sep().Append("BEST ").Append(s.BestScore);
+                progress = s.WaveSize > 0 ? 1f - s.EnemiesLeft / (float)s.WaveSize : 0f;
+            }
+            else if (CapitalAssault.Instance != null && CapitalAssault.Instance.isActiveAndEnabled)
+            {
+                var a = CapitalAssault.Instance;
+                var ship = a.Ship;
+                if (ship != null)
+                {
+                    int gens = ship.Generators.Count, turrets = ship.Turrets.Count;
+                    Sep().Append("GENERATORS ").Append(ship.GeneratorsLeft).Append('/').Append(gens);
+                    Sep().Append("TURRETS ").Append(ship.TurretsLeft).Append('/').Append(turrets);
+                    float reactor = ship.Reactor != null && ship.Reactor.MaxHull > 0f ? 1f - Mathf.Clamp01(ship.Reactor.Hull / ship.Reactor.MaxHull) : 0f;
+                    progress = ((gens > 0 ? 1f - ship.GeneratorsLeft / (float)gens : 1f) + (turrets > 0 ? 1f - ship.TurretsLeft / (float)turrets : 1f) + reactor) / 3f;
+                }
+                Sep().Append("FIGHTERS ").Append(Fighters(Team.Enemy));
+                Sep().Append("SHIPS ").Append(a.LivesLeft);
+            }
+            else if (Escort.Instance != null && Escort.Instance.isActiveAndEnabled)
+            {
+                var e = Escort.Instance;
+                Sep().Append("ROUTE ").Append(Mathf.RoundToInt(e.RouteProgress * 100f)).Append('%');
+                Sep().Append("AMBUSH ").Append(e.Ambush).Append('/').Append(GameConfig.Instance.escort.ambushAt.Length);
+                Sep().Append("ENEMIES ").Append(e.EnemiesAlive);
+                Sep().Append("KILLS ").Append(e.Kills);
+                progress = e.RouteProgress;
+            }
+            else if (TeamDogfight.Instance != null && TeamDogfight.Instance.isActiveAndEnabled)
+            {
+                var d = TeamDogfight.Instance;
+                int toWin = GameConfig.Instance.dogfight.killsToWin;
+                Sep().Append("US ").Append(d.OurKills).Append(" : ").Append(d.TheirKills).Append(" THEM");
+                Sep().Append("FIRST TO ").Append(toWin);
+                Sep().Append("ENEMIES ").Append(Fighters(Team.Enemy)).Append("  ALLIES ").Append(Fighters(Team.Player));
+                progress = d.OurKills / (float)Mathf.Max(1, toWin);
+            }
+            else if (DroneRange.Instance != null && DroneRange.Instance.isActiveAndEnabled)
+            {
+                var r = DroneRange.Instance;
+                Sep().Append("DRONES ").Append(r.Alive);
+                Sep().Append("KILLS ").Append(r.Kills);
+                Sep().Append("MISSILES ").Append(r.Missiles);
+                Sep().Append("TIME ").Append(Clock(r.Elapsed));
+            }
+            else if (RingsCourse.Instance != null && RingsCourse.Instance.isActiveAndEnabled)
+            {
+                var c = RingsCourse.Instance;
+                Sep().Append("RING ").Append(Mathf.Min(c.Next + 1, c.Count)).Append('/').Append(c.Count);
+                Sep().Append("COLLISIONS ").Append(c.Collisions);
+                if (c.BestTime > 0f) Sep().Append("BEST ").Append(FormatTime(c.BestTime));
+                progress = c.Next / (float)Mathf.Max(1, c.Count);
+            }
+            _cockpit.Overhead.SetText(_sb.ToString());
+            OverheadProgress = progress;
+        }
+
+        StringBuilder Sep() => _sb.Append(_sb.Length > 0 ? "   \u00B7   " : "");
+
+        /// <summary>Live fighters of a team (ships with guns: not capital ship parts, transports or drones).</summary>
+        static int Fighters(Team team)
+        {
+            int n = 0;
+            var all = ShipWeapons.All;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var w = all[i];
+                if (w == null || !w.isActiveAndEnabled || w.Self == null || !w.Self.Alive || w.Self.Team != team) continue;
+                if (team == Team.Player && w.IsPlayer) continue;   // allies: the player not counted
+                n++;
+            }
+            return n;
         }
 
         static string Clock(float seconds)

@@ -39,6 +39,8 @@ namespace HexWing
         public bool Overheated => _lockoutLeft > 0f;
         public float LockoutLeft => _lockoutLeft;
         public Damageable Target { get; private set; }
+        /// <summary>This ship's own hull and shields.</summary>
+        public Damageable Self => _self;
         /// <summary>0..1 while locking; 1 = locked.</summary>
         public float LockProgress { get; private set; }
         public bool Locked => LockProgress >= 1f && Target != null;

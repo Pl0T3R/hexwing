@@ -48,6 +48,10 @@ PALETTE = {
 
 RADAR = Vector((0.0, -0.02, 0.6))       # the scope's face on the pod above the centre display (the game draws the blips)
 GAUGES = Vector((-0.27, -0.366, 0.455))  # the bar graph panel below the left display (the game draws the bars)
+# the overhead display: a long strip above the window, 62 degrees up and 0.85 m from the eye, so it only shows
+# when the pilot lifts the head (CockpitFactory places its glass and text at the same point)
+OVERHEAD = EYE + Vector((0.0, math.sin(math.radians(62.0)), math.cos(math.radians(62.0)))) * 0.85
+OVERHEAD_SIZE = (0.44, 0.075)
 
 
 def sphere(r, theta, phi):
@@ -396,6 +400,15 @@ def instruments(P):
             d = (q - p).normalized()
             P(geo.cylinder("HoseRib", tuple(mid - d * 0.006), tuple(mid + d * 0.006), 0.023, 0.023, "DARK", sides=10, cap0=False, cap1=False))
 
+    # the overhead display: a dark housing reaching up into the shell, its bezel, an amber-lit frame
+    m = facing(OVERHEAD)
+    check["Overhead"] = [geo.bevel(_box_m("OverheadHousing", (0.54, 0.13, 0.12), "TRIM", m @ geo.at((0, 0, 0.068))), width=0.01, segments=2)]
+    P(check["Overhead"][0])
+    P(geo.bevel(bezel("BezelOverhead", OVERHEAD, OVERHEAD_SIZE, 0.03, "DARK"), width=0.005, segments=1))
+    hex_frame(P, "FrameOverhead", m, *OVERHEAD_SIZE, (True, True), glow="L_YELLOW")
+    for x in (-0.24, 0.24):
+        P(_box_m("OverheadLamp", (0.012, 0.03, 0.004), "L_RED", m @ geo.at((x, 0.0, -0.002))))
+
     layout_check(check)
     geo.socket("Radar", tuple(RADAR - (RADAR - EYE).normalized() * 0.004))
     geo.socket("Gauges", tuple(GAUGES - (GAUGES - EYE).normalized() * 0.009))
@@ -473,6 +486,15 @@ def layout_check(items):
                 else:
                     continue
                 break
+    # the overhead display: hidden while looking straight ahead (its lowest point well above the view),
+    # clear of the window opening, and its housing just reaching the shell
+    over = _unity_points(items["Overhead"])
+    low = min(math.degrees(math.atan2((p - EYE).y, math.hypot((p - EYE).x, (p - EYE).z))) for p in over)
+    near_window = min(math.degrees(math.acos(max(-1.0, min(1.0, p.normalized().z)))) for p in over)
+    print(f"Overhead display: lowest point {low:.1f} degrees above the eye, {near_window:.1f} degrees from straight ahead (window edge {HALF:.0f})")
+    if low < 50.0 or near_window < HALF + 4.0:
+        print("Cockpit check: the overhead display is too low (in view or over the window)")
+        problems += 1
     print(f"Cockpit check: {problems} problem(s)")
     sc = [side_display(s) for s in (-1, 1)]
     for s, (centre, m) in zip((-1, 1), sc):

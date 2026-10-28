@@ -38,7 +38,9 @@ namespace HexWing
         public int BestWave { get; private set; }
         public bool NewBest { get; private set; }
         /// <summary>Enemies still to beat in this wave (alive plus waiting to spawn).</summary>
-        public int EnemiesLeft => _toSpawn + AliveEnemies;
+        public int EnemiesLeft => _toSpawn + _eliteToSpawn + AliveEnemies;
+        /// <summary>Enemies in the current wave, elite included.</summary>
+        public int WaveSize { get; private set; }
         public int AliveEnemies { get; private set; }
         public int WingmenAlive { get; private set; }
         public float PhaseTime => Time.time - _phaseStart;
@@ -73,6 +75,7 @@ namespace HexWing
             _toSpawn = cfg.firstWave + Mathf.RoundToInt(cfg.perWave * (Wave - 1));
             _eliteToSpawn = EliteWave ? 1 : 0;
             if (EliteWave) _toSpawn = Mathf.Max(0, _toSpawn - 1);
+            WaveSize = _toSpawn + _eliteToSpawn;
             SetPhase(State.Intro);
             SpawnWingmen();
             Debug.Log($"[HexWing] Survival wave {Wave}: {_toSpawn + _eliteToSpawn} enemies{(EliteWave ? " with an elite" : "")}, skill {Skill(false):F2}.");
